@@ -1,0 +1,20 @@
+[Unit]
+Description=Unia-Danmuku Bilibili Danmaku System
+After=network.target
+
+[Service]
+Type=simple
+User=YOUR_USERNAME
+WorkingDirectory=/path/to/Unia-Danmuku/backend
+ExecStart=/usr/bin/node /path/to/Unia-Danmuku/backend/src/server.js
+Restart=always
+RestartSec=10
+StandardOutput=append:/var/log/unia-danmuku/backend.log
+StandardError=append:/var/log/unia-danmuku/error.log
+
+# 环境变量
+Environment="NODE_ENV=production"
+Environment="PORT=3001"
+
+[Install]
+WantedBy=multi-user.target

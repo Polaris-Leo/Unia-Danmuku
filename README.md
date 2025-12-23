@@ -14,6 +14,13 @@
 
 Unia-Danmuku 是一个专为 Unia 设计的弹幕姬系统，支持实时弹幕接收、OBS 浏览器源显示、SC（醒目留言）展示等功能。通过简洁优雅的界面设计和高度可定制的样式系统，让主播能够轻松打造属于自己的直播弹幕效果。
 
+### 📚 快速导航
+
+- 🚀 [快速启动命令参考](QUICK_START.md) - 常用命令速查
+- 📖 [完整部署指南](DEPLOYMENT.md) - 服务器部署详细步骤
+- 💡 [使用指南](#-使用指南) - 功能使用说明
+- 🐛 [常见问题](#-常见问题) - 问题排查
+
 ## ✨ 功能特性
 
 ### 🎯 核心功能
@@ -109,7 +116,9 @@ FRONTEND_URL=http://localhost:5173
 
 ### 启动服务
 
-#### 启动后端服务
+#### 开发环境启动
+
+**启动后端服务**
 
 ```bash
 cd backend
@@ -118,11 +127,194 @@ npm start
 npm run dev
 ```
 
-#### 启动前端服务
+**启动前端服务**
 
 ```bash
 cd frontend
 npm run dev
+```
+
+### 生产环境部署
+
+#### 🖥️ 一键启动（推荐）
+
+**Windows 系统**
+
+双击运行 `start.bat` 脚本，会自动：
+- 检查并安装依赖
+- 构建前端静态文件
+- 启动后端服务
+- 生成日志文件
+
+停止服务：双击运行 `stop.bat`
+
+**Linux/Mac 系统**
+
+```bash
+# 添加执行权限
+chmod +x start.sh stop.sh
+
+# 启动服务
+./start.sh
+
+# 停止服务
+./stop.sh
+```
+
+#### ⚙️ 开机自启配置
+
+##### Windows 系统（使用 Windows 服务）
+
+1. **安装服务**（需要管理员权限）
+
+   右键点击 PowerShell，选择"以管理员身份运行"，然后执行：
+
+   ```powershell
+   .\install-windows-service.ps1
+   ```
+
+2. **服务管理命令**
+
+   ```powershell
+   # 启动服务
+   net start UniaDanmuku
+
+   # 停止服务
+   net stop UniaDanmuku
+
+   # 查看服务状态
+   sc query UniaDanmuku
+   ```
+
+3. **卸载服务**
+
+   ```powershell
+   .\uninstall-windows-service.ps1
+   ```
+
+##### Linux 系统（使用 systemd）
+
+1. **编辑服务配置文件**
+
+   打开 `unia-danmuku.service` 文件，修改以下内容：
+
+   ```ini
+   User=YOUR_USERNAME                                    # 改为你的用户名
+   WorkingDirectory=/path/to/Unia-Danmuku/backend       # 改为实际路径
+   ExecStart=/usr/bin/node /path/to/Unia-Danmuku/backend/src/server.js
+   ```
+
+2. **安装服务**
+
+   ```bash
+   # 复制服务文件到系统目录
+   sudo cp unia-danmuku.service /etc/systemd/system/
+
+   # 创建日志目录
+   sudo mkdir -p /var/log/unia-danmuku
+   sudo chown YOUR_USERNAME:YOUR_USERNAME /var/log/unia-danmuku
+
+   # 重新加载 systemd 配置
+   sudo systemctl daemon-reload
+
+   # 启用开机自启
+   sudo systemctl enable unia-danmuku
+
+   # 启动服务
+   sudo systemctl start unia-danmuku
+   ```
+
+3. **服务管理命令**
+
+   ```bash
+   # 查看服务状态
+   sudo systemctl status unia-danmuku
+
+   # 启动服务
+   sudo systemctl start unia-danmuku
+
+   # 停止服务
+   sudo systemctl stop unia-danmuku
+
+   # 重启服务
+   sudo systemctl restart unia-danmuku
+
+   # 查看日志
+   sudo journalctl -u unia-danmuku -f
+
+   # 禁用开机自启
+   sudo systemctl disable unia-danmuku
+   ```
+
+#### 🌐 反向代理配置（可选）
+
+如果需要使用域名访问，建议配置 Nginx 反向代理：
+
+**Nginx 配置示例**
+
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # 前端静态文件
+    location / {
+        root /path/to/Unia-Danmuku/frontend/dist;
+        try_files $uri $uri/ /index.html;
+    }
+
+    # 后端 API
+    location /api {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection 'upgrade';
+        proxy_set_header Host $host;
+        proxy_cache_bypass $http_upgrade;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    }
+
+    # WebSocket
+    location /ws {
+        proxy_pass http://localhost:3001;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "Upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_read_timeout 86400;
+    }
+}
+```
+
+#### 📊 进程管理（可选）
+
+也可以使用 PM2 进行进程管理：
+
+```bash
+# 安装 PM2
+npm install -g pm2
+
+# 启动服务
+pm2 start backend/src/server.js --name unia-danmuku
+
+# 设置开机自启
+pm2 startup
+pm2 save
+
+# 查看状态
+pm2 status
+
+# 查看日志
+pm2 logs unia-danmuku
+
+# 重启服务
+pm2 restart unia-danmuku
+
+# 停止服务
+pm2 stop unia-danmuku
 ```
 
 ## 🚀 使用指南
@@ -213,6 +405,17 @@ Unia-Danmuku/
 │   ├── vite.config.js
 │   └── package.json
 │
+├── logs/                   # 日志文件目录
+│   ├── backend.log         # 后端服务日志
+│   └── error.log           # 错误日志
+│
+├── start.bat               # Windows 一键启动脚本
+├── stop.bat                # Windows 停止脚本
+├── start.sh                # Linux/Mac 启动脚本
+├── stop.sh                 # Linux/Mac 停止脚本
+├── install-windows-service.ps1    # Windows 服务安装脚本
+├── uninstall-windows-service.ps1  # Windows 服务卸载脚本
+├── unia-danmuku.service    # Linux systemd 服务配置
 └── README.md               # 项目文档
 ```
 
@@ -260,6 +463,34 @@ const API_BASE_URL = 'http://localhost:3001/api';
 - 刷新 OBS 浏览器源
 - 清除浏览器缓存
 - 检查本地存储是否保存成功
+
+### 4. Windows 服务安装失败？
+
+- 确保以管理员权限运行 PowerShell
+- 检查 Node.js 是否正确安装
+- 查看错误日志：`logs/backend.log`
+- 尝试手动安装 node-windows：`cd backend && npm install node-windows`
+
+### 5. Linux 系统服务无法启动？
+
+- 检查服务配置文件中的路径是否正确
+- 确认用户权限：`sudo chown -R $USER:$USER /path/to/Unia-Danmuku`
+- 查看系统日志：`sudo journalctl -u unia-danmuku -n 50`
+- 检查端口是否被占用：`sudo lsof -i :3001`
+
+### 6. 服务器上无法访问前端页面？
+
+- 确认前端已正确构建：`cd frontend && npm run build`
+- 检查防火墙是否开放对应端口
+- 如果使用域名，检查 DNS 解析是否正确
+- 建议配置 Nginx 反向代理
+
+### 7. WebSocket 连接失败？
+
+- 检查后端服务是否正常运行
+- 确认 WebSocket 端口未被防火墙阻止
+- 如果使用反向代理，确保正确配置 WebSocket 转发
+- 查看浏览器控制台错误信息
 
 ## 📝 开发计划
 
