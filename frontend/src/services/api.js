@@ -41,4 +41,67 @@ export const logout = async () => {
   return response.data;
 };
 
+/**
+ * 获取监控房间列表
+ */
+export const getMonitoredRooms = async () => {
+  const response = await api.get('/monitor/rooms');
+  return response.data;
+};
+
+/**
+ * 添加监控房间
+ * @param {string} roomId
+ */
+export const addMonitoredRoom = async (roomId) => {
+  const response = await api.post('/monitor/rooms', { roomId });
+  return response.data;
+};
+
+/**
+ * 移除监控房间
+ * @param {string} roomId
+ */
+export const removeMonitoredRoom = async (roomId) => {
+  const response = await api.delete(`/monitor/rooms/${roomId}`);
+  return response.data;
+};
+
+/**
+ * 暂停监控
+ * @param {string} roomId
+ */
+export const pauseMonitoredRoom = async (roomId) => {
+  const response = await api.post(`/monitor/rooms/${roomId}/pause`);
+  return response.data;
+};
+
+/**
+ * 恢复监控
+ * @param {string} roomId
+ */
+export const resumeMonitoredRoom = async (roomId) => {
+  const response = await api.post(`/monitor/rooms/${roomId}/resume`);
+  return response.data;
+};
+
+/**
+ * 获取历史会话列表
+ * @param {string} roomId
+ */
+export const getHistorySessions = async (roomId) => {
+  const response = await api.get(`/history/${roomId}/sessions`);
+  return response.data;
+};
+
+/**
+ * 获取历史会话数据
+ * @param {string} roomId
+ * @param {string} sessionId
+ */
+export const getHistoryData = async (roomId, sessionId) => {
+  const response = await api.get(`/history/${roomId}/${sessionId}`);
+  return response.data;
+};
+
 export default api;

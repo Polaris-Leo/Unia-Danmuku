@@ -1,6 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
 import './ObsDanmakuPage.css';
-import './ObsDanmakuPage2.css';
 
 const ObsDanmakuPage = () => {
   // 立即同步加载样式设置，避免第一条消息显示异常
@@ -24,7 +23,6 @@ const ObsDanmakuPage = () => {
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [styleType] = useState(initialSettings?.styleType || 'simple');
   const [customStyles] = useState(initialSettings);
   const [activeSCs, setActiveSCs] = useState([]); // 活跃的SC列表（倒计时中）
   const messagesContainerRef = useRef(null);
@@ -122,7 +120,11 @@ const ObsDanmakuPage = () => {
     const params = new URLSearchParams(window.location.search);
     const roomId = params.get('room') || localStorage.getItem('obsRoomId') || '1017';
 
-    const wsUrl = `ws://localhost:3001/ws/danmaku?roomId=${roomId}`;
+    // 动态构建WebSocket URL，支持局域网访问
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host; // 包含域名和端口 (如 localhost:5173 或 192.168.1.x:3000)
+    const wsUrl = `${protocol}//${host}/ws/danmaku?roomId=${roomId}`;
+    
     console.log('🔌 创建 WebSocket 连接 [实例ID:', Date.now() + ']:', wsUrl);
     const websocket = new WebSocket(wsUrl);
     wsRef.current = websocket;
@@ -137,25 +139,31 @@ const ObsDanmakuPage = () => {
     websocket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
-        console.log('📨 OBS收到WebSocket消息:', data.type, data);
-        console.log('🔍 消息详细信息:', {
-          type: data.type,
-          hasUser: !!data.user,
-          username: data.user?.username,
-          price: data.price,
-          message: data.message,
-          timestamp: data.timestamp
-        });
         
         if (data.type === 'danmaku' || data.type === 'superchat') {
-          console.log('✅ 添加消息到列表:', data.type, data.user?.username);
           setMessages(prev => {
+            // 生成唯一指纹用于去重
+            const fingerprint = data.type === 'danmaku' 
+              ? `${data.timestamp}-${data.user?.uid}-${data.content}`
+              : `${data.time}-${data.user?.uid}-${data.price}`;
+            
+            // 检查最近的消息中是否已存在相同指纹
+            const isDuplicate = prev.slice(-20).some(msg => {
+              const msgFingerprint = msg.type === 'danmaku'
+                ? `${msg.timestamp}-${msg.user?.uid}-${msg.content}`
+                : `${msg.time}-${msg.user?.uid}-${msg.price}`;
+              return msgFingerprint === fingerprint;
+            });
+
+            if (isDuplicate) {
+              console.log('⚠️ 忽略重复消息:', fingerprint);
+              return prev;
+            }
+
             const newMessages = [...prev, {
               id: Date.now() + Math.random(),
               ...data
             }].slice(-50);
-            console.log('📋 当前消息列表长度:', newMessages.length);
-            console.log('📋 最新消息:', newMessages[newMessages.length - 1]);
             return newMessages;
           });
           
@@ -356,129 +364,7 @@ const ObsDanmakuPage = () => {
     setActiveSCs(prev => [...prev, newSC]);
   };
 
-  return styleType === 'bubble' ? (
-    // 气泡样式
-    <div className={`obs-danmaku-page ${activeSCs.length > 0 ? 'has-sc-timer' : ''}`}>
-      {/* SC倒计时栏 */}
-      {activeSCs.length > 0 && (
-        <div className="sc-timer-bar">
-          {activeSCs.map(sc => {
-            const now = Date.now();
-            const elapsed = now - sc.startTime;
-            const remaining = Math.max(0, Math.ceil((sc.endTime - now) / 1000));
-            const progress = Math.min(100, (elapsed / (sc.duration * 1000)) * 100);
-            const colors = getSCColor(sc.price);
-            
-            return (
-              <div 
-                key={sc.id} 
-                className="sc-timer-capsule"
-                style={{
-                  '--sc-bg': colors.bg,
-                  '--sc-bg-light': colors.bgLight,
-                  '--progress': `${progress}%`
-                }}
-              >
-                <div className="sc-timer-avatar">
-                  <img src={sc.user.face} alt="" />
-                </div>
-                <div className="sc-timer-price">CN¥{sc.price}</div>
-              </div>
-            );
-          })}
-        </div>
-      )}
-      
-      {testMode && (
-        <button 
-          onClick={sendTestSC}
-          style={{
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            zIndex: 9999,
-            padding: '10px 20px',
-            background: '#8a2be2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-          }}
-        >
-          测试SC
-        </button>
-      )}
-      <div className="events-list-wrap">
-        <div className="event-list" ref={messagesContainerRef}>
-          {messages.length === 0 && connected && (
-            <div style={{
-              color: 'white',
-              textAlign: 'center',
-              marginTop: '50px',
-              fontSize: '16px',
-              textShadow: '0 0 5px rgba(0,0,0,0.5)'
-            }}>
-              等待弹幕中...
-            </div>
-          )}
-          {messages.map(msg => {
-            const guardLevel = msg.user?.guardLevel || 0;
-            const onlyEmotes = hasOnlyEmotes(msg.content, msg.emots);
-            
-            return (
-              <div 
-                key={msg.id} 
-                className={`event event--message ${guardLevel > 0 ? `guard-level--${guardLevel}` : ''} ${onlyEmotes ? 'has-emotes' : ''}`}
-              >
-                <div className="avatar-wrap">
-                  <img 
-                    src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
-                    alt={msg.user?.username}
-                    className="avatar"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                
-                <div className="content-wrap">
-                  <div className="user-info-line">
-                    {msg.medal && (
-                      <div className={`fans-medal ${guardLevel > 0 ? `guard-${guardLevel}` : ''}`}>
-                        {guardLevel > 0 && (
-                          <span className="guard-icon">
-                            <img 
-                              src={
-                                guardLevel === 1 
-                                  ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
-                                  : guardLevel === 2
-                                  ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png'
-                                  : 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png'
-                              }
-                              alt={guardLevel === 1 ? '总督' : guardLevel === 2 ? '提督' : '舰长'}
-                              title={guardLevel === 1 ? '总督' : guardLevel === 2 ? '提督' : '舰长'}
-                            />
-                          </span>
-                        )}
-                        <span className="medal-name">{msg.medal.name}</span>
-                        <span className="medal-level">{msg.medal.level}</span>
-                      </div>
-                    )}
-                    <div className="username">{msg.user?.username || '未知用户'}</div>
-                  </div>
-                  
-                  <div className="message">
-                    {renderContentWithEmoji(msg.content, msg.emots)}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-    </div>
-  ) : (
+  return (
     // 简洁样式
     <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''}`}>
       {/* SC倒计时栏 */}

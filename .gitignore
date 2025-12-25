@@ -39,6 +39,9 @@ frontend/dist/
 
 # 数据文件
 backend/data/cookies.json
+backend/data/history/
+backend/data/monitored_rooms.json
+backend/data/face-cache.json
 
 # Windows
 Thumbs.db
