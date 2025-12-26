@@ -319,7 +319,7 @@ html, body {
   margin-left: 0.3em;
   
   /* 使用多重阴影模拟平滑描边，解决折角问题且保证兼容性 */
-  text-shadow: var(--smooth-stroke-shadow);
+  text-shadow: var(--username-text-shadow);
 }
 
 /* 舰长用户名 */
@@ -348,16 +348,22 @@ html, body {
   margin-left: 0.5em;
   
   /* 使用多重阴影模拟平滑描边 */
-  text-shadow: var(--smooth-stroke-shadow);
+  text-shadow: var(--danmaku-text-shadow);
 }
 
 /* 表情图片 */
-.danmaku-emot {
+.danmaku-emot, .emote {
   display: inline-block;
-  height: var(--emot-size);
-  max-height: var(--emot-size);
+  height: var(--danmaku-font-size);
+  max-height: var(--danmaku-font-size);
   vertical-align: middle;
   margin: 0 2px;
+}
+
+/* 大表情特殊处理 */
+.emote-large {
+  height: var(--emot-size);
+  max-height: var(--emot-size);
 }
 
 /* SC（醒目留言）样式 */
