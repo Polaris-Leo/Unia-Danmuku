@@ -127,7 +127,12 @@ function DanmakuPage() {
 
   // SC和礼物滚动状态
   const [isScAutoScroll, setIsScAutoScroll] = useState(true);
+  const [scUnreadCount, setScUnreadCount] = useState(0);
+  const [showScNewMsgButton, setShowScNewMsgButton] = useState(false);
+
   const [isGiftAutoScroll, setIsGiftAutoScroll] = useState(true);
+  const [giftUnreadCount, setGiftUnreadCount] = useState(0);
+  const [showGiftNewMsgButton, setShowGiftNewMsgButton] = useState(false);
   
   // 设置状态
   const [showSettings, setShowSettings] = useState(false);
@@ -152,6 +157,8 @@ function DanmakuPage() {
   };
 
   const wsRef = useRef(null);
+  const reconnectTimeoutRef = useRef(null);
+  const isManualDisconnect = useRef(false);
   const danmakuListRef = useRef(null); // 滚动容器的引用
   const scListRef = useRef(null);
   const giftListRef = useRef(null);
@@ -239,6 +246,7 @@ function DanmakuPage() {
     
     if (!isAtBottom) {
       setIsAutoScroll(false);
+      setShowNewMsgButton(true);
     }
   };
 
@@ -260,14 +268,21 @@ function DanmakuPage() {
     if (!scListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scListRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-    if (!isAtBottom) setIsScAutoScroll(false);
+    if (!isAtBottom) {
+      setIsScAutoScroll(false);
+      setShowScNewMsgButton(true);
+    }
   };
 
   const handleScScrollCheck = () => {
     if (!scListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = scListRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
-    if (isAtBottom) setIsScAutoScroll(true);
+    if (isAtBottom) {
+      setIsScAutoScroll(true);
+      setScUnreadCount(0);
+      setShowScNewMsgButton(false);
+    }
   };
 
   // 礼物滚动处理
@@ -275,14 +290,21 @@ function DanmakuPage() {
     if (!giftListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = giftListRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
-    if (!isAtBottom) setIsGiftAutoScroll(false);
+    if (!isAtBottom) {
+      setIsGiftAutoScroll(false);
+      setShowGiftNewMsgButton(true);
+    }
   };
 
   const handleGiftScrollCheck = () => {
     if (!giftListRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = giftListRef.current;
     const isAtBottom = scrollHeight - scrollTop - clientHeight < 20;
-    if (isAtBottom) setIsGiftAutoScroll(true);
+    if (isAtBottom) {
+      setIsGiftAutoScroll(true);
+      setGiftUnreadCount(0);
+      setShowGiftNewMsgButton(false);
+    }
   };
 
   // 手动滚动到底部
@@ -295,17 +317,45 @@ function DanmakuPage() {
     }
   };
 
-  useEffect(() => {
-    if (isScAutoScroll && scEndRef.current) {
+  const scrollToBottomSc = () => {
+    setIsScAutoScroll(true);
+    setScUnreadCount(0);
+    setShowScNewMsgButton(false);
+    if (scEndRef.current) {
       scEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
-  }, [scList, isScAutoScroll]);
+  };
 
-  useEffect(() => {
-    if (isGiftAutoScroll && giftEndRef.current) {
+  const scrollToBottomGift = () => {
+    setIsGiftAutoScroll(true);
+    setGiftUnreadCount(0);
+    setShowGiftNewMsgButton(false);
+    if (giftEndRef.current) {
       giftEndRef.current.scrollIntoView({ behavior: 'auto' });
     }
-  }, [giftList, isGiftAutoScroll]);
+  };
+
+  useEffect(() => {
+    if (isScAutoScroll) {
+      if (scEndRef.current) {
+        scEndRef.current.scrollIntoView({ behavior: 'auto' });
+      }
+    } else {
+      setScUnreadCount(prev => prev + 1);
+      setShowScNewMsgButton(true);
+    }
+  }, [scList]);
+
+  useEffect(() => {
+    if (isGiftAutoScroll) {
+      if (giftEndRef.current) {
+        giftEndRef.current.scrollIntoView({ behavior: 'auto' });
+      }
+    } else {
+      setGiftUnreadCount(prev => prev + 1);
+      setShowGiftNewMsgButton(true);
+    }
+  }, [giftList]);
 
   // 设置逻辑
   const toggleOnlyCurrentSession = async () => {
@@ -440,7 +490,7 @@ function DanmakuPage() {
       }, 1000);
       return () => clearTimeout(timer);
     }
-  }, [roomId]);
+  }, [roomId, connected, onlyCurrentSession]);
 
   const checkAuth = async () => {
     try {
@@ -475,6 +525,14 @@ function DanmakuPage() {
 
     localStorage.setItem('lastRoomId', idToUse);
 
+    // 重置主动断开标志
+    isManualDisconnect.current = false;
+    // 清除可能存在的重连定时器
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
+
     if (wsRef.current) {
       wsRef.current.close();
     }
@@ -491,6 +549,8 @@ function DanmakuPage() {
       setDanmakuList([]);
       setScList([]);
       setGiftList([]);
+      // 重置已加载的历史记录标记，以便重新加载
+      setLoadedHistorySessions(new Set());
     };
 
     ws.onmessage = (event) => {
@@ -510,12 +570,25 @@ function DanmakuPage() {
     ws.onclose = () => {
       console.log('WebSocket连接关闭');
       setConnected(false);
+      wsRef.current = null;
+
+      if (!isManualDisconnect.current) {
+        console.log('非主动断开，3秒后尝试重连...');
+        reconnectTimeoutRef.current = setTimeout(() => {
+          connectRoom(idToUse);
+        }, 3000);
+      }
     };
 
     wsRef.current = ws;
   };
 
   const disconnect = () => {
+    isManualDisconnect.current = true;
+    if (reconnectTimeoutRef.current) {
+      clearTimeout(reconnectTimeoutRef.current);
+      reconnectTimeoutRef.current = null;
+    }
     if (wsRef.current) {
       wsRef.current.close();
       wsRef.current = null;
@@ -1143,6 +1216,7 @@ function DanmakuPage() {
                                       : 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
                                   }
                                   alt={`guard-${guardLevel}`}
+                                  referrerPolicy="no-referrer"
                                   className="medal-guard-icon"
                                 />
                               </div>
@@ -1166,6 +1240,7 @@ function DanmakuPage() {
                               : 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
                           }
                           alt={`guard-${guardLevel}`}
+                          referrerPolicy="no-referrer"
                           className="guard-icon"
                         />
                       )}
@@ -1187,7 +1262,7 @@ function DanmakuPage() {
           </div>
           {showNewMsgButton && (
             <div className="new-msg-btn" onClick={scrollToBottom}>
-              新消息 {unreadCount > 99 ? '99+' : unreadCount}
+              {unreadCount > 0 ? `新消息 ${unreadCount > 99 ? '99+' : unreadCount}` : '回到最新位置'}
               <span className="arrow-down">↓</span>
             </div>
           )}
@@ -1254,6 +1329,12 @@ function DanmakuPage() {
             })}
             <div ref={scEndRef} />
           </div>
+          {showScNewMsgButton && (
+            <div className="new-msg-btn" onClick={scrollToBottomSc}>
+              {scUnreadCount > 0 ? `新消息 ${scUnreadCount > 99 ? '99+' : scUnreadCount}` : '回到最新位置'}
+              <span className="arrow-down">↓</span>
+            </div>
+          )}
         </div>
 
         {/* 第三列：礼物和舰长 */}
@@ -1371,7 +1452,7 @@ function DanmakuPage() {
                         </div>
                       </div>
                       <div className="guard-card-right">
-                        <img src={iconSrc} alt="" className="guard-icon-large" />
+                        <img src={iconSrc} alt="" className="guard-icon-large" referrerPolicy="no-referrer" />
                       </div>
                     </div>
                   );
@@ -1405,7 +1486,7 @@ function DanmakuPage() {
                       </div>
                       {iconSrc && (
                         <div className="gift-highlight-bg-icon">
-                          <img src={iconSrc} alt="" />
+                          <img src={iconSrc} alt="" referrerPolicy="no-referrer" />
                         </div>
                       )}
                     </div>
@@ -1426,7 +1507,7 @@ function DanmakuPage() {
                     />
                     <span className="gift-username-small" onClick={(e) => handleUserClick(e, msg.user, msg.time)}>{msg.user?.username}</span>
                     {smallIconSrc && (
-                      <img className="gift-icon-small" src={smallIconSrc} alt="" />
+                      <img className="gift-icon-small" src={smallIconSrc} alt="" referrerPolicy="no-referrer" />
                     )}
                     <span className="gift-name-small">{msg.giftName}</span>
                     {count > 1 && (
@@ -1441,6 +1522,12 @@ function DanmakuPage() {
             })}
             <div ref={giftEndRef} />
           </div>
+          {showGiftNewMsgButton && (
+            <div className="new-msg-btn" onClick={scrollToBottomGift}>
+              {giftUnreadCount > 0 ? `新消息 ${giftUnreadCount > 99 ? '99+' : giftUnreadCount}` : '回到最新位置'}
+              <span className="arrow-down">↓</span>
+            </div>
+          )}
         </div>
       </div>
 
