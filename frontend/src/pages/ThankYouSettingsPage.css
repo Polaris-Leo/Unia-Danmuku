@@ -44,12 +44,16 @@
   overflow: hidden;
   transition: background-color 0.3s;
   background-image: 
-    linear-gradient(45deg, #ccc 25%, transparent 25%), 
-    linear-gradient(-45deg, #ccc 25%, transparent 25%), 
-    linear-gradient(45deg, transparent 75%, #ccc 75%), 
-    linear-gradient(-45deg, transparent 75%, #ccc 75%);
+    linear-gradient(45deg, #e0e0e0 25%, transparent 25%), 
+    linear-gradient(-45deg, #e0e0e0 25%, transparent 25%), 
+    linear-gradient(45deg, transparent 75%, #e0e0e0 75%), 
+    linear-gradient(-45deg, transparent 75%, #e0e0e0 75%);
   background-size: 20px 20px;
   background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  
+  /* Enable Container Queries */
+  container-type: size;
+  position: relative;
 }
 
 .preview-container.light-bg {
@@ -58,32 +62,62 @@
 
 .preview-container.dark-bg {
   background-color: #121212;
-  background-image: none; /* Remove checkerboard for dark mode if preferred, or keep it */
+  background-image: none; 
 }
+
+/* Removed .preview-viewport entirely */
 
 /* The Card inside the preview */
 .thank-you-card-preview {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 16px;
-  padding: 20px;
-  width: 380px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  width: auto;
+  height: auto;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  border: 3px solid #ff99cc;
-  transform-origin: center;
-  /* Scale down if screen is small */
-  max-width: 90%;
+  justify-content: center;
+  border: none;
+  transform: none; 
+  box-sizing: border-box;
+  max-height: 100cqh; /* Match OBS max-height: 100vh */
+  width: 100%; /* Ensure it takes full width of container */
+}
+
+.thank-you-card-preview.animate-in {
+  animation: fadeInPreview var(--anim-duration) forwards;
+}
+
+.thank-you-card-preview.animate-out {
+  animation: fadeOutPreview var(--anim-duration) forwards;
+}
+
+@keyframes fadeInPreview {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes fadeOutPreview {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
 }
 
 .preview-avatar {
-  width: 60px;
-  height: 60px;
-  border-radius: 50%;
-  border: 2px solid #ff99cc;
-  margin-bottom: 16px;
-  object-fit: cover;
+  /* width/height are controlled by inline styles now usually, but keeping defaults here just in case */
+  border-radius: 0;
+  border: none;
+  margin-bottom: 0;
+  object-fit: contain;
 }
 
 .preview-message {

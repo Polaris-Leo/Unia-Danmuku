@@ -9,7 +9,9 @@ import authRoutes from './routes/auth.js';
 import danmakuRoutes, { createDanmakuWSS } from './routes/danmaku.js';
 import monitorRoutes from './routes/monitor.js';
 import historyRoutes from './routes/history.js';
+import thankyouRoutes from './routes/thankyou.js';
 import { roomManager } from './services/roomManager.js';
+import { sortAllHistory, repairOverlappingSessions } from './utils/historyStorage.js';
 
 dotenv.config();
 
@@ -33,6 +35,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/danmaku', danmakuRoutes);
 app.use('/api/monitor', monitorRoutes);
 app.use('/api/history', historyRoutes);
+app.use('/api/thankyou', thankyouRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -43,6 +46,19 @@ app.get('/api/health', (req, res) => {
 const frontendDist = path.join(__dirname, '../../frontend/dist');
 app.use(express.static(frontendDist));
 
+// 托管上传的文件
+const publicDir = path.join(__dirname, '../public');
+app.use(express.static(publicDir));
+
+// Serve uploaded files from data/daxie
+const daxieDir = path.join(__dirname, '../data/daxie');
+// Explicitly serve /daxie to ensure accessibility with aggressive caching
+app.use('/daxie', express.static(daxieDir, {
+  maxAge: '1y',
+  immutable: true
+}));
+
+// 
 // SPA 路由回退
 app.get('*', (req, res) => {
   if (req.path.startsWith('/api')) {
@@ -67,8 +83,17 @@ app.use((err, req, res, next) => {
 });
 
 // 启动服务器
-server.listen(PORT, () => {
-  console.log(`🚀 Server is running on http://localhost:${PORT}`);
-  console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL}`);
-  console.log(`🌐 WebSocket URL: ws://localhost:${PORT}/ws/danmaku`);
-});
+const startServer = async () => {
+  // 1. 先修复重叠数据 (将误入旧场次的新数据移动到新场次)
+  await repairOverlappingSessions();
+  // 2. 再整理数据顺序 (确保文件内按时间戳排序)
+  await sortAllHistory();
+
+  server.listen(PORT, () => {
+    console.log(`🚀 Server is running on http://localhost:${PORT}`);
+    console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL}`);
+    console.log(`🌐 WebSocket URL: ws://localhost:${PORT}/ws/danmaku`);
+  });
+};
+
+startServer();

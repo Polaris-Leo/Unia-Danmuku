@@ -1,57 +1,117 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import axios from 'axios';
 import './ThankYouPage.css';
 
 const ThankYouPage = () => {
   const [searchParams] = useSearchParams();
+  const roomId = searchParams.get('room');
   const [queue, setQueue] = useState([]);
   const [currentGift, setCurrentGift] = useState(null);
+  const [isExiting, setIsExiting] = useState(false);
   const [ws, setWs] = useState(null);
-  const audioRef = useRef(new Audio('/thankyou.mp3'));
+  const audioRef = useRef(null);
   const processingRef = useRef(false);
   const [config, setConfig] = useState({
     audioEnabled: true,
-    audioVolume: 1.0,
     backgroundImg: '',
+    audioUrl: '',
+    imageHeight: 600, // Default 600px for 2000x2000
+    
+    // Templates
     template: '感谢 {sender} 的 {gift} * {count} ({price} 元)',
+    blindboxTemplate: '感谢 {sender} 的 {blindbox_name} * {count}, 爆出 {gift} ({price} 元)',
     guardTemplate: '感谢 {sender} 开通 {gift} * {count}',
+    scTemplate: '感谢 {sender} 的醒目留言 ({price} 元): {content}',
+    
+    // Style
     fontFamily: 'Microsoft YaHei',
-    fontSize: 28,
+    fontSize: 120,
     fontColor: '#333333',
     fontWeight: 'bold',
+    textSpacing: 0, // New: Spacing between image and text
+    
+    // Advanced Text Style
+    strokeWidth: 0,
+    strokeColor: '#ffffff',
+    glowIntensity: 0,
+    shadowIntensity: 0,
+    highlightKeywords: false,
+    highlightColor: '#ff0000',
+
+    // Logic
     minPrice: 9.9,
     ignoreFree: true,
-    displayDuration: 5000
+    blindboxCalcOriginal: false,
+    
+    // Animation
+    stayDuration: 5,
+    animationDuration: 1,
+    animationType: 'fadein'
   });
 
+  // Load config
   useEffect(() => {
-    // Load config from localStorage
-    const savedConfig = localStorage.getItem('thankYouConfig');
-    if (savedConfig) {
-      const parsed = JSON.parse(savedConfig);
-      setConfig(prev => ({ ...prev, ...parsed }));
-      
-      // Update Audio Volume
-      if (audioRef.current) {
-        audioRef.current.volume = parsed.audioVolume !== undefined ? parsed.audioVolume : 1.0;
-      }
+    if (roomId) {
+      axios.get(`/api/thankyou/${roomId}`)
+        .then(res => {
+          if (res.data.config) {
+            setConfig(prev => ({ ...prev, ...res.data.config }));
+          }
+        })
+        .catch(err => console.error(err));
     }
-    
-    connectWebSocket();
+  }, [roomId]);
+
+  // Initialize Audio
+  useEffect(() => {
+    if (config.audioUrl) {
+      audioRef.current = new Audio(config.audioUrl);
+      // Preload audio to ensure it's ready
+      audioRef.current.load();
+    } else {
+      audioRef.current = null;
+    }
+  }, [config.audioUrl]);
+
+  // Connect WebSocket
+  useEffect(() => {
+    if (roomId) {
+      connectWebSocket();
+    }
     return () => {
       if (ws) ws.close();
     };
-  }, []);
+  }, [roomId]);
 
+  // Process Queue
   useEffect(() => {
     if (queue.length > 0 && !processingRef.current) {
       processQueue();
     }
   }, [queue]);
 
+  // Add a click handler to unlock audio context if needed (for browser testing)
+  useEffect(() => {
+    const unlockAudio = () => {
+      if (audioRef.current) {
+        audioRef.current.play().then(() => {
+          audioRef.current.pause();
+          audioRef.current.currentTime = 0;
+        }).catch(() => {});
+      }
+      document.removeEventListener('click', unlockAudio);
+    };
+    document.addEventListener('click', unlockAudio);
+    return () => document.removeEventListener('click', unlockAudio);
+  }, []);
+
   const connectWebSocket = () => {
+    if (!roomId) return;
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.hostname}:3001`;
+    const host = window.location.host; 
+    const wsUrl = `${protocol}//${host}/ws/danmaku?roomId=${roomId}`;
+    
     const newWs = new WebSocket(wsUrl);
 
     newWs.onopen = () => {
@@ -60,8 +120,13 @@ const ThankYouPage = () => {
 
     newWs.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        handleMessage(data);
+        const msg = JSON.parse(event.data);
+        
+        if (roomId && msg.roomId && String(msg.roomId) !== String(roomId)) {
+            return;
+        }
+        
+        handleMessage(msg);
       } catch (error) {
         console.error('Error parsing message:', error);
       }
@@ -75,136 +140,280 @@ const ThankYouPage = () => {
     setWs(newWs);
   };
 
-  const handleMessage = (data) => {
-    if (data.type === 'gift' || data.type === 'guard') {
-      let price = 0;
-      
-      if (data.type === 'guard') {
-        // Guard price is usually in gold/1000
-        price = (Number(data.price) || 0) / 1000;
+  const handleMessage = (msg) => {
+    const data = msg.data;
+    const type = msg.type;
+
+    // Handle Config Update
+    if (type === 'config_updated') {
+      console.log('Config updated via WebSocket', msg.config);
+      setConfig(prev => ({ ...prev, ...msg.config }));
+      return;
+    }
+
+    if (type === 'gift' || type === 'guard' || type === 'superchat') {
+      let totalPrice = 0;
+      let giftType = 'gift'; // default
+
+      if (type === 'guard') {
+        giftType = 'guard';
+        totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
+      } else if (type === 'superchat') {
+        giftType = 'sc';
+        totalPrice = Number(data.price) || 0; // SC price is usually already in RMB or needs conversion? 
+        // Usually SC price from bilibili-live-listener is in RMB directly or needs check. 
+        // Assuming standard format where price is in RMB for SC.
+        // Wait, bilibili-live-listener usually gives price in RMB for SC.
       } else {
-        // Gift
-        if (data.coinType === 'gold') {
-          price = (Number(data.price) || 0) / 1000;
+        // Normal Gift or Blindbox
+        if (data.blindGift) {
+          giftType = 'blindbox';
+          // Blindbox price calculation
+          if (config.blindboxCalcOriginal) {
+             // Use original price of the blindbox item itself (if available)
+             // Usually blindbox gift has a base price.
+             // data.blindGift.original_price might be available or we use the gift price.
+             // If blindboxCalcOriginal is true, we might want to use the price of the *dropped* item?
+             // Or the price of the blindbox itself?
+             // "blindboxCalcOriginal: false" usually means use the price of the item obtained.
+             // "blindboxCalcOriginal: true" usually means use the price of the blindbox cost.
+             // Let's assume:
+             // If calcOriginal is true, use data.price (cost of blindbox).
+             // If calcOriginal is false, use data.blindGift.price (value of item obtained).
+             // But data.blindGift structure depends on what we parsed in backend.
+             // In backend we just passed `blindGift: giftData.blind_gift`.
+             // Let's assume standard logic:
+             // If it's a blindbox, the `price` field in `data` is usually the cost.
+             // The value of the item is inside `blindGift`.
+             
+             // Actually, let's look at how we want to filter.
+             // If blindboxCalcOriginal is true, we use the cost (data.price).
+             // If false, we try to find the value of the content.
+             // Since we might not have the value of the content easily, let's stick to data.price for now unless we have more info.
+             // Wait, the user asked for "Blindbox calculation mode".
+             // Let's assume:
+             // True: Use the price of the blindbox itself (cost).
+             // False: Use the price of the item inside (value).
+             
+             // For now, let's use data.price as base.
+             totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
+          } else {
+             // Use value of item inside if possible, otherwise fallback to cost
+             // We don't have item value in standard payload usually unless we look it up.
+             // Let's just use the cost for now to be safe, or if the user provided logic implies something else.
+             // For now, let's just use the standard price calculation.
+             totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
+          }
         } else {
-          // Silver gifts
-          price = 0;
+          // Normal Gift
+          if (data.coinType === 'gold') {
+             totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
+          } else {
+            totalPrice = 0; // Silver gift
+          }
         }
       }
 
-      // Filter based on config
-      if (config.ignoreFree && price <= 0 && data.type !== 'guard') return;
-      if (price < config.minPrice && data.type !== 'guard') return;
+      // Filter
+      if (config.ignoreFree && totalPrice <= 0 && type !== 'guard') return;
+      if (totalPrice < config.minPrice && type !== 'guard' && type !== 'superchat') return;
 
       const giftItem = {
         ...data,
-        priceInCny: price,
-        id: Date.now() + Math.random()
+        totalPrice,
+        giftType, // 'gift', 'blindbox', 'guard', 'sc'
+        // For SC
+        content: data.message || '',
+        // For Blindbox
+        blindboxName: data.giftName, // The name of the blindbox itself (e.g. "星月盲盒")
+        giftName: (giftType === 'blindbox' && data.blindGift) ? data.blindGift.gift_name : data.giftName // The item inside or the gift name
       };
+      
       setQueue(prev => [...prev, giftItem]);
     }
   };
 
   const processQueue = async () => {
-    if (queue.length === 0) return;
-
     processingRef.current = true;
-    const nextGift = queue[0];
-    setQueue(prev => prev.slice(1));
-    setCurrentGift(nextGift);
-
-    // Play Audio
-    if (config.audioEnabled) {
+    const item = queue[0];
+    setCurrentGift(item);
+    setIsExiting(false);
+    
+    // Play audio
+    if (config.audioEnabled && audioRef.current) {
       try {
         audioRef.current.currentTime = 0;
-        await audioRef.current.play();
+        const playPromise = audioRef.current.play();
+        if (playPromise !== undefined) {
+          playPromise.catch(e => {
+            console.error('Audio play failed (likely autoplay policy):', e);
+          });
+        }
       } catch (e) {
-        console.error("Audio play failed", e);
+        console.error('Audio play failed', e);
       }
     }
 
-    // Wait for duration
+    const stayDuration = (config.stayDuration || 5) * 1000;
+    const animDuration = (config.animationDuration || 1) * 1000;
+    
+    // Wait for stay duration
     setTimeout(() => {
-      setCurrentGift(null);
-      processingRef.current = false;
-      // Trigger next processing if queue has items
-      if (queue.length > 0) {
-        // Small delay between items
-        setTimeout(() => processQueue(), 500); 
-      }
-    }, config.displayDuration);
+      // Start exit animation
+      setIsExiting(true);
+      
+      // Wait for exit animation to finish
+      setTimeout(() => {
+        setCurrentGift(null);
+        setIsExiting(false);
+        setQueue(prev => prev.slice(1));
+        processingRef.current = false;
+      }, animDuration);
+      
+    }, stayDuration);
   };
 
-  if (!currentGift) {
-    return <div className="thank-you-container empty"></div>;
-  }
+  // Helper to convert px to vh (based on 1080p reference height)
+  // Includes globalScale factor
+  const toVh = (px) => {
+    const val = parseFloat(px);
+    if (isNaN(val)) return '0vh';
+    const scale = config.globalScale || 1.0;
+    return `${(val / 10.8 * scale).toFixed(3)}vh`;
+  };
 
-  const isGuard = currentGift.type === 'guard';
-  
-  // Format Message
-  let message = '';
-  if (isGuard) {
-    message = (config.guardTemplate || '感谢 {sender} 开通 {gift} * {count}')
-      .replace('{sender}', currentGift.user?.username)
-      .replace('{gift}', currentGift.giftName)
-      .replace('{count}', currentGift.num || 1)
-      .replace('{price}', currentGift.priceInCny);
-  } else {
-    message = (config.template || '感谢 {sender} 的 {gift} * {count} ({price} 元)')
-      .replace('{sender}', currentGift.user?.username)
-      .replace('{gift}', currentGift.giftName)
-      .replace('{count}', currentGift.num || 1)
-      .replace('{price}', currentGift.priceInCny);
-  }
+  // Generate Text Shadow
+  const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity) => {
+    const layers = [0.33, 0.66, 1];
+    const directions = [
+      [1, 0], [-1, 0], [0, 1], [0, -1],
+      [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]
+    ];
+    
+    // Convert input value to em (relative to font size)
+    // Assuming input 100 = 1em (100% of font size)
+    const toEm = (val) => `${(val / 100).toFixed(3)}em`;
+    
+    let shadows = [];
+    
+    // Stroke
+    if (strokeWidth > 0) {
+      layers.forEach(layer => {
+        const w = strokeWidth * layer;
+        directions.forEach(dir => {
+          shadows.push(`${toEm(w * dir[0])} ${toEm(w * dir[1])} 0 ${strokeColor}`);
+        });
+      });
+    }
+    
+    // Glow
+    if (glowIntensity > 0) {
+      shadows.push(`0 0 ${toEm(glowIntensity)} ${strokeColor}`);
+    }
+    
+    // Shadow
+    if (shadowIntensity > 0) {
+      shadows.push(`0 ${toEm(shadowIntensity * 0.5)} ${toEm(shadowIntensity)} rgba(0,0,0,0.6)`);
+    }
+    
+    return shadows.join(', ');
+  };
+
+  const renderMessage = (gift) => {
+    let template = config.template;
+    
+    if (gift.giftType === 'guard') template = config.guardTemplate;
+    else if (gift.giftType === 'blindbox') template = config.blindboxTemplate;
+    else if (gift.giftType === 'sc') template = config.scTemplate;
+    
+    const replacements = {
+      '{sender}': gift.user.username,
+      '{gift}': gift.giftName,
+      '{count}': gift.num,
+      '{price}': gift.totalPrice ? parseFloat(gift.totalPrice.toFixed(1)) : '0',
+      '{blindbox_name}': gift.blindboxName || gift.giftName,
+      '{content}': gift.content || ''
+    };
+
+    // If no highlighting, just do string replace
+    if (!config.highlightKeywords) {
+      let text = template;
+      for (const [key, value] of Object.entries(replacements)) {
+        // Use a global replace for each key
+        text = text.split(key).join(value);
+      }
+      return text;
+    }
+
+    // If highlighting, we need to split the string by the placeholders
+    // Create a regex that matches any of the keys
+    const keys = Object.keys(replacements).map(k => k.replace(/[{}]/g, '\\$&')); // escape { }
+    const regex = new RegExp(`(${keys.join('|')})`, 'g');
+    
+    const parts = template.split(regex);
+    
+    return parts.map((part, index) => {
+      // Check if the part is one of our placeholders
+      // We need to find which key it corresponds to
+      const key = Object.keys(replacements).find(k => k === part);
+      
+      if (key) {
+        const value = replacements[key];
+        // Highlight sender and gift (and blindbox_name)
+        if (['{sender}', '{gift}', '{blindbox_name}'].includes(key)) {
+           return <span key={index} style={{ color: config.highlightColor }}>{value}</span>;
+        }
+        return value;
+      }
+      return part;
+    });
+  };
+
+  if (!currentGift) return <div className="thank-you-container empty"></div>;
+
+  // Use configured background image as main image if available, otherwise fallback to user avatar
+  const mainImage = config.backgroundImg || currentGift.user.face;
 
   return (
-    <div className="thank-you-container active" style={{
-      fontFamily: config.fontFamily,
-      fontWeight: config.fontWeight
-    }}>
-      <div className="thank-you-card" style={{
-        backgroundImage: config.backgroundImg ? `url(${config.backgroundImg})` : 'none',
-        backgroundSize: 'cover'
-      }}>
-        <div className="thank-you-header">
-          <img 
-            src={currentGift.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'} 
-            className="user-avatar" 
-            alt="avatar"
-            referrerPolicy="no-referrer"
-          />
-          <div className="user-info">
-            <div className="username" style={{ color: config.fontColor }}>{currentGift.user?.username}</div>
-          </div>
-        </div>
-        
-        <div className="gift-display">
-          {/* Use static icon if available, else dynamic */}
-          <img 
-            src={currentGift.giftIconStatic || currentGift.giftIcon || (isGuard ? getGuardIcon(currentGift.guardLevel) : '')} 
-            className="gift-icon" 
-            alt="gift" 
-          />
-          <div className="gift-count">x {currentGift.num || 1}</div>
-        </div>
-
-        <div className="thank-you-message" style={{ 
-          fontSize: `${config.fontSize}px`,
-          color: config.fontColor 
+    <div className="thank-you-container">
+      <div 
+        className={`thank-you-card ${isExiting ? 'animate-out' : 'animate-in'}`} 
+        style={{
+          '--anim-duration': `${config.animationDuration}s`
+        }}
+      >
+        <img 
+          src={mainImage} 
+          alt="main" 
+          className="user-avatar"
+          style={{ 
+            width: toVh(config.imageHeight), 
+            height: toVh(config.imageHeight),
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain' 
+          }}
+        />
+        <div className="message" style={{
+          fontFamily: config.fontFamily,
+          color: config.fontColor,
+          fontWeight: config.fontWeight,
+          fontSize: toVh(config.fontSize),
+          textShadow: generateTextShadow(config.strokeWidth, config.strokeColor, config.glowIntensity, config.shadowIntensity),
+          width: toVh(config.imageHeight * 2),
+          minWidth: toVh(config.imageHeight * 2),
+          textAlign: 'center',
+          wordWrap: 'break-word',
+          whiteSpace: 'normal',
+          lineHeight: '1.5',
+          marginTop: toVh(config.textSpacing || 0),
+          flexShrink: 0
         }}>
-          {message}
+          {renderMessage(currentGift)}
         </div>
       </div>
     </div>
   );
-};
-
-// Helper for guard icons
-const getGuardIcon = (level) => {
-  if (level === 3) return 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png';
-  if (level === 2) return 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png';
-  if (level === 1) return 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png';
-  return '';
 };
 
 export default ThankYouPage;

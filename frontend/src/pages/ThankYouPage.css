@@ -9,16 +9,57 @@
 }
 
 .thank-you-card {
-  background: rgba(255, 255, 255, 0.95);
-  border-radius: 20px;
-  padding: 30px;
-  width: 500px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  background: transparent;
+  border-radius: 0;
+  padding: 0;
+  /* Remove fixed dimensions to allow content to dictate size, or parent to center */
+  width: auto;
+  height: auto;
+  /* Ensure it doesn't overflow the viewport when testing in browser */
+  max-width: 100vw;
+  max-height: 100vh;
+  box-shadow: none;
   display: flex;
   flex-direction: column;
   align-items: center;
-  animation: popIn 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  border: 4px solid #ff99cc;
+  justify-content: center;
+  border: none;
+  box-sizing: border-box;
+}
+
+.thank-you-card.animate-in {
+  animation: fadeIn var(--anim-duration) forwards;
+}
+
+.thank-you-card.animate-out {
+  animation: fadeOut var(--anim-duration) forwards;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: scale(1);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.message {
+  text-align: center;
+  word-break: break-word;
 }
 
 .thank-you-header {
@@ -26,17 +67,16 @@
   align-items: center;
   width: 100%;
   margin-bottom: 20px;
-  border-bottom: 2px solid #f0f0f0;
+  border-bottom: none;
   padding-bottom: 15px;
 }
 
 .user-avatar {
-  width: 80px;
-  height: 80px;
-  border-radius: 50%;
-  border: 3px solid #ff99cc;
-  margin-right: 20px;
-  object-fit: cover;
+  /* This class might be used for the main image now */
+  border-radius: 0;
+  border: none;
+  margin-bottom: 0;
+  object-fit: contain;
 }
 
 .user-info {
@@ -68,7 +108,6 @@
   object-fit: contain;
   margin-right: 20px;
   filter: drop-shadow(0 5px 15px rgba(0,0,0,0.1));
-  animation: bounce 2s infinite;
 }
 
 .gift-count {
@@ -86,16 +125,7 @@
   text-align: center;
 }
 
-@keyframes popIn {
-  0% {
-    opacity: 0;
-    transform: scale(0.5);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
-}
+
 
 @keyframes bounce {
   0%, 100% {

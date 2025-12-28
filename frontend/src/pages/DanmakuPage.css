@@ -99,6 +99,19 @@
   font-weight: 600;
 }
 
+/* Loading Spinner */
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.loading-spinner {
+  display: inline-block;
+  animation: spin 1s linear infinite;
+  margin-right: 5px;
+  font-weight: bold;
+}
+
 .danmaku-dashboard .status-indicator.live {
   background-color: #e6f7ff;
   color: #1890ff;
@@ -1330,8 +1343,12 @@ input:checked + .dm-slider:before {
 /* Add hover effect to username in lists to indicate clickability */
 .username, .sc-name, .guard-username, .gift-highlight-username, .gift-username-small {
   cursor: pointer;
+  display: inline-block;
+  transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1); /* Bouncy effect */
+  transform-origin: left center; /* Scale from left to avoid layout shift issues if centered */
 }
 
 .username:hover, .sc-name:hover, .guard-username:hover, .gift-highlight-username:hover, .gift-username-small:hover {
-  text-decoration: underline;
+  text-decoration: none;
+  transform: scale(1.15);
 }

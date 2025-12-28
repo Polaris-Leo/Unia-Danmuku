@@ -74,6 +74,28 @@ router.post('/stop', (req, res) => {
 });
 
 /**
+ * 发送测试弹幕/礼物
+ * POST /api/danmaku/test
+ */
+router.post('/test', (req, res) => {
+  const { roomId, type, data } = req.body;
+  
+  if (!roomId || !type || !data) {
+    return res.status(400).json({
+      success: false,
+      message: '缺少必要参数'
+    });
+  }
+  
+  roomManager.broadcastToRoom(roomId, { type, data });
+  
+  res.json({
+    success: true,
+    message: '测试消息已发送'
+  });
+});
+
+/**
  * 获取当前监听的直播间列表
  * GET /api/danmaku/rooms
  */

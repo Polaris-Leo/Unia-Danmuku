@@ -58,3 +58,12 @@ desktop.ini
 # node-windows 服务守护进程
 backend/daemon/
 
+# 答谢姬数据
+backend/data/daxie/
+backend/data/thankyou-configs.json
+backend/public/uploads/
+
+# 其他缓存
+backend/data/emote-cache.json
+backend/data/gift-cache.json
+
