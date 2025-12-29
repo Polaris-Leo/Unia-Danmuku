@@ -1,6 +1,66 @@
 import { useState, useEffect, useRef } from 'react';
 import './ObsDanmakuPage.css';
 
+// Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
+const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) => {
+  if (!text) return null;
+  
+  // Regex to match ASCII characters (Basic Latin + Latin-1 Supplement)
+  const asciiRegex = /[\u0000-\u007F]+/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  const colorStyle = overrideColor || `var(--${type}-color)`;
+  
+  while ((match = asciiRegex.exec(text)) !== null) {
+    // Non-ASCII part before this match (Fallback Font)
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`fb-${lastIndex}`} style={{ 
+          fontFamily: `var(--${type}-font-family-fallback)`,
+          fontWeight: `var(--${type}-font-weight-fallback)`,
+          fontSize: `var(--${type}-font-size)`,
+          color: colorStyle
+        }}>
+          {text.substring(lastIndex, match.index)}
+        </span>
+      );
+    }
+    
+    // ASCII part (Main Font)
+    parts.push(
+      <span key={`main-${match.index}`} style={{ 
+        fontFamily: `var(--${type}-font-family)`,
+        fontWeight: `var(--${type}-font-weight)`,
+        fontSize: `var(--${type}-font-size)`,
+        color: colorStyle
+      }}>
+        {match[0]}
+      </span>
+    );
+    
+    lastIndex = asciiRegex.lastIndex;
+  }
+  
+  // Remaining Non-ASCII part
+  if (lastIndex < text.length) {
+    parts.push(
+      <span key={`fb-${lastIndex}`} style={{ 
+        fontFamily: `var(--${type}-font-family-fallback)`,
+        fontWeight: `var(--${type}-font-weight-fallback)`,
+        fontSize: `var(--${type}-font-size)`,
+        color: colorStyle
+      }}>
+        {text.substring(lastIndex)}
+      </span>
+    );
+  }
+  
+  return parts;
+};
+
 const ObsDanmakuPage = () => {
   // 立即同步加载样式设置，避免第一条消息显示异常
   const initialSettings = (() => {
@@ -23,15 +83,77 @@ const ObsDanmakuPage = () => {
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
-  const [customStyles] = useState(initialSettings);
+  const [customStyles, setCustomStyles] = useState(initialSettings);
   const [activeSCs, setActiveSCs] = useState([]); // 活跃的SC列表（倒计时中）
   const messagesContainerRef = useRef(null);
   const wsRef = useRef(null);
   const isClosingRef = useRef(false);
   
+  // 从后端加载配置 (用于OBS浏览器源，无法访问localStorage的情况)
+  useEffect(() => {
+    const loadConfig = async () => {
+      try {
+        console.log('🔄 开始从后端加载OBS配置...');
+        const res = await fetch(`/api/obs/settings?t=${Date.now()}`);
+        const data = await res.json();
+        
+        if (data.success && data.settings && Object.keys(data.settings).length > 0) {
+          console.log('✅ 成功加载OBS配置:', data.settings);
+          setCustomStyles(data.settings);
+          setError(null);
+        } else {
+          console.warn('⚠️ 后端配置为空或无效，使用默认值');
+          setError('后端配置为空');
+        }
+      } catch (err) {
+        console.error('❌ 加载OBS配置失败:', err);
+        setError('加载配置失败: ' + err.message);
+      }
+    };
+
+    loadConfig();
+    
+    // 每10秒轮询一次配置，确保OBS能同步最新的修改
+    const interval = setInterval(loadConfig, 10000);
+    return () => clearInterval(interval);
+  }, []);
+
   // 检测是否开启测试模式（URL包含 ?test=true）
   const params = new URLSearchParams(window.location.search);
   const testMode = params.get('test') === 'true';
+
+  // 加载自定义字体
+  useEffect(() => {
+    fetch('/api/fonts')
+      .then(res => res.json())
+      .then(fonts => {
+        if (Array.isArray(fonts) && fonts.length > 0) {
+          // Inject styles for custom fonts
+          const styleId = 'custom-fonts-style';
+          let styleEl = document.getElementById(styleId);
+          if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            document.head.appendChild(styleEl);
+          }
+          
+          let css = '';
+          fonts.forEach(font => {
+            css += `
+              @font-face {
+                font-family: '${font.family}';
+                src: url('${font.url}');
+                font-weight: 100 900;
+                font-style: normal;
+              }
+            `;
+          });
+          
+          styleEl.textContent = css;
+        }
+      })
+      .catch(err => console.error('Failed to fetch fonts:', err));
+  }, []);
 
   // 动态应用样式（移除加载样式的useEffect，因为已经在初始化时同步加载）
   useEffect(() => {
@@ -39,15 +161,24 @@ const ObsDanmakuPage = () => {
     if (customStyles) {
       const root = document.documentElement;
       
-      // 生成平滑描边阴影
+      // Helper to append vh unit
+      const toVh = (val) => {
+        const num = parseFloat(val);
+        if (isNaN(num)) return '0vh';
+        return `${num}vh`;
+      };
+
+      // 生成平滑描边阴影 (直接使用 vh 单位，与预览保持一致)
       const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
         if (!enhanced) {
+          const w = toVh(strokeWidth);
+          const s = toVh(shadowIntensity);
           return `
-            ${strokeWidth}px 0 0 ${strokeColor},
-            -${strokeWidth}px 0 0 ${strokeColor},
-            0 ${strokeWidth}px 0 ${strokeColor},
-            0 -${strokeWidth}px 0 ${strokeColor},
-            0 ${shadowIntensity}px ${shadowIntensity}px rgba(0,0,0,0.5)
+            ${w} 0 0 ${strokeColor},
+            -${w} 0 0 ${strokeColor},
+            0 ${w} 0 ${strokeColor},
+            0 -${w} 0 ${strokeColor},
+            0 ${s} ${s} rgba(0,0,0,0.5)
           `;
         }
 
@@ -65,19 +196,19 @@ const ObsDanmakuPage = () => {
           layers.forEach(layer => {
             const w = strokeWidth * layer;
             directions.forEach(dir => {
-              shadows.push(`${(w * dir[0]).toFixed(1)}px ${(w * dir[1]).toFixed(1)}px 0 ${strokeColor}`);
+              shadows.push(`${toVh(w * dir[0])} ${toVh(w * dir[1])} 0 ${strokeColor}`);
             });
           });
         }
         
         // 外发光
         if (glowIntensity > 0) {
-          shadows.push(`0 0 ${glowIntensity}px ${strokeColor}`);
+          shadows.push(`0 0 ${toVh(glowIntensity)} ${strokeColor}`);
         }
         
         // 投影
         if (shadowIntensity > 0) {
-          shadows.push(`0 ${shadowIntensity * 0.5}px ${shadowIntensity}px rgba(0,0,0,0.6)`);
+          shadows.push(`0 ${toVh(shadowIntensity * 0.5)} ${toVh(shadowIntensity)} rgba(0,0,0,0.6)`);
         }
         
         return shadows.join(', ');
@@ -85,9 +216,11 @@ const ObsDanmakuPage = () => {
 
       // 所有样式都需要设置，因为气泡样式也使用了部分CSS变量
       root.style.setProperty('--username-font-family', customStyles.usernameFontFamily);
-      root.style.setProperty('--username-font-size', `${customStyles.usernameFontSize}px`);
-      root.style.setProperty('--username-font-weight', customStyles.usernameFontWeight);
-      root.style.setProperty('--username-color', customStyles.usernameColor);
+      root.style.setProperty('--username-font-family-fallback', customStyles.usernameFontFamilyFallback || 'sans-serif');
+      root.style.setProperty('--username-font-size', toVh(customStyles.usernameFontSize));
+      root.style.setProperty('--username-font-weight', customStyles.usernameFontWeight || 'bold');
+      root.style.setProperty('--username-font-weight-fallback', customStyles.usernameFontWeightFallback || 'normal');
+      root.style.setProperty('--username-color', customStyles.usernameColor || '#333333');
       root.style.setProperty('--username-color-guard1', customStyles.usernameColorGuard1 || '#ff1a75');
       root.style.setProperty('--username-color-guard2', customStyles.usernameColorGuard2 || '#9b39f4');
       root.style.setProperty('--username-color-guard3', customStyles.usernameColorGuard3 || '#1fa3f1');
@@ -102,9 +235,11 @@ const ObsDanmakuPage = () => {
       ));
 
       root.style.setProperty('--danmaku-font-family', customStyles.danmakuFontFamily);
-      root.style.setProperty('--danmaku-font-size', `${customStyles.danmakuFontSize}px`);
-      root.style.setProperty('--danmaku-font-weight', customStyles.danmakuFontWeight);
-      root.style.setProperty('--danmaku-color', customStyles.danmakuColor);
+      root.style.setProperty('--danmaku-font-family-fallback', customStyles.danmakuFontFamilyFallback || 'sans-serif');
+      root.style.setProperty('--danmaku-font-size', toVh(customStyles.danmakuFontSize));
+      root.style.setProperty('--danmaku-font-weight', customStyles.danmakuFontWeight || 'normal');
+      root.style.setProperty('--danmaku-font-weight-fallback', customStyles.danmakuFontWeightFallback || 'normal');
+      root.style.setProperty('--danmaku-color', customStyles.danmakuColor || '#333333');
       
       // 动态生成弹幕内容阴影
       root.style.setProperty('--danmaku-text-shadow', generateTextShadow(
@@ -115,9 +250,9 @@ const ObsDanmakuPage = () => {
         customStyles.danmakuEnhancedStroke !== false
       ));
 
-      root.style.setProperty('--avatar-size', `${customStyles.avatarSize}px`);
-      root.style.setProperty('--item-spacing', `${customStyles.itemSpacing}px`);
-      root.style.setProperty('--emot-size', `${customStyles.emotSize || 28}px`);
+      root.style.setProperty('--avatar-size', toVh(customStyles.avatarSize));
+      root.style.setProperty('--item-spacing', toVh(customStyles.itemSpacing));
+      root.style.setProperty('--emot-size', toVh(customStyles.emotSize || 28));
       console.log('✅ CSS变量应用完成');
     } else {
       console.warn('⚠️ 没有自定义样式，将使用默认CSS样式');
@@ -134,6 +269,17 @@ const ObsDanmakuPage = () => {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // 监听 activeSCs 变化，处理顶部栏展开时的滚动
+  useEffect(() => {
+    if (activeSCs.length > 0) {
+      // 顶部栏展开动画约400ms，动画完成后再次滚动到底部，确保最新消息可见
+      const timer = setTimeout(() => {
+        scrollToBottom();
+      }, 450);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSCs.length]);
 
   // 活跃SC倒计时更新
   useEffect(() => {
@@ -192,24 +338,47 @@ const ObsDanmakuPage = () => {
       try {
         const data = JSON.parse(event.data);
         
-        if (data.type === 'danmaku' || data.type === 'superchat') {
+        if (['danmaku', 'superchat', 'gift', 'guard'].includes(data.type)) {
           setMessages(prev => {
             // 生成唯一指纹用于去重
-            const fingerprint = data.type === 'danmaku' 
-              ? `${data.timestamp}-${data.user?.uid}-${data.content}`
-              : `${data.time}-${data.user?.uid}-${data.price}`;
+            let fingerprint;
+            if (data.type === 'danmaku') {
+              fingerprint = `${data.timestamp}-${data.user?.uid}-${data.content}`;
+            } else if (data.type === 'superchat') {
+              fingerprint = `${data.time}-${data.user?.uid}-${data.price}`;
+            } else if (data.type === 'gift') {
+              fingerprint = `${data.timestamp}-${data.user?.uid}-${data.giftId}-${data.num}`;
+            } else if (data.type === 'guard') {
+              fingerprint = `${data.timestamp}-${data.user?.uid}-${data.guardLevel}`;
+            }
             
             // 检查最近的消息中是否已存在相同指纹
             const isDuplicate = prev.slice(-20).some(msg => {
-              const msgFingerprint = msg.type === 'danmaku'
-                ? `${msg.timestamp}-${msg.user?.uid}-${msg.content}`
-                : `${msg.time}-${msg.user?.uid}-${msg.price}`;
+              let msgFingerprint;
+              if (msg.type === 'danmaku') {
+                msgFingerprint = `${msg.timestamp}-${msg.user?.uid}-${msg.content}`;
+              } else if (msg.type === 'superchat') {
+                msgFingerprint = `${msg.time}-${msg.user?.uid}-${msg.price}`;
+              } else if (msg.type === 'gift') {
+                msgFingerprint = `${msg.timestamp}-${msg.user?.uid}-${msg.giftId}-${msg.num}`;
+              } else if (msg.type === 'guard') {
+                msgFingerprint = `${msg.timestamp}-${msg.user?.uid}-${msg.guardLevel}`;
+              }
               return msgFingerprint === fingerprint;
             });
 
             if (isDuplicate) {
               console.log('⚠️ 忽略重复消息:', fingerprint);
               return prev;
+            }
+
+            // 过滤低价值礼物 (例如小于 10 元的)
+            if (data.type === 'gift') {
+               // 如果 coinType 是 silver，则忽略
+               if (data.coinType === 'silver') return prev;
+               // 如果 totalCoin < 10000 (10元)，则忽略
+               const totalValue = data.totalCoin || (data.price * data.num);
+               if (totalValue < 10000) return prev;
             }
 
             const newMessages = [...prev, {
@@ -224,13 +393,35 @@ const ObsDanmakuPage = () => {
             const duration = getSCDuration(data.price);
             const newSC = {
               id: Date.now() + Math.random(),
+              type: 'superchat',
               user: data.user,
               price: data.price,
               startTime: Date.now(),
               endTime: Date.now() + duration * 1000,
-              duration: duration
+              duration: duration,
+              message: data.message
             };
             setActiveSCs(prev => [...prev, newSC]);
+          }
+
+          // 如果是舰长，添加到活跃列表 (显示在顶部)
+          if (data.type === 'guard') {
+            // 舰长价格通常是 198000 (198元), 提督 1998000, 总督 19998000
+            const priceRMB = (data.price || 0) / 1000;
+            const duration = getSCDuration(priceRMB);
+            
+            const newGuard = {
+              id: Date.now() + Math.random(),
+              type: 'guard',
+              user: data.user,
+              price: priceRMB, // 存RMB价格以便统一处理颜色
+              guardLevel: data.guardLevel,
+              startTime: Date.now(),
+              endTime: Date.now() + duration * 1000,
+              duration: duration,
+              message: `开通了 ${data.giftName}`
+            };
+            setActiveSCs(prev => [...prev, newGuard]);
           }
         }
       } catch (error) {
@@ -291,7 +482,7 @@ const ObsDanmakuPage = () => {
     });
 
     if (emotMatches.length === 0) {
-      return content;
+      return renderTextWithFallback(content, 'danmaku');
     }
 
     emotMatches.sort((a, b) => a.start - b.start);
@@ -303,7 +494,7 @@ const ObsDanmakuPage = () => {
     emotMatches.forEach(emot => {
       if (emot.start >= lastEnd) {
         if (emot.start > lastEnd) {
-          parts.push(content.substring(lastEnd, emot.start));
+          parts.push(renderTextWithFallback(content.substring(lastEnd, emot.start), 'danmaku'));
         }
 
         const textContent = emot.text.replace(/[\[\]]/g, '');
@@ -327,10 +518,10 @@ const ObsDanmakuPage = () => {
     });
 
     if (lastEnd < content.length) {
-      parts.push(content.substring(lastEnd));
+      parts.push(renderTextWithFallback(content.substring(lastEnd), 'danmaku'));
     }
 
-    return parts.length > 0 ? parts : content;
+    return parts.length > 0 ? parts : renderTextWithFallback(content, 'danmaku');
   };
 
   // 判断是否只有大表情
@@ -364,6 +555,13 @@ const ObsDanmakuPage = () => {
     return { bg: '#2a60b2', bgLight: '#4275c4' }; // 蓝色（30元以下）
   };
 
+  // 根据舰长等级获取颜色
+  const getGuardColor = (level) => {
+    if (level === 1) return { bg: '#ab1a32', bgLight: '#c42a42' }; // 总督 - 深红
+    if (level === 2) return { bg: '#900bbd', bgLight: '#a825d1' }; // 提督 - 紫色
+    return { bg: '#2a60b2', bgLight: '#4275c4' }; // 舰长 - 蓝色
+  };
+
   // 根据SC金额获取CD时长（秒）
   const getSCDuration = (price) => {
     if (price >= 2000) return 7200; // 2小时
@@ -372,52 +570,6 @@ const ObsDanmakuPage = () => {
     if (price >= 100) return 300; // 5分钟
     if (price >= 50) return 120; // 2分钟
     return 60; // 60秒
-  };
-
-  // 测试SC功能
-  const sendTestSC = () => {
-    const testAmounts = [30, 50, 77, 100, 177, 500, 777, 1000, 2000, 7777, 17777, 77777];
-    const testMessages = [
-      '测试SC消息',
-      '这是一条测试的醒目留言',
-      '支持主播！',
-      '来看看效果怎么样',
-      '紫色主题真好看',
-      '感谢分享',
-      'Test Super Chat',
-      '666666',
-      '测试一下特殊金额'
-    ];
-    
-    const amount = testAmounts[Math.floor(Math.random() * testAmounts.length)];
-    const message = testMessages[Math.floor(Math.random() * testMessages.length)];
-    
-    const testSC = {
-      id: Date.now() + Math.random(),
-      type: 'superchat',
-      user: {
-        uid: 123456,
-        username: '测试用户' + Math.floor(Math.random() * 100),
-        face: `https://i2.hdslb.com/bfs/face/member/noface.jpg`
-      },
-      message: message,
-      price: amount,
-      timestamp: Date.now()
-    };
-    
-    setMessages(prev => [...prev, testSC].slice(-50));
-    
-    // 添加到活跃SC列表
-    const duration = getSCDuration(amount);
-    const newSC = {
-      id: testSC.id,
-      user: testSC.user,
-      price: amount,
-      startTime: Date.now(),
-      endTime: Date.now() + duration * 1000,
-      duration: duration
-    };
-    setActiveSCs(prev => [...prev, newSC]);
   };
 
   return (
@@ -431,7 +583,17 @@ const ObsDanmakuPage = () => {
             const elapsed = now - sc.startTime;
             const remaining = Math.max(0, Math.ceil((sc.endTime - now) / 1000));
             const progress = Math.min(100, (elapsed / (sc.duration * 1000)) * 100);
-            const colors = getSCColor(sc.price);
+            
+            let colors;
+            let label;
+            
+            if (sc.type === 'guard') {
+               colors = getGuardColor(sc.guardLevel);
+               label = sc.guardLevel === 1 ? '总督' : (sc.guardLevel === 2 ? '提督' : '舰长');
+            } else {
+               colors = getSCColor(sc.price);
+               label = `CN¥${sc.price}`;
+            }
             
             return (
               <div 
@@ -446,35 +608,13 @@ const ObsDanmakuPage = () => {
                 <div className="sc-timer-avatar">
                   <img src={sc.user.face} alt="" referrerPolicy="no-referrer" />
                 </div>
-                <div className="sc-timer-price">CN¥{sc.price}</div>
+                <div className="sc-timer-price">{label}</div>
               </div>
             );
           })}
         </div>
       )}
       
-      {testMode && (
-        <button 
-          onClick={sendTestSC}
-          style={{
-            position: 'fixed',
-            top: '10px',
-            right: '10px',
-            zIndex: 9999,
-            padding: '10px 20px',
-            background: '#8a2be2',
-            color: 'white',
-            border: 'none',
-            borderRadius: '5px',
-            cursor: 'pointer',
-            fontSize: '14px',
-            fontWeight: 'bold',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
-          }}
-        >
-          测试SC
-        </button>
-      )}
       <div className="danmaku-list" ref={messagesContainerRef}>
         {messages.map(msg => {
           const guardLevel = msg.user?.guardLevel || 0;
@@ -499,6 +639,64 @@ const ObsDanmakuPage = () => {
                 </div>
                 <div className="sc-content">
                   {msg.message}
+                </div>
+              </div>
+            );
+          }
+
+          // 舰长消息
+          if (msg.type === 'guard') {
+            const colors = getGuardColor(msg.guardLevel);
+            const roleName = msg.guardLevel === 1 ? '总督' : (msg.guardLevel === 2 ? '提督' : '舰长');
+            return (
+              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                <div className="sc-header">
+                  <div className="sc-avatar">
+                    <img 
+                      src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                      alt={msg.user?.username}
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div className="sc-user-info">
+                    <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                  </div>
+                  <div className="sc-price">{roleName}</div>
+                </div>
+                <div className="sc-content">
+                  {msg.user?.username} 开通了 {roleName}
+                </div>
+              </div>
+            );
+          }
+
+          // 礼物消息
+          if (msg.type === 'gift') {
+             const colors = { bg: '#ff6699', bgLight: '#ff88b2' }; // 默认粉色
+             // 如果是高价值礼物 (>= 100元)，可以用红色
+             if ((msg.totalCoin || (msg.price * msg.num)) >= 100000) {
+                colors.bg = '#e54d4d';
+                colors.bgLight = '#ed6565';
+             }
+
+             return (
+              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                <div className="sc-header">
+                  <div className="sc-avatar">
+                    <img 
+                      src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                      alt={msg.user?.username}
+                      referrerPolicy="no-referrer"
+                    />
+                  </div>
+                  <div className="sc-user-info">
+                    <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                  </div>
+                  <div className="sc-price">投喂</div>
+                </div>
+                <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span>送出了 {msg.giftName} x {msg.num}</span>
+                  {msg.giftIcon && <img src={msg.giftIcon} alt="" style={{ height: '30px' }} referrerPolicy="no-referrer" />}
                 </div>
               </div>
             );
@@ -531,11 +729,15 @@ const ObsDanmakuPage = () => {
                       className="guard-icon"
                     />
                   )}
-                  <span className={`username ${guardLevel > 0 ? `guard-${guardLevel}` : ''}`}>
-                    {msg.user?.username || '未知用户'}
+                  <span className={`username ${guardLevel > 0 ? `guard-${guardLevel}` : ''}`} lang={customStyles?.usernameLang || 'zh-CN'}>
+                    {renderTextWithFallback(
+                      msg.user?.username || '未知用户', 
+                      'username', 
+                      guardLevel > 0 ? `var(--username-color-guard${guardLevel})` : null
+                    )}
                   </span>
                 </div>
-                <div className="danmaku-text">
+                <div className="danmaku-text" lang={customStyles?.danmakuLang || 'zh-CN'}>
                   {renderContentWithEmoji(msg.content, msg.emots)}
                 </div>
               </div>

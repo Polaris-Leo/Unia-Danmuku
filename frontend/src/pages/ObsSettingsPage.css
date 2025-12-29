@@ -10,27 +10,31 @@
   gap: 40px;
   max-width: 98%;
   margin: 0 auto;
-  align-items: start;
+  /* align-items: start; Removed to allow columns to stretch */
 }
 
-.settings-container {
-  background: white;
-  /* Removed card styles for cleaner look on white bg */
-  padding: 0 20px;
+.preview-wrapper {
+  /* This wrapper stretches to the full height of the grid row */
   min-width: 0;
+  position: sticky;
+  top: 20px;
+  align-self: start;
+  z-index: 100;
 }
 
 .preview-container {
-  position: sticky;
-  top: 20px;
+  /* position: sticky; Removed, moved to wrapper */
+  /* top: 20px; Removed */
+  /* align-self: start; Removed */
   background: #1a1a1a;
   border-radius: 12px;
   overflow: hidden;
   box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
-  height: calc(100vh - 40px); /* Fill viewport height minus padding */
+  height: calc(100vh - 60px); /* Fill viewport height minus padding */
   aspect-ratio: 2400/3000; /* Enforce 2400x3000 aspect ratio (4:5) */
   display: flex;
   flex-direction: column;
+  /* z-index: 100; Removed */
 }
 
 .settings-container h1 {
@@ -191,6 +195,59 @@
   background: #6c757d;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(134, 142, 150, 0.4);
+}
+
+/* 测试按钮样式 */
+.btn-test-flow,
+.btn-test-sc {
+  padding: 0.625rem 1.25rem; /* 10px 20px */
+  border: none;
+  border-radius: 0.5rem; /* 8px */
+  font-size: 0.9375rem; /* 15px */
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem; /* 8px */
+  color: white;
+  box-shadow: 0 0.25rem 0.375rem rgba(0, 0, 0, 0.1); /* 0 4px 6px */
+  white-space: nowrap; /* 防止文字换行 */
+}
+
+.btn-test-flow {
+  background: linear-gradient(135deg, #ff4081 0%, #f50057 100%);
+}
+
+.btn-test-flow:hover {
+  background: linear-gradient(135deg, #ff5c93 0%, #ff1a6d 100%);
+  transform: translateY(-0.125rem) scale(1.02); /* -2px */
+  box-shadow: 0 0.375rem 1rem rgba(245, 0, 87, 0.4); /* 0 6px 16px */
+}
+
+.btn-test-flow:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-test-sc {
+  background: linear-gradient(135deg, #8a2be2 0%, #6200ea 100%);
+}
+
+.btn-test-sc:hover {
+  background: linear-gradient(135deg, #9d46ff 0%, #7c4dff 100%);
+  transform: translateY(-0.125rem) scale(1.02); /* -2px */
+  box-shadow: 0 0.375rem 1rem rgba(98, 0, 234, 0.4); /* 0 6px 16px */
+}
+
+.btn-test-sc:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-test-flow .icon,
+.btn-test-sc .icon {
+  font-size: 1.125rem; /* 18px */
+  filter: drop-shadow(0 0.125rem 0.125rem rgba(0,0,0,0.2)); /* 0 2px 2px */
 }
 
 .info-box {

@@ -1,6 +1,58 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ObsPreview.css';
 
+// Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
+const renderTextWithFallback = (text, type = 'danmaku') => {
+  if (!text) return null;
+  
+  // Regex to match ASCII characters (Basic Latin + Latin-1 Supplement)
+  const asciiRegex = /[\u0000-\u007F]+/g;
+  
+  const parts = [];
+  let lastIndex = 0;
+  let match;
+  
+  while ((match = asciiRegex.exec(text)) !== null) {
+    // Non-ASCII part before this match (Fallback Font)
+    if (match.index > lastIndex) {
+      parts.push(
+        <span key={`fb-${lastIndex}`} style={{ 
+          fontFamily: `var(--${type}-font-family-fallback)`,
+          fontWeight: `var(--${type}-font-weight-fallback)`
+        }}>
+          {text.substring(lastIndex, match.index)}
+        </span>
+      );
+    }
+    
+    // ASCII part (Main Font)
+    parts.push(
+      <span key={`main-${match.index}`} style={{ 
+        fontFamily: `var(--${type}-font-family)`,
+        fontWeight: `var(--${type}-font-weight)`
+      }}>
+        {match[0]}
+      </span>
+    );
+    
+    lastIndex = asciiRegex.lastIndex;
+  }
+  
+  // Remaining Non-ASCII part
+  if (lastIndex < text.length) {
+    parts.push(
+      <span key={`fb-${lastIndex}`} style={{ 
+        fontFamily: `var(--${type}-font-family-fallback)`,
+        fontWeight: `var(--${type}-font-weight-fallback)`
+      }}>
+        {text.substring(lastIndex)}
+      </span>
+    );
+  }
+  
+  return parts;
+};
+
 const ObsPreview = ({ settings }) => {
   const containerRef = useRef(null);
   const [scale, setScale] = useState(1);
@@ -36,22 +88,22 @@ const ObsPreview = ({ settings }) => {
     {
       id: 2,
       type: 'message',
-      user: { username: '老粉A', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
-      message: '前排围观，今天的背景音乐很好听',
+      user: { username: 'EnglishUser', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
+      message: 'Hello streamer! Nice to meet you. This is an English test message.',
       guardLevel: 0
     },
     {
       id: 3,
       type: 'message',
-      user: { username: '舰长大佬', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
-      message: '今天的直播效果真不错！',
+      user: { username: '日本語ユーザー', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
+      message: 'こんにちは！初見です。配信頑張ってください！',
       guardLevel: 3
     },
     {
       id: 4,
       type: 'message',
       user: { username: '提督巨佬', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
-      message: '什么时候唱那首歌呀？期待很久了',
+      message: 'Mixed Test: 中文 English 日本語 12345',
       guardLevel: 2
     },
     {
@@ -88,6 +140,22 @@ const ObsPreview = ({ settings }) => {
       emots: {
         '[U脑过载]': { url: 'https://i0.hdslb.com/bfs/live/6528ebcab366a09c92c4c6bf2a16af1a088a9578.png', height: 60 }
       }
+    },
+    {
+      id: 9,
+      type: 'gift',
+      user: { username: '富哥', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
+      giftName: '告白气球',
+      num: 1,
+      price: 520,
+      totalCoin: 52000
+    },
+    {
+      id: 10,
+      type: 'guard',
+      user: { username: '新舰长', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
+      guardLevel: 3,
+      giftName: '舰长'
     }
   ];
 
@@ -106,11 +174,11 @@ const ObsPreview = ({ settings }) => {
   const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
     if (!enhanced) {
       return `
-        ${strokeWidth}px 0 0 ${strokeColor},
-        -${strokeWidth}px 0 0 ${strokeColor},
-        0 ${strokeWidth}px 0 ${strokeColor},
-        0 -${strokeWidth}px 0 ${strokeColor},
-        0 ${shadowIntensity}px ${shadowIntensity}px rgba(0,0,0,0.5)
+        ${strokeWidth}cqh 0 0 ${strokeColor},
+        -${strokeWidth}cqh 0 0 ${strokeColor},
+        0 ${strokeWidth}cqh 0 ${strokeColor},
+        0 -${strokeWidth}cqh 0 ${strokeColor},
+        0 ${shadowIntensity}cqh ${shadowIntensity}cqh rgba(0,0,0,0.5)
       `;
     }
 
@@ -128,19 +196,19 @@ const ObsPreview = ({ settings }) => {
       layers.forEach(layer => {
         const w = strokeWidth * layer;
         directions.forEach(dir => {
-          shadows.push(`${(w * dir[0]).toFixed(1)}px ${(w * dir[1]).toFixed(1)}px 0 ${strokeColor}`);
+          shadows.push(`${(w * dir[0]).toFixed(3)}cqh ${(w * dir[1]).toFixed(3)}cqh 0 ${strokeColor}`);
         });
       });
     }
     
     // 外发光
     if (glowIntensity > 0) {
-      shadows.push(`0 0 ${glowIntensity}px ${strokeColor}`);
+      shadows.push(`0 0 ${glowIntensity}cqh ${strokeColor}`);
     }
     
     // 投影
     if (shadowIntensity > 0) {
-      shadows.push(`0 ${shadowIntensity * 0.5}px ${shadowIntensity}px rgba(0,0,0,0.6)`);
+      shadows.push(`0 ${shadowIntensity * 0.5}cqh ${shadowIntensity}cqh rgba(0,0,0,0.6)`);
     }
     
     return shadows.join(', ');
@@ -148,9 +216,11 @@ const ObsPreview = ({ settings }) => {
 
   // 构建样式对象
   const containerStyle = {
-    '--username-font-family': settings.usernameFontFamily,
-    '--username-font-size': `${settings.usernameFontSize}px`,
+    '--username-font-family': `${settings.usernameFontFamily}, sans-serif`,
+    '--username-font-family-fallback': `${settings.usernameFontFamilyFallback || 'sans-serif'}`,
+    '--username-font-size': `${settings.usernameFontSize}cqh`,
     '--username-font-weight': settings.usernameFontWeight,
+    '--username-font-weight-fallback': settings.usernameFontWeightFallback || 'normal',
     '--username-color': settings.usernameColor,
     '--username-color-guard1': settings.usernameColorGuard1,
     '--username-color-guard2': settings.usernameColorGuard2,
@@ -165,9 +235,11 @@ const ObsPreview = ({ settings }) => {
       settings.usernameEnhancedStroke
     ),
     
-    '--danmaku-font-family': settings.danmakuFontFamily,
-    '--danmaku-font-size': `${settings.danmakuFontSize}px`,
+    '--danmaku-font-family': `${settings.danmakuFontFamily}, sans-serif`,
+    '--danmaku-font-family-fallback': `${settings.danmakuFontFamilyFallback || 'sans-serif'}`,
+    '--danmaku-font-size': `${settings.danmakuFontSize}cqh`,
     '--danmaku-font-weight': settings.danmakuFontWeight,
+    '--danmaku-font-weight-fallback': settings.danmakuFontWeightFallback || 'normal',
     '--danmaku-color': settings.danmakuColor,
     
     // 动态生成阴影
@@ -179,9 +251,9 @@ const ObsPreview = ({ settings }) => {
       settings.danmakuEnhancedStroke
     ),
     
-    '--avatar-size': `${settings.avatarSize}px`,
-    '--item-spacing': `${settings.itemSpacing}px`,
-    '--emot-size': `${settings.emotSize || 28}px`,
+    '--avatar-size': `${settings.avatarSize}cqh`,
+    '--item-spacing': `${settings.itemSpacing}cqh`,
+    '--emot-size': `${settings.emotSize || 3.3}cqh`,
   };
 
   // 渲染内容（简化版，不包含所有逻辑）
@@ -202,14 +274,14 @@ const ObsPreview = ({ settings }) => {
       
       const content = [];
       parts.forEach((part, i) => {
-        if (part) content.push(part);
+        if (part) content.push(renderTextWithFallback(part, 'danmaku'));
         if (i < matches.length) {
           const key = matches[i];
           if (msg.emots[key]) {
             const isLarge = msg.emots[key].height > 30;
             content.push(
               <img 
-                key={i} 
+                key={`emot-${i}`} 
                 src={msg.emots[key].url} 
                 className={`danmaku-emot ${isLarge ? 'emote-large' : ''}`}
                 alt={key} 
@@ -218,14 +290,14 @@ const ObsPreview = ({ settings }) => {
               />
             );
           } else {
-            content.push(key);
+            content.push(renderTextWithFallback(key, 'danmaku'));
           }
         }
       });
       
-      return content.length > 0 ? content : msg.message;
+      return content.length > 0 ? content : renderTextWithFallback(msg.message, 'danmaku');
     }
-    return msg.message;
+    return renderTextWithFallback(msg.message, 'danmaku');
   };
 
   return (
@@ -270,7 +342,52 @@ const ObsPreview = ({ settings }) => {
         </div>
 
         {/* 普通消息 */}
-        {sampleMessages.map(msg => (
+        {sampleMessages.map(msg => {
+          // 舰长消息
+          if (msg.type === 'guard') {
+            const colors = { bg: '#2a60b2', bgLight: '#4275c4' }; // 舰长蓝色
+            const roleName = '舰长';
+            return (
+              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                <div className="sc-header">
+                  <div className="sc-avatar">
+                    <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
+                  </div>
+                  <div className="sc-user-info">
+                    <div className="sc-username">{msg.user.username}</div>
+                  </div>
+                  <div className="sc-price">{roleName}</div>
+                </div>
+                <div className="sc-content">
+                  {msg.user.username} 开通了 {roleName}
+                </div>
+              </div>
+            );
+          }
+
+          // 礼物消息
+          if (msg.type === 'gift') {
+            const colors = { bg: '#e54d4d', bgLight: '#ed6565' }; // 高价值礼物红色
+            return (
+              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                <div className="sc-header">
+                  <div className="sc-avatar">
+                    <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
+                  </div>
+                  <div className="sc-user-info">
+                    <div className="sc-username">{msg.user.username}</div>
+                  </div>
+                  <div className="sc-price">投喂</div>
+                </div>
+                <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <span>送出了 {msg.giftName} x {msg.num}</span>
+                </div>
+              </div>
+            );
+          }
+
+          // 普通弹幕
+          return (
           <div key={msg.id} className="danmaku-item">
             <div className="avatar">
               <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
@@ -289,16 +406,16 @@ const ObsPreview = ({ settings }) => {
                     referrerPolicy="no-referrer"
                   />
                 )}
-                <span className={`username guard-${msg.guardLevel}`}>
-                  {msg.user.username}
+                <span className={`username guard-${msg.guardLevel}`} lang={settings.usernameLang || 'zh-CN'}>
+                  {renderTextWithFallback(msg.user.username, 'username')}
                 </span>
               </div>
-              <div className="danmaku-text">
+              <div className="danmaku-text" lang={settings.danmakuLang || 'zh-CN'}>
                 {renderContent(msg)}
               </div>
             </div>
           </div>
-        ))}
+        )})}
       </div>
       </div>
     </div>

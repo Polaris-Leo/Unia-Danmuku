@@ -8,8 +8,8 @@ const defaultConfig = {
   audioEnabled: true,
   backgroundImg: '', 
   audioUrl: '', // Custom audio URL
-  imageHeight: 500, // New: Image Height (Scaled for 2000x2000)
-  globalScale: 1.0, // New: Global Scale Factor
+  imageHeight: 46.0, // vh
+  globalScale: 1.0, // Global Scale Factor
   
   // Text Style
   template: '感谢 {sender} 的 {gift} * {count} ({price} 元)',
@@ -17,16 +17,17 @@ const defaultConfig = {
   guardTemplate: '感谢 {sender} 开通 {gift} * {count}',
   scTemplate: '感谢 {sender} 的醒目留言 ({price} 元): {content}',
   fontFamily: 'Microsoft YaHei',
-  fontSize: 50,
+  fontFamilyFallback: '', // New: Fallback font
+  fontSize: 4.6, // vh
   fontColor: '#000000',
   fontWeight: 'normal',
-  textSpacing: 0, // New: Spacing between image and text
+  textSpacing: 0, // vh
   
   // Advanced Text Style
-  strokeWidth: 0,
+  strokeWidth: 0, // vh
   strokeColor: '#ffffff',
-  glowIntensity: 0,
-  shadowIntensity: 0,
+  glowIntensity: 0, // vh
+  shadowIntensity: 0, // vh
   highlightKeywords: false,
   highlightColor: '#ff0000',
 
@@ -100,6 +101,55 @@ const ThankYouSettingsPage = () => {
   const [pendingFiles, setPendingFiles] = useState({ backgroundImg: null, audioUrl: null });
   const [showPreview, setShowPreview] = useState(false);
   const [isExiting, setIsExiting] = useState(false);
+  const [availableFonts, setAvailableFonts] = useState([
+    { name: '默认 (微软雅黑)', value: 'Microsoft YaHei' },
+    { name: '黑体', value: 'SimHei' },
+    { name: '宋体', value: 'SimSun' },
+    { name: '楷体', value: 'KaiTi' },
+    { name: 'Arial', value: 'Arial' },
+    { name: 'Helvetica', value: 'Helvetica' },
+    { name: 'Times New Roman', value: 'Times New Roman' },
+  ]);
+
+  // Load custom fonts
+  useEffect(() => {
+    fetch('/api/fonts')
+      .then(res => res.json())
+      .then(fonts => {
+        if (Array.isArray(fonts) && fonts.length > 0) {
+          // Inject styles for custom fonts
+          const styleId = 'custom-fonts-style-thankyou';
+          let styleEl = document.getElementById(styleId);
+          if (!styleEl) {
+            styleEl = document.createElement('style');
+            styleEl.id = styleId;
+            document.head.appendChild(styleEl);
+          }
+          
+          let css = '';
+          const customFontOptions = fonts.map(font => {
+            css += `
+              @font-face {
+                font-family: '${font.family}';
+                src: url('${font.url}');
+                font-weight: 100 900;
+                font-style: normal;
+              }
+            `;
+            return { name: font.name, value: font.family };
+          });
+          
+          styleEl.textContent = css;
+          
+          setAvailableFonts(prev => [
+            ...prev,
+            { name: '--- 自定义字体 ---', value: '', disabled: true },
+            ...customFontOptions
+          ]);
+        }
+      })
+      .catch(err => console.error('Failed to fetch fonts:', err));
+  }, []);
 
   useEffect(() => {
     if (roomId) {
@@ -234,7 +284,7 @@ const ThankYouSettingsPage = () => {
 
       try {
         await axios.post('/api/danmaku/test', {
-          roomId,
+          roomId: String(roomId),
           type,
           data
         });
@@ -337,15 +387,13 @@ const ThankYouSettingsPage = () => {
     setExpandedPanel(expandedPanel === panel ? null : panel);
   };
 
-  // Helper to scale px values based on globalScale
+  // Helper to scale vh values based on globalScale
   // Returns cqh (Container Query Height) for the preview
-  // 1080px = 100cqh
-  const toPreviewUnit = (px) => {
-    const val = parseFloat(px);
-    if (isNaN(val)) return '0cqh';
+  const toPreviewUnit = (val) => {
+    const num = parseFloat(val);
+    if (isNaN(num)) return '0cqh';
     const scale = config.globalScale || 1.0;
-    // val / 10.8 gives the percentage of 1080p height
-    return `${(val / 10.8 * scale).toFixed(3)}cqh`;
+    return `${(num * scale).toFixed(3)}cqh`;
   };
 
   // Generate Text Shadow (Same logic as ObsDanmakuPage)
@@ -431,6 +479,34 @@ const ThankYouSettingsPage = () => {
     });
   };
 
+  // 上传字体
+  const handleFontUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/fonts/upload', {
+        method: 'POST',
+        body: formData
+      });
+      const data = await response.json();
+      
+      if (data.success) {
+        alert('字体上传成功！');
+        // Refresh fonts list
+        window.location.reload();
+      } else {
+        alert('上传失败: ' + data.message);
+      }
+    } catch (error) {
+      console.error('Error uploading font:', error);
+      alert('上传出错');
+    }
+  };
+
   return (
     <div className="v-app">
       <div className="settings-layout">
@@ -461,7 +537,7 @@ const ThankYouSettingsPage = () => {
                   }}
                 />
                 <div className="preview-message" style={{
-                  fontFamily: config.fontFamily,
+                  fontFamily: `${config.fontFamily}${config.fontFamilyFallback ? ', ' + config.fontFamilyFallback : ''}, sans-serif`,
                   color: config.fontColor,
                   fontWeight: config.fontWeight,
                   fontSize: toPreviewUnit(config.fontSize),
@@ -515,8 +591,8 @@ const ThankYouSettingsPage = () => {
               <button className="v-btn" style={{ flex: 1, backgroundColor: '#4caf50', color: 'white' }} onClick={handleTest}>
                 发送测试
               </button>
-              <button className="v-btn bg-red" style={{ flex: 1 }} onClick={handleReset}>
-                重置数据
+              <button className="v-btn bg-info" style={{ flex: 1 }} onClick={handleGenerate}>
+                复制链接
               </button>
             </div>
           </div>
@@ -594,23 +670,23 @@ const ThankYouSettingsPage = () => {
                     />
                   </div>
                   <div className="form-group">
-                    <label>图片大小 (px)</label>
+                    <label>图片大小 (vh)</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <input 
                         type="range" 
-                        min="100" 
-                        max="1000" 
-                        step="10"
-                        value={config.imageHeight}
-                        onChange={e => saveConfig({...config, imageHeight: Number(e.target.value)})}
+                        min="10" 
+                        max="500" 
+                        step="1"
+                        value={Math.round(config.imageHeight * 5)}
+                        onChange={e => saveConfig({...config, imageHeight: Number(e.target.value) / 5})}
                         style={{ flex: 1 }}
                       />
                       <input 
                         type="number" 
                         className="v-input"
                         style={{ width: '80px' }}
-                        value={config.imageHeight}
-                        onChange={e => saveConfig({...config, imageHeight: Number(e.target.value)})}
+                        value={Math.round(config.imageHeight * 5)}
+                        onChange={e => saveConfig({...config, imageHeight: Number(e.target.value) / 5})}
                       />
                     </div>
                   </div>
@@ -648,45 +724,86 @@ const ThankYouSettingsPage = () => {
               {expandedPanel === 'style' && (
                 <div className="v-expansion-panel-text">
                   <div className="form-group">
-                    <label>字体大小 (px)</label>
+                    <label>字体</label>
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                      <select 
+                        className="v-input"
+                        value={config.fontFamily}
+                        onChange={e => saveConfig({...config, fontFamily: e.target.value})}
+                        style={{ flex: 1 }}
+                      >
+                        {availableFonts.map((font, idx) => (
+                          <option key={idx} value={font.value} disabled={font.disabled}>
+                            {font.name}
+                          </option>
+                        ))}
+                      </select>
+                      <label className="v-btn" style={{ width: 'auto', padding: '0 15px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', margin: 0, height: '38px', background: '#f0f0f0', color: '#333', border: '1px solid #ccc' }}>
+                        上传
+                        <input 
+                          type="file" 
+                          accept=".ttf,.otf,.woff,.woff2"
+                          onChange={handleFontUpload}
+                          style={{ display: 'none' }}
+                        />
+                      </label>
+                    </div>
+                  </div>
+                  <div className="form-group">
+                    <label>备用字体 (当主字体缺字时使用)</label>
+                    <select 
+                      className="v-input"
+                      value={config.fontFamilyFallback || ''}
+                      onChange={e => saveConfig({...config, fontFamilyFallback: e.target.value})}
+                    >
+                      <option value="">无 (默认)</option>
+                      {availableFonts.map((font, idx) => (
+                        <option key={idx} value={font.value} disabled={font.disabled}>
+                          {font.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="form-group">
+                    <label>字体大小 (vh)</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <input 
                         type="range" 
-                        min="10" 
-                        max="200" 
+                        min="0" 
+                        max="128" 
                         step="1"
-                        value={config.fontSize}
-                        onChange={e => saveConfig({...config, fontSize: Number(e.target.value)})}
+                        value={Math.round(config.fontSize * 10)}
+                        onChange={e => saveConfig({...config, fontSize: Number(e.target.value) / 10})}
                         style={{ flex: 1 }}
                       />
                       <input 
                         type="number" 
                         className="v-input"
                         style={{ width: '80px' }}
-                        value={config.fontSize}
-                        onChange={e => saveConfig({...config, fontSize: Number(e.target.value)})}
+                        value={Math.round(config.fontSize * 10)}
+                        onChange={e => saveConfig({...config, fontSize: Number(e.target.value) / 10})}
                       />
                     </div>
                   </div>
 
                   <div className="form-group">
-                    <label>文字与图片间距 (px)</label>
+                    <label>文字与图片间距 (vh)</label>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <input 
                         type="range" 
-                        min="-100" 
-                        max="100" 
+                        min="-500" 
+                        max="500" 
                         step="1"
-                        value={config.textSpacing || 0}
-                        onChange={e => saveConfig({...config, textSpacing: Number(e.target.value)})}
+                        value={Math.round((config.textSpacing || 0) * 10)}
+                        onChange={e => saveConfig({...config, textSpacing: Number(e.target.value) / 10})}
                         style={{ flex: 1 }}
                       />
                       <input 
                         type="number" 
                         className="v-input"
                         style={{ width: '80px' }}
-                        value={config.textSpacing || 0}
-                        onChange={e => saveConfig({...config, textSpacing: Number(e.target.value)})}
+                        value={Math.round((config.textSpacing || 0) * 10)}
+                        onChange={e => saveConfig({...config, textSpacing: Number(e.target.value) / 10})}
                       />
                     </div>
                   </div>
@@ -729,8 +846,10 @@ const ThankYouSettingsPage = () => {
                     <input 
                       type="number" 
                       className="v-input"
-                      value={config.strokeWidth}
-                      onChange={e => saveConfig({...config, strokeWidth: Number(e.target.value)})}
+                      min="0"
+                      max="15"
+                      value={Math.round(config.strokeWidth * 25)}
+                      onChange={e => saveConfig({...config, strokeWidth: Number(e.target.value) / 25})}
                     />
                   </div>
                   <div className="form-group">
@@ -756,8 +875,10 @@ const ThankYouSettingsPage = () => {
                     <input 
                       type="number" 
                       className="v-input"
-                      value={config.glowIntensity}
-                      onChange={e => saveConfig({...config, glowIntensity: Number(e.target.value)})}
+                      min="0"
+                      max="15"
+                      value={Math.round(config.glowIntensity * 10)}
+                      onChange={e => saveConfig({...config, glowIntensity: Number(e.target.value) / 10})}
                     />
                   </div>
                   <div className="form-group">
@@ -765,8 +886,10 @@ const ThankYouSettingsPage = () => {
                     <input 
                       type="number" 
                       className="v-input"
-                      value={config.shadowIntensity}
-                      onChange={e => saveConfig({...config, shadowIntensity: Number(e.target.value)})}
+                      min="0"
+                      max="15"
+                      value={Math.round(config.shadowIntensity * 10)}
+                      onChange={e => saveConfig({...config, shadowIntensity: Number(e.target.value) / 10})}
                     />
                   </div>
 
@@ -918,28 +1041,6 @@ const ThankYouSettingsPage = () => {
               )}
             </div>
 
-          </div>
-
-          <div className="v-divider"></div>
-
-          {/* Generation Section */}
-          <div className="generation-section">
-            <h2>生成</h2>
-            <p className="subtitle">生成网页链接后, 在obs的浏览器源中添加链接</p>
-            
-            <div className="form-group">
-              <label>直播间ID</label>
-              <input 
-                type="number" 
-                className="v-input"
-                value={roomId}
-                onChange={e => setRoomId(e.target.value)}
-                placeholder="输入直播间ID"
-              />
-            </div>
-            <button className="v-btn bg-primary full-width" onClick={handleGenerate}>
-              生成 / 复制链接
-            </button>
           </div>
         </div>
       </div>

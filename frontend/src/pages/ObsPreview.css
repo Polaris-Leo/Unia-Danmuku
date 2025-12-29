@@ -25,80 +25,93 @@
   height: 3000px; /* Exact OBS resolution height */
   transform-origin: top left;
   
+  /* 定义容器查询，允许子元素使用 cqh 单位相对于容器高度进行布局 */
+  container-type: size;
+  
   /* 强制使用高质量渲染 */
   image-rendering: -webkit-optimize-contrast;
   image-rendering: crisp-edges;
   
   /* 默认样式变量 - 将在组件中通过 style 覆盖 */
+  /* 使用 cqh (Container Query Height) 单位，1cqh = 1% 容器高度 */
+  /* 在 3000px 高度下，1cqh = 30px */
+  /* 这些值与 ObsDanmakuPage.css 中的 vh 值完全对应 */
+  
   --username-font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
-  --username-font-size: 16px;
+  --username-font-size: 2.22cqh; /* 24px */
   --username-font-weight: bold;
   --username-color: #333333;
   --username-color-guard1: #ff1a75;
   --username-color-guard2: #9b39f4;
   --username-color-guard3: #1fa3f1;
-  --username-stroke-width: 4px;
-  --username-stroke-width-neg: -4px;
+  --username-stroke-width: 0.19cqh; /* 4px -> 5.7px (Wait, 4px in 1080p is 0.37vh. Here 0.19cqh is 5.7px. 0.19vh is 2px. Let's stick to the vh values from ObsDanmakuPage.css) */
+  /* Wait, in ObsDanmakuPage.css I set --username-stroke-width: 0.19vh (2px). */
+  /* So here it should be 0.19cqh. */
+  
+  --username-stroke-width-neg: -0.19cqh;
   --username-stroke-color: #ffffff;
   --username-enhanced-stroke: 1;
-  --username-glow-intensity: 16px;
-  --username-shadow-intensity: 12px;
+  --username-glow-intensity: 0.74cqh;
+  --username-shadow-intensity: 0.56cqh;
   
   --danmaku-font-family: 'Microsoft YaHei', 'SimHei', sans-serif;
-  --danmaku-font-size: 18px;
+  --danmaku-font-size: 2.59cqh; /* 28px */
   --danmaku-font-weight: normal;
   --danmaku-color: #333333;
-  --danmaku-stroke-width: 4px;
-  --danmaku-stroke-width-neg: -4px;
+  --danmaku-stroke-width: 0.19cqh;
+  --danmaku-stroke-width-neg: -0.19cqh;
   --danmaku-stroke-color: #ffffff;
   --danmaku-enhanced-stroke: 1;
-  --danmaku-glow-intensity: 16px;
-  --danmaku-shadow-intensity: 12px;
+  --danmaku-glow-intensity: 0.74cqh;
+  --danmaku-shadow-intensity: 0.56cqh;
   
-  --avatar-size: 48px;
-  --item-spacing: 12px;
-  --emot-size: 28px;
+  --avatar-size: 5.93cqh; /* 64px */
+  --item-spacing: 1.11cqh;
+  --emot-size: 3.33cqh; /* 36px */
 
   /* 预定义平滑描边阴影 */
   --smooth-stroke-shadow: 
-    1.5px 0 0 var(--username-stroke-color),
-    -1.5px 0 0 var(--username-stroke-color),
-    0 1.5px 0 var(--username-stroke-color),
-    0 -1.5px 0 var(--username-stroke-color),
-    1px 1px 0 var(--username-stroke-color),
-    -1px 1px 0 var(--username-stroke-color),
-    1px -1px 0 var(--username-stroke-color),
-    -1px -1px 0 var(--username-stroke-color),
-    3px 0 0 var(--username-stroke-color),
-    -3px 0 0 var(--username-stroke-color),
-    0 3px 0 var(--username-stroke-color),
-    0 -3px 0 var(--username-stroke-color),
-    2px 2px 0 var(--username-stroke-color),
-    -2px 2px 0 var(--username-stroke-color),
-    2px -2px 0 var(--username-stroke-color),
-    -2px -2px 0 var(--username-stroke-color),
-    3.5px 1.5px 0 var(--username-stroke-color),
-    -3.5px 1.5px 0 var(--username-stroke-color),
-    3.5px -1.5px 0 var(--username-stroke-color),
-    -3.5px -1.5px 0 var(--username-stroke-color),
-    1.5px 3.5px 0 var(--username-stroke-color),
-    -1.5px 3.5px 0 var(--username-stroke-color),
-    1.5px -3.5px 0 var(--username-stroke-color),
-    -1.5px -3.5px 0 var(--username-stroke-color),
-    0 4px 6px rgba(0, 0, 0, 0.5);
+    0.14cqh 0 0 var(--username-stroke-color),
+    -0.14cqh 0 0 var(--username-stroke-color),
+    0 0.14cqh 0 var(--username-stroke-color),
+    0 -0.14cqh 0 var(--username-stroke-color),
+    0.09cqh 0.09cqh 0 var(--username-stroke-color),
+    -0.09cqh 0.09cqh 0 var(--username-stroke-color),
+    0.09cqh -0.09cqh 0 var(--username-stroke-color),
+    -0.09cqh -0.09cqh 0 var(--username-stroke-color),
+    0.28cqh 0 0 var(--username-stroke-color),
+    -0.28cqh 0 0 var(--username-stroke-color),
+    0 0.28cqh 0 var(--username-stroke-color),
+    0 -0.28cqh 0 var(--username-stroke-color),
+    0.19cqh 0.19cqh 0 var(--username-stroke-color),
+    -0.19cqh 0.19cqh 0 var(--username-stroke-color),
+    0.19cqh -0.19cqh 0 var(--username-stroke-color),
+    -0.19cqh -0.19cqh 0 var(--username-stroke-color),
+    0.32cqh 0.14cqh 0 var(--username-stroke-color),
+    -0.32cqh 0.14cqh 0 var(--username-stroke-color),
+    0.32cqh -0.14cqh 0 var(--username-stroke-color),
+    -0.32cqh -0.14cqh 0 var(--username-stroke-color),
+    0.14cqh 0.32cqh 0 var(--username-stroke-color),
+    -0.14cqh 0.32cqh 0 var(--username-stroke-color),
+    0.14cqh -0.32cqh 0 var(--username-stroke-color),
+    -0.14cqh -0.32cqh 0 var(--username-stroke-color),
+    0 0.37cqh 0.56cqh rgba(0, 0, 0, 0.5);
+    
+  /* 默认应用平滑描边阴影 */
+  --username-text-shadow: var(--smooth-stroke-shadow);
+  --danmaku-text-shadow: var(--smooth-stroke-shadow);
 }
 
-/* SC倒计时栏 */
+/* SC倒计时栏 - 模拟 3000px 高度下的 vh 值 */
 .obs-preview-scale-container .sc-timer-bar {
   position: absolute;
   top: 0;
   left: 0;
   right: 0;
-  height: calc(var(--danmaku-font-size) * 1.5); /* 1.5 times the font size */
   display: flex;
   align-items: center;
-  gap: calc(var(--danmaku-font-size) * 0.5);
-  padding: 0 calc(var(--danmaku-font-size) * 0.5);
+  gap: 2.22cqh; /* 2.22vh */
+  padding: 1.11cqh 3.70cqh; /* 1.11vh 3.70vh */
   background: transparent;
   z-index: 1000;
   overflow-x: auto;
@@ -116,9 +129,9 @@
   position: relative;
   display: flex;
   align-items: center;
-  gap: calc(var(--danmaku-font-size) * 0.3);
-  padding: calc(var(--danmaku-font-size) * 0.15) calc(var(--danmaku-font-size) * 0.5) calc(var(--danmaku-font-size) * 0.15) calc(var(--danmaku-font-size) * 0.15);
-  border-radius: calc(var(--danmaku-font-size) * 1);
+  gap: 1.48cqh; /* 1.48vh */
+  padding: 1.11cqh 2.96cqh 1.11cqh 1.11cqh; /* 1.11vh 2.96vh 1.11vh 1.11vh */
+  border-radius: 9.26cqh; /* 9.26vh */
   overflow: hidden;
   background: linear-gradient(
     to left,
@@ -127,19 +140,19 @@
     var(--sc-bg-light) var(--progress),
     var(--sc-bg-light) 100%
   );
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.19cqh 0.74cqh rgba(0, 0, 0, 0.3); /* 0 0.19vh 0.74vh */
   flex-shrink: 0;
 }
 
 /* SC倒计时头像 */
 .obs-preview-scale-container .sc-timer-avatar {
-  width: calc(var(--danmaku-font-size) * 1.2);
-  height: calc(var(--danmaku-font-size) * 1.2);
+  width: 7.41cqh; /* 7.41vh */
+  height: 7.41cqh; /* 7.41vh */
   border-radius: 50%;
   overflow: hidden;
   flex-shrink: 0;
-  border: calc(var(--danmaku-font-size) * 0.05) solid rgba(255, 255, 255, 0.8);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 0.37cqh solid rgba(255, 255, 255, 0.8); /* 0.37vh */
+  box-shadow: 0 0.37cqh 1.11cqh rgba(0, 0, 0, 0.2); /* 0 0.37vh 1.11vh */
 }
 
 .obs-preview-scale-container .sc-timer-avatar img {
@@ -150,15 +163,15 @@
 
 /* SC倒计时金额 */
 .obs-preview-scale-container .sc-timer-price {
-  font-size: var(--danmaku-font-size);
+  font-size: 2.96cqh; /* 2.96vh */
   font-weight: bold;
   color: #ffffff;
   text-shadow: 
-    -1px -1px 0 rgba(0, 0, 0, 0.8),
-    1px -1px 0 rgba(0, 0, 0, 0.8),
-    -1px 1px 0 rgba(0, 0, 0, 0.8),
-    1px 1px 0 rgba(0, 0, 0, 0.8),
-    0 2px 4px rgba(0, 0, 0, 0.5);
+    -0.37cqh -0.37cqh 0 rgba(0, 0, 0, 0.8),
+    0.37cqh -0.37cqh 0 rgba(0, 0, 0, 0.8),
+    -0.37cqh 0.37cqh 0 rgba(0, 0, 0, 0.8),
+    0.37cqh 0.37cqh 0 rgba(0, 0, 0, 0.8),
+    0 0.56cqh 0.93cqh rgba(0, 0, 0, 0.5);
   white-space: nowrap;
 }
 
@@ -169,16 +182,17 @@
   left: 0;
   right: 0;
   bottom: 0;
-  padding: 20px;
+  padding: 1.85cqh; /* 1.85vh */
   overflow-y: auto;
   overflow-x: hidden;
   box-sizing: border-box;
   z-index: 10;
+  transition: top 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 
-/* 有SC倒计时时，裁剪顶部 */
-.obs-preview-scale-container .has-sc-timer .danmaku-list {
-  clip-path: inset(calc(var(--danmaku-font-size) * 1.5) 0 0 0);
+/* 有SC倒计时时，整体下移 */
+.obs-preview-scale-container .danmaku-list.has-sc-timer {
+  top: 12cqh; /* 12vh */
 }
 
 /* 隐藏滚动条 */
@@ -198,7 +212,7 @@
   width: var(--avatar-size);
   height: var(--avatar-size);
   flex-shrink: 0;
-  margin-right: 12px;
+  margin-right: 1.11cqh; /* 1.11vh */
 }
 
 .obs-preview-scale-container .danmaku-item .avatar img {
@@ -206,8 +220,8 @@
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
-  border: 2px solid rgba(255, 255, 255, 0.9);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border: 0.19cqh solid rgba(255, 255, 255, 0.9); /* 0.19vh */
+  box-shadow: 0 0.19cqh 0.74cqh rgba(0, 0, 0, 0.15); /* 0 0.19vh 0.74vh */
 }
 
 /* 内容区 */
@@ -222,8 +236,8 @@
 .obs-preview-scale-container .username-line {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-bottom: 4px;
+  gap: 0.56cqh; /* 0.56vh */
+  margin-bottom: 0.37cqh; /* 0.37vh */
 }
 
 /* 舰长图标 */
@@ -232,7 +246,7 @@
   width: auto !important;
   flex-shrink: 0;
   vertical-align: middle;
-  filter: drop-shadow(0 1px 3px rgba(0, 0, 0, 0.3));
+  filter: drop-shadow(0 0.09cqh 0.28cqh rgba(0, 0, 0, 0.3)); /* 0 0.09vh 0.28vh */
 }
 
 /* 用户名样式 */
@@ -267,7 +281,7 @@
   height: var(--danmaku-font-size);
   max-height: var(--danmaku-font-size);
   vertical-align: middle;
-  margin: 0 2px;
+  margin: 0 0.19cqh; /* 0.19vh */
 }
 
 /* 大表情特殊处理 */
@@ -281,18 +295,18 @@
   display: flex;
   flex-direction: column;
   margin-bottom: var(--item-spacing);
-  border-radius: 50px;
+  border-radius: 4.63cqh; /* 4.63vh */
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 0.37cqh 1.11cqh rgba(0, 0, 0, 0.3); /* 0 0.37vh 1.11vh */
 }
 
 /* SC上栏 */
 .obs-preview-scale-container .sc-header {
   display: flex;
   align-items: center;
-  padding: 12px 28px;
+  padding: 1.11cqh 2.59cqh; /* 1.11vh 2.59vh */
   background: var(--sc-bg, #7497ED);
-  gap: 12px;
+  gap: 1.11cqh; /* 1.11vh */
   position: relative;
 }
 
@@ -312,8 +326,8 @@
   flex-shrink: 0;
   border-radius: 50%;
   overflow: hidden;
-  border: 2px solid rgba(255, 255, 255, 0.6);
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  border: 0.19cqh solid rgba(255, 255, 255, 0.6); /* 0.19vh */
+  box-shadow: 0 0.19cqh 0.56cqh rgba(0, 0, 0, 0.2); /* 0 0.19vh 0.56vh */
 }
 
 .obs-preview-scale-container .sc-avatar img {
@@ -331,8 +345,8 @@
   font-family: var(--username-font-family);
   font-size: var(--username-font-size);
   font-weight: var(--username-font-weight);
-  color: #8836d3;
-  text-shadow: var(--smooth-stroke-shadow);
+  color: var(--username-color);
+  text-shadow: var(--username-text-shadow);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -344,24 +358,24 @@
   font-weight: bold;
   color: #ffffff;
   text-shadow: 
-    0 1px 3px rgba(0, 0, 0, 0.4),
-    0 0 10px rgba(0, 0, 0, 0.3);
+    0 0.09cqh 0.28cqh rgba(0, 0, 0, 0.4), /* 0 0.09vh 0.28vh */
+    0 0 0.93cqh rgba(0, 0, 0, 0.3); /* 0 0 0.93vh */
   white-space: nowrap;
-  padding: 4px 10px;
+  padding: 0.37cqh 0.93cqh; /* 0.37vh 0.93vh */
   background: rgba(0, 0, 0, 0.15);
-  border-radius: 12px;
+  border-radius: 1.11cqh; /* 1.11vh */
 }
 
 /* SC下栏 */
 .obs-preview-scale-container .sc-content {
-  padding: 15px 28px;
+  padding: 1.39cqh 2.59cqh; /* 1.39vh 2.59vh */
   background: var(--sc-bg-light, #8AAAF2);
-  color: #6e46ff;
+  color: var(--danmaku-color);
   font-family: var(--danmaku-font-family);
   font-size: var(--danmaku-font-size);
   font-weight: var(--danmaku-font-weight);
   line-height: 1.6;
   word-wrap: break-word;
-  text-shadow: var(--smooth-stroke-shadow);
-  min-height: 50px;
+  text-shadow: var(--danmaku-text-shadow);
+  min-height: 4.63cqh; /* 4.63vh */
 }

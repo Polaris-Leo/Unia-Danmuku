@@ -4,12 +4,15 @@ import cookieParser from 'cookie-parser';
 import dotenv from 'dotenv';
 import http from 'http';
 import path from 'path';
+import fs from 'fs';
 import { fileURLToPath } from 'url';
 import authRoutes from './routes/auth.js';
 import danmakuRoutes, { createDanmakuWSS } from './routes/danmaku.js';
 import monitorRoutes from './routes/monitor.js';
 import historyRoutes from './routes/history.js';
 import thankyouRoutes from './routes/thankyou.js';
+import fontRoutes from './routes/fonts.js';
+import obsRoutes from './routes/obs.js';
 import { roomManager } from './services/roomManager.js';
 import { sortAllHistory, repairOverlappingSessions } from './utils/historyStorage.js';
 
@@ -36,6 +39,8 @@ app.use('/api/danmaku', danmakuRoutes);
 app.use('/api/monitor', monitorRoutes);
 app.use('/api/history', historyRoutes);
 app.use('/api/thankyou', thankyouRoutes);
+app.use('/api/fonts', fontRoutes);
+app.use('/api/obs', obsRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {
@@ -48,6 +53,12 @@ app.use(express.static(frontendDist));
 
 // 托管上传的文件
 const publicDir = path.join(__dirname, '../public');
+app.use(express.static(publicDir));
+
+// 托管字体文件
+const fontsDir = path.join(__dirname, '../data/fonts');
+app.use('/fonts', express.static(fontsDir));
+
 app.use(express.static(publicDir));
 
 // Serve uploaded files from data/daxie

@@ -71,6 +71,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/25251809aa71ea22f105c0d756421da649719dda.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/6a5f6e1932744eb44513c47b97ade9507428ff7a.webp"
   },
+  "32609": {
+    "name": "棒棒糖",
+    "icon": "https://i0.hdslb.com/bfs/live/310e51cec038edd8131238602a894ae2360ce4d4.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/310e51cec038edd8131238602a894ae2360ce4d4.webp"
+  },
   "32756": {
     "name": "再来亿把",
     "icon": "https://i0.hdslb.com/bfs/live/02dede166baee3c1467286301f0934df690cd3e2.webp",
@@ -166,6 +172,18 @@
     "icon": "https://i0.hdslb.com/bfs/live/c1f29d9e96aed42c7c232d9b35736337e25be492.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/821e560089fb42b2ef07230d96dc34abe1390970.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/c1f29d9e96aed42c7c232d9b35736337e25be492.webp"
+  },
+  "35348": {
+    "name": "软鳞初醒",
+    "icon": "https://i0.hdslb.com/bfs/live/5154f6143719e251337f1bf9629a2e37b165a1fe.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/08633bac2f78687fa0be6c1c4af101e103a37a89.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/5154f6143719e251337f1bf9629a2e37b165a1fe.webp"
+  },
+  "35357": {
+    "name": "茸角探头",
+    "icon": "https://i0.hdslb.com/bfs/live/0c520f28e7464632c7d13c9210588dda1b1793df.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/ac5277cae5a27a942d8a65f681c67b24c650b112.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/0c520f28e7464632c7d13c9210588dda1b1793df.webp"
   },
   "35358": {
     "name": "云间嬉戏",

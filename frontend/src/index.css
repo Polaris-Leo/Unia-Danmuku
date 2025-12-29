@@ -18,3 +18,18 @@ code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
+
+/* 
+自定义字体配置示例：
+1. 将字体文件放入 backend/data/fonts/ 文件夹
+2. 取消下面的注释，并将文件名修改为你实际的文件名
+3. 在设置页面的"字体"输入框中填入 font-family 的名字（例如：MyCustomFont）
+*/
+/*
+@font-face {
+  font-family: 'MyCustomFont';
+  src: url('/fonts/your-font-file.ttf'); 
+  font-weight: normal;
+  font-style: normal;
+}
+*/

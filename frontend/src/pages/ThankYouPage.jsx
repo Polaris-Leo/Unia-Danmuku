@@ -141,8 +141,9 @@ const ThankYouPage = () => {
   };
 
   const handleMessage = (msg) => {
-    const data = msg.data;
+    // Support both nested {type, data} and flat {type, ...data} formats
     const type = msg.type;
+    const data = msg.data || msg;
 
     // Handle Config Update
     if (type === 'config_updated') {
@@ -273,13 +274,12 @@ const ThankYouPage = () => {
     }, stayDuration);
   };
 
-  // Helper to convert px to vh (based on 1080p reference height)
-  // Includes globalScale factor
-  const toVh = (px) => {
-    const val = parseFloat(px);
-    if (isNaN(val)) return '0vh';
+  // Helper to scale vh values based on globalScale
+  const toVh = (val) => {
+    const num = parseFloat(val);
+    if (isNaN(num)) return '0vh';
     const scale = config.globalScale || 1.0;
-    return `${(val / 10.8 * scale).toFixed(3)}vh`;
+    return `${(num * scale).toFixed(3)}vh`;
   };
 
   // Generate Text Shadow

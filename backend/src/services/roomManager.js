@@ -212,8 +212,9 @@ class RoomManager {
   broadcastToRoom(roomId, data) {
     if (!this.wss) return;
     
+    const targetId = String(roomId);
     this.wss.clients.forEach(client => {
-      if (client.roomId === roomId && client.readyState === 1) {
+      if (client.roomId === targetId && client.readyState === 1) {
         client.send(JSON.stringify(data));
       }
     });

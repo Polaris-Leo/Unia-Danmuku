@@ -80,18 +80,93 @@ router.post('/stop', (req, res) => {
 router.post('/test', (req, res) => {
   const { roomId, type, data } = req.body;
   
-  if (!roomId || !type || !data) {
+  if (!roomId || !data) {
     return res.status(400).json({
       success: false,
       message: '缺少必要参数'
     });
   }
   
-  roomManager.broadcastToRoom(roomId, { type, data });
+  // 广播扁平化的消息对象，以兼容 ObsDanmakuPage 和 ThankYouPage (已更新支持扁平结构)
+  // 使用 spread operator 将 data 展开，确保 type 位于顶层
+  roomManager.broadcastToRoom(roomId, { type: type || 'gift', ...data });
   
   res.json({
     success: true,
     message: '测试消息已发送'
+  });
+});
+
+/**
+ * 发送综合测试流
+ * POST /api/danmaku/test-flow
+ */
+router.post('/test-flow', (req, res) => {
+  const { roomId } = req.body;
+  
+  if (!roomId) {
+    return res.status(400).json({
+      success: false,
+      message: '缺少roomId参数'
+    });
+  }
+
+  const events = [
+    { type: 'danmaku', delay: 0, username: '萌新观众', content: '主播好！第一次来看直播' },
+    { type: 'danmaku', delay: 200, username: '老粉', content: '前排围观' },
+    { type: 'gift', delay: 500, username: '老板大气', giftName: '牛哇牛哇', num: 1, price: 100, totalCoin: 10000 }, // 10元
+    { type: 'danmaku', delay: 800, username: '路人甲', content: '这也太帅了吧 [打call] [打call]' },
+    { type: 'guard', delay: 1500, username: '新舰长', guardLevel: 3, giftName: '舰长' },
+    { type: 'danmaku', delay: 1800, username: '欢迎团', content: '欢迎舰长！' },
+    { type: 'danmaku', delay: 2000, username: '欢迎团', content: '欢迎欢迎！' },
+    { type: 'gift', delay: 2500, username: '富哥', giftName: '告白气球', num: 1, price: 520, totalCoin: 52000 }, // 52元
+    { type: 'superchat', delay: 3500, username: 'SC大佬', price: 30, message: '加油加油！支持一下' },
+    { type: 'danmaku', delay: 4000, username: '刷屏怪', content: '2333333333333333333' },
+    { type: 'guard', delay: 5000, username: '提督巨佬', guardLevel: 2, giftName: '提督' },
+    { type: 'superchat', delay: 6000, username: '神秘人', price: 100, message: '测试一下金色SC的效果' },
+  ];
+
+  events.forEach(event => {
+    setTimeout(() => {
+      const baseUser = {
+        uid: 10000 + Math.floor(Math.random() * 90000),
+        username: event.username,
+        face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg',
+        guardLevel: event.guardLevel || 0
+      };
+
+      let msg = {
+        timestamp: Date.now(),
+        user: baseUser,
+        type: event.type
+      };
+
+      if (event.type === 'danmaku') {
+        msg.content = event.content;
+      } else if (event.type === 'gift') {
+        msg.giftName = event.giftName;
+        msg.num = event.num;
+        msg.price = event.price;
+        msg.totalCoin = event.totalCoin;
+        msg.coinType = 'gold';
+        msg.giftId = Math.floor(Math.random() * 1000);
+      } else if (event.type === 'guard') {
+        msg.guardLevel = event.guardLevel;
+        msg.giftName = event.giftName;
+        msg.price = event.guardLevel === 3 ? 198000 : (event.guardLevel === 2 ? 1998000 : 19998000);
+      } else if (event.type === 'superchat') {
+        msg.price = event.price;
+        msg.message = event.message;
+        msg.time = Math.floor(Date.now() / 1000);
+      }
+
+      roomManager.broadcastToRoom(roomId, msg);
+    }, event.delay);
+  });
+
+  res.json({
+    success: true,
+    message: '综合测试流已启动'
   });
 });
 

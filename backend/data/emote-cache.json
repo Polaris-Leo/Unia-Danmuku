@@ -1381,10 +1381,146 @@
     "height": 20,
     "emoticon_unique": "upower_[胡桃Usa_比心]"
   },
-  "[[胡桃Usa堕令时_偷笑]]": {
-    "url": "https://i0.hdslb.com/bfs/garb/962da23d8ab519cb90c76ec5c4aff2e59a9dce7c.png",
+  "[[香奈美·追寻那道光 应援装扮_委屈]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/f72d8271563e89a594d099cd0fed36f25818c3a3.png",
     "width": 20,
     "height": 20,
-    "emoticon_unique": "upower_[胡桃Usa堕令时_偷笑]"
+    "emoticon_unique": "upower_[香奈美·追寻那道光 应援装扮_委屈]"
+  },
+  "[[鸽一品天才集_吃饱饱]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/15e8c95d2721d8cd42ef575fe5bacea77c666217.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_吃饱饱]"
+  },
+  "[[天才鸽鸽表情包_剪刀手]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/a17ed61b62142ae065ee4cf38ed4baf6a123a256.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_剪刀手]"
+  },
+  "[[香奈美·追寻那道光 应援装扮_累了]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/f6c127a3dc4cf0b0c66a53e660c802bac1136696.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[香奈美·追寻那道光 应援装扮_累了]"
+  },
+  "[[香奈美·追寻那道光 应援装扮_mvp]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/8956ef8c3d7d3e9523fc37dd2bc96b0dcb5e58b4.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[香奈美·追寻那道光 应援装扮_mvp]"
+  },
+  "[[香奈美·追寻那道光 应援装扮_疑问]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/91e99bd4f080d38e7838da9563bb55db37f995b7.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[香奈美·追寻那道光 应援装扮_疑问]"
+  },
+  "[[香奈美·追寻那道光 应援装扮_啊]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/66daba6d20e9517a1ca0457c369f1f4037ecbcd7.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[香奈美·追寻那道光 应援装扮_啊]"
+  },
+  "[惊讶]": {
+    "count": 2,
+    "descript": "[惊讶]",
+    "emoji": "[惊讶]",
+    "emoticon_id": 232,
+    "emoticon_unique": "emoji_232",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/bc26f29f62340091737c82109b8b91f32e6675ad.png",
+    "width": 20
+  },
+  "[[天才鸽鸽表情包_除臭喷雾]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/9419ef09afdf5aa82a1eb25b4775f6f79e6bf757.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_除臭喷雾]"
+  },
+  "[[天才鸽鸽表情包_钓鱼]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/0357ce01366eef5d3719d1adf954e14e5f65f257.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_钓鱼]"
+  },
+  "[跟你爆了]": {
+    "url": "https://i0.hdslb.com/bfs/garb/311025e46eea7ca11ffa6ae671a047c54f60f6d1.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4910271_35362"
+  },
+  "[[Mygo表情包_发送消息]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/22dae20a7cab878ab37a4b21ffde7ee2b11a4e99.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[Mygo表情包_发送消息]"
+  },
+  "[[鸣潮·共鸣与群星_哭了]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/7bb5280552ec6903593b24aeb5e33a177d01abae.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸣潮·共鸣与群星_哭了]"
+  },
+  "[[鸽一品天才集_上班]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/3fe649e9bd01f6857a313d0ffca0ce288e837a8a.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_上班]"
+  },
+  "[惊喜]": {
+    "count": 1,
+    "descript": "[惊喜]",
+    "emoji": "[惊喜]",
+    "emoticon_id": 226,
+    "emoticon_unique": "emoji_226",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/9c75761c5b6e1ff59b29577deb8e6ad996b86bd7.png",
+    "width": 20
+  },
+  "[[Akie秋绘E见钟情动态_杂鱼]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/ed3de50ed81a9d3def7c3306035085781544fedb.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[Akie秋绘E见钟情动态_杂鱼]"
+  },
+  "[保佑]": {
+    "count": 3,
+    "descript": "[保佑]",
+    "emoji": "[保佑]",
+    "emoticon_id": 287,
+    "emoticon_unique": "emoji_287",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/241b13adb4933e38b7ea6f5204e0648725e76fbf.png",
+    "width": 20
+  },
+  "[[王冠的支配者_neko]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/75aa10fdb753403335b3b291b1811825faddeee4.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[王冠的支配者_neko]"
+  },
+  "[[UPOWER_353361863_祈祷]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/f300d93e8a66ab3906d806ab204ba27740077bf6.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_353361863_祈祷]"
+  },
+  "[[妮喃梦呓gif_完啦]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/a983f8ee088182dffc517afc33f301d40469c768.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[妮喃梦呓gif_完啦]"
+  },
+  "[偷笑]": {
+    "count": 3,
+    "descript": "[偷笑]",
+    "emoji": "[偷笑]",
+    "emoticon_id": 224,
+    "emoticon_unique": "emoji_224",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/e2ba16f947a23179cdc00420b71cc1d627d8ae25.png",
+    "width": 20
   }
 }
