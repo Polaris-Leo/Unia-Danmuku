@@ -163,15 +163,11 @@
 
 /* SC倒计时金额 */
 .obs-preview-scale-container .sc-timer-price {
-  font-size: 2.96cqh; /* 2.96vh */
-  font-weight: bold;
-  color: #ffffff;
-  text-shadow: 
-    -0.37cqh -0.37cqh 0 rgba(0, 0, 0, 0.8),
-    0.37cqh -0.37cqh 0 rgba(0, 0, 0, 0.8),
-    -0.37cqh 0.37cqh 0 rgba(0, 0, 0, 0.8),
-    0.37cqh 0.37cqh 0 rgba(0, 0, 0, 0.8),
-    0 0.56cqh 0.93cqh rgba(0, 0, 0, 0.5);
+  font-family: var(--danmaku-font-family);
+  font-size: var(--danmaku-font-size);
+  font-weight: var(--danmaku-font-weight);
+  color: var(--danmaku-color);
+  text-shadow: var(--danmaku-text-shadow);
   white-space: nowrap;
 }
 
