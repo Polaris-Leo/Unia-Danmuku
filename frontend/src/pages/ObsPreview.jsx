@@ -174,11 +174,11 @@ const ObsPreview = ({ settings }) => {
   const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
     if (!enhanced) {
       return `
-        ${strokeWidth}cqh 0 0 ${strokeColor},
-        -${strokeWidth}cqh 0 0 ${strokeColor},
-        0 ${strokeWidth}cqh 0 ${strokeColor},
-        0 -${strokeWidth}cqh 0 ${strokeColor},
-        0 ${shadowIntensity}cqh ${shadowIntensity}cqh rgba(0,0,0,0.5)
+        ${strokeWidth}px 0 0 ${strokeColor},
+        -${strokeWidth}px 0 0 ${strokeColor},
+        0 ${strokeWidth}px 0 ${strokeColor},
+        0 -${strokeWidth}px 0 ${strokeColor},
+        0 ${shadowIntensity}px ${shadowIntensity}px rgba(0,0,0,0.5)
       `;
     }
 
@@ -196,29 +196,38 @@ const ObsPreview = ({ settings }) => {
       layers.forEach(layer => {
         const w = strokeWidth * layer;
         directions.forEach(dir => {
-          shadows.push(`${(w * dir[0]).toFixed(3)}cqh ${(w * dir[1]).toFixed(3)}cqh 0 ${strokeColor}`);
+          shadows.push(`${(w * dir[0]).toFixed(1)}px ${(w * dir[1]).toFixed(1)}px 0 ${strokeColor}`);
         });
       });
     }
     
     // 外发光
     if (glowIntensity > 0) {
-      shadows.push(`0 0 ${glowIntensity}cqh ${strokeColor}`);
+      shadows.push(`0 0 ${glowIntensity}px ${strokeColor}`);
     }
     
     // 投影
     if (shadowIntensity > 0) {
-      shadows.push(`0 ${shadowIntensity * 0.5}cqh ${shadowIntensity}cqh rgba(0,0,0,0.6)`);
+      shadows.push(`0 ${shadowIntensity * 0.5}px ${shadowIntensity}px rgba(0,0,0,0.6)`);
     }
     
     return shadows.join(', ');
+  };
+
+// Helper to convert px to cqh (based on 1080px reference height)
+  // We want the preview to look like it's on a 1080p screen, even though the internal canvas is 3000px.
+  // So we convert the px value to a percentage of 1080px, and apply that percentage to the container height.
+  const toCqh = (px) => {
+    const val = parseFloat(px);
+    if (isNaN(val)) return '0cqh';
+    return `${(val / 10.8).toFixed(3)}cqh`;
   };
 
   // 构建样式对象
   const containerStyle = {
     '--username-font-family': `${settings.usernameFontFamily}, sans-serif`,
     '--username-font-family-fallback': `${settings.usernameFontFamilyFallback || 'sans-serif'}`,
-    '--username-font-size': `${settings.usernameFontSize}cqh`,
+    '--username-font-size': toCqh(settings.usernameFontSize),
     '--username-font-weight': settings.usernameFontWeight,
     '--username-font-weight-fallback': settings.usernameFontWeightFallback || 'normal',
     '--username-color': settings.usernameColor,
@@ -237,7 +246,7 @@ const ObsPreview = ({ settings }) => {
     
     '--danmaku-font-family': `${settings.danmakuFontFamily}, sans-serif`,
     '--danmaku-font-family-fallback': `${settings.danmakuFontFamilyFallback || 'sans-serif'}`,
-    '--danmaku-font-size': `${settings.danmakuFontSize}cqh`,
+    '--danmaku-font-size': toCqh(settings.danmakuFontSize),
     '--danmaku-font-weight': settings.danmakuFontWeight,
     '--danmaku-font-weight-fallback': settings.danmakuFontWeightFallback || 'normal',
     '--danmaku-color': settings.danmakuColor,
@@ -250,10 +259,10 @@ const ObsPreview = ({ settings }) => {
       settings.danmakuShadowIntensity,
       settings.danmakuEnhancedStroke
     ),
-    
-    '--avatar-size': `${settings.avatarSize}cqh`,
-    '--item-spacing': `${settings.itemSpacing}cqh`,
-    '--emot-size': `${settings.emotSize || 3.3}cqh`,
+
+    '--avatar-size': toCqh(settings.avatarSize),
+    '--item-spacing': toCqh(settings.itemSpacing),
+    '--emot-size': toCqh(settings.emotSize || 28),
   };
 
   // 渲染内容（简化版，不包含所有逻辑）

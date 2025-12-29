@@ -8,7 +8,6 @@ function DashboardPage() {
   const [authInfo, setAuthInfo] = useState(null);
   const [loading, setLoading] = useState(true);
   const [roomId, setRoomId] = useState(localStorage.getItem('lastRoomId') || '');
-  const [copyStatus, setCopyStatus] = useState('');
 
   useEffect(() => {
     checkAuth();
@@ -48,19 +47,6 @@ function DashboardPage() {
     navigate(`/danmaku?roomId=${roomId}`);
   };
 
-  const handleCopyOBSLink = () => {
-    if (!roomId) {
-      alert('请输入直播间号');
-      return;
-    }
-    localStorage.setItem('lastRoomId', roomId);
-    const obsLink = `${window.location.origin}/obs?room=${roomId}`;
-    navigator.clipboard.writeText(obsLink).then(() => {
-      setCopyStatus('OBS链接已复制！');
-      setTimeout(() => setCopyStatus(''), 2000);
-    });
-  };
-
   if (loading) {
     return (
       <div className="dashboard-container">
@@ -95,14 +81,10 @@ function DashboardPage() {
               <button className="action-btn primary" onClick={handleEnterConsole}>
                 📺 进入控制台
               </button>
-              <button className="action-btn secondary" onClick={handleCopyOBSLink}>
-                🔗 复制OBS链接
-              </button>
               <button className="action-btn outline" onClick={() => navigate('/monitor')}>
                 📡 后台监控配置
               </button>
             </div>
-            {copyStatus && <div className="status-msg success" style={{textAlign: 'center', marginTop: '10px', color: '#4caf50'}}>{copyStatus}</div>}
           </div>
 
           <div className="info-section">

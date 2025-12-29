@@ -1522,5 +1522,35 @@
     "height": 20,
     "url": "https://i0.hdslb.com/bfs/live/e2ba16f947a23179cdc00420b71cc1d627d8ae25.png",
     "width": 20
+  },
+  "[吃P]": {
+    "url": "https://i0.hdslb.com/bfs/garb/212fda70ed5e3fcdf0f483d20af7e39acc8b92f5.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_21514463_972"
+  },
+  "[[七濑Unia_难受了]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/a27403f2aa57627097dd8658f1fd84adaca72905.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[七濑Unia_难受了]"
+  },
+  "[[魔女的夜宴动态表情包_嘿嘿]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/541e82bbc7a3bdbc4487b27dec5fa869b17c2386.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[魔女的夜宴动态表情包_嘿嘿]"
+  },
+  "[[RIDDLE JOKER动态表情包_摇摇]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e1aff9f347885a4c55d8c19c0798669da62c0d43.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[RIDDLE JOKER动态表情包_摇摇]"
+  },
+  "[[千恋万花动态表情包_呆]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/8ddbc6f85f0dcf070d3e0c559071a1107d4bfe54.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[千恋万花动态表情包_呆]"
   }
 }

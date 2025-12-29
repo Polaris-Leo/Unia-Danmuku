@@ -88,7 +88,19 @@ const ThankYouSettingsPage = () => {
     }
   ];
 
-  const previewData = previewSamples[previewIndex];
+  const rawPreviewData = previewSamples[previewIndex];
+  const previewData = { ...rawPreviewData };
+
+  // Recalculate blindbox price for preview based on config
+  if (previewData.giftType === 'blindbox') {
+    if (config.blindboxCalcOriginal) {
+       // Use cost (price is in 1000 units)
+       previewData.totalPrice = (previewData.price * previewData.num) / 1000;
+    } else {
+       // Use value (blindItemPrice is in 1000 units)
+       previewData.totalPrice = (previewData.blindItemPrice * previewData.num) / 1000;
+    }
+  }
 
   useEffect(() => {
     // Removed simple interval
@@ -273,7 +285,7 @@ const ThankYouSettingsPage = () => {
         data.coinType = 'gold';
         data.blindGift = {
           gift_name: item.giftName,
-          original_price: item.blindItemPrice || item.price 
+          original_gift_price: item.blindItemPrice || item.price 
         };
       } else {
         // Normal gift

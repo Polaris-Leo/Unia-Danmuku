@@ -171,39 +171,15 @@ const ThankYouPage = () => {
           giftType = 'blindbox';
           // Blindbox price calculation
           if (config.blindboxCalcOriginal) {
-             // Use original price of the blindbox item itself (if available)
-             // Usually blindbox gift has a base price.
-             // data.blindGift.original_price might be available or we use the gift price.
-             // If blindboxCalcOriginal is true, we might want to use the price of the *dropped* item?
-             // Or the price of the blindbox itself?
-             // "blindboxCalcOriginal: false" usually means use the price of the item obtained.
-             // "blindboxCalcOriginal: true" usually means use the price of the blindbox cost.
-             // Let's assume:
-             // If calcOriginal is true, use data.price (cost of blindbox).
-             // If calcOriginal is false, use data.blindGift.price (value of item obtained).
-             // But data.blindGift structure depends on what we parsed in backend.
-             // In backend we just passed `blindGift: giftData.blind_gift`.
-             // Let's assume standard logic:
-             // If it's a blindbox, the `price` field in `data` is usually the cost.
-             // The value of the item is inside `blindGift`.
-             
-             // Actually, let's look at how we want to filter.
-             // If blindboxCalcOriginal is true, we use the cost (data.price).
-             // If false, we try to find the value of the content.
-             // Since we might not have the value of the content easily, let's stick to data.price for now unless we have more info.
-             // Wait, the user asked for "Blindbox calculation mode".
-             // Let's assume:
-             // True: Use the price of the blindbox itself (cost).
-             // False: Use the price of the item inside (value).
-             
-             // For now, let's use data.price as base.
+             // Use original price of the blindbox item itself (cost)
              totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
           } else {
-             // Use value of item inside if possible, otherwise fallback to cost
-             // We don't have item value in standard payload usually unless we look it up.
-             // Let's just use the cost for now to be safe, or if the user provided logic implies something else.
-             // For now, let's just use the standard price calculation.
-             totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
+             // Use value of item inside (dropped item)
+             // blindGift usually has original_gift_price (in 1000 = 1 RMB units)
+             const droppedPrice = (data.blindGift && data.blindGift.original_gift_price) 
+                ? data.blindGift.original_gift_price 
+                : data.price;
+             totalPrice = ((Number(droppedPrice) || 0) * (Number(data.num) || 1)) / 1000;
           }
         } else {
           // Normal Gift
