@@ -1552,5 +1552,17 @@
     "width": 20,
     "height": 20,
     "emoticon_unique": "upower_[千恋万花动态表情包_呆]"
+  },
+  "[mua]": {
+    "url": "https://i0.hdslb.com/bfs/live/610b4413d42cdea6640de6ac1f9a0a90bf3d85a3.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_26"
+  },
+  "[就一勺]": {
+    "url": "https://i0.hdslb.com/bfs/live/51fe2d8e4a90dba47b2e79e8bd4429ad415c8b74.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_27"
   }
 }

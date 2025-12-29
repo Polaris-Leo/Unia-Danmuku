@@ -287,7 +287,8 @@ const ObsSettingsPage = () => {
       alert('请先输入直播间ID');
       return;
     }
-    const testAmounts = [30, 50, 100, 500, 1000, 2000];
+    // 包含特殊金额以便测试紫色背景
+    const testAmounts = [30, 50, 77, 100, 177, 500, 777, 1000, 2000, 7777, 17777, 77777];
     const amount = testAmounts[Math.floor(Math.random() * testAmounts.length)];
     const msg = {
       type: 'superchat',
