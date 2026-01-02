@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ObsPreview.css';
+import './styles/Bubbles.css';
 
 // Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
 const renderTextWithFallback = (text, type = 'danmaku') => {
@@ -170,9 +171,8 @@ const ObsPreview = ({ settings }) => {
     duration: 60
   };
 
-  // Helper to convert value to cqh
-  // Since settings are already in vh (percentage), we just append cqh
-  const toCqh = (val) => {
+  // Helper to convert value to unit
+  const toUnit = (val) => {
     const num = parseFloat(val);
     if (isNaN(num)) return '0cqh';
     return `${num}cqh`;
@@ -181,9 +181,9 @@ const ObsPreview = ({ settings }) => {
   // 生成平滑描边阴影
   const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
     if (!enhanced) {
-      const sw = toCqh(strokeWidth);
-      const swNeg = toCqh(-strokeWidth);
-      const si = toCqh(shadowIntensity);
+      const sw = toUnit(strokeWidth);
+      const swNeg = toUnit(-strokeWidth);
+      const si = toUnit(shadowIntensity);
       return `
         ${sw} 0 0 ${strokeColor},
         ${swNeg} 0 0 ${strokeColor},
@@ -207,19 +207,19 @@ const ObsPreview = ({ settings }) => {
       layers.forEach(layer => {
         const w = strokeWidth * layer;
         directions.forEach(dir => {
-          shadows.push(`${toCqh(w * dir[0])} ${toCqh(w * dir[1])} 0 ${strokeColor}`);
+          shadows.push(`${toUnit(w * dir[0])} ${toUnit(w * dir[1])} 0 ${strokeColor}`);
         });
       });
     }
     
     // 外发光
     if (glowIntensity > 0) {
-      shadows.push(`0 0 ${toCqh(glowIntensity)} ${strokeColor}`);
+      shadows.push(`0 0 ${toUnit(glowIntensity)} ${strokeColor}`);
     }
     
     // 投影
     if (shadowIntensity > 0) {
-      shadows.push(`0 ${toCqh(shadowIntensity * 0.5)} ${toCqh(shadowIntensity)} rgba(0,0,0,0.6)`);
+      shadows.push(`0 ${toUnit(shadowIntensity * 0.5)} ${toUnit(shadowIntensity)} rgba(0,0,0,0.6)`);
     }
     
     return shadows.join(', ');
@@ -229,7 +229,7 @@ const ObsPreview = ({ settings }) => {
   const containerStyle = {
     '--username-font-family': `${settings.usernameFontFamily}, sans-serif`,
     '--username-font-family-fallback': `${settings.usernameFontFamilyFallback || 'sans-serif'}`,
-    '--username-font-size': toCqh(settings.usernameFontSize),
+    '--username-font-size': toUnit(settings.usernameFontSize),
     '--username-font-weight': settings.usernameFontWeight,
     '--username-font-weight-fallback': settings.usernameFontWeightFallback || 'normal',
     '--username-color': settings.usernameColor,
@@ -248,7 +248,7 @@ const ObsPreview = ({ settings }) => {
     
     '--danmaku-font-family': `${settings.danmakuFontFamily}, sans-serif`,
     '--danmaku-font-family-fallback': `${settings.danmakuFontFamilyFallback || 'sans-serif'}`,
-    '--danmaku-font-size': toCqh(settings.danmakuFontSize),
+    '--danmaku-font-size': toUnit(settings.danmakuFontSize),
     '--danmaku-font-weight': settings.danmakuFontWeight,
     '--danmaku-font-weight-fallback': settings.danmakuFontWeightFallback || 'normal',
     '--danmaku-color': settings.danmakuColor,
@@ -262,9 +262,16 @@ const ObsPreview = ({ settings }) => {
       settings.danmakuEnhancedStroke
     ),
 
-    '--avatar-size': toCqh(settings.avatarSize),
-    '--item-spacing': toCqh(settings.itemSpacing),
-    '--emot-size': toCqh(settings.emotSize || 28),
+    '--avatar-size': toUnit(settings.avatarSize),
+    '--item-spacing': toUnit(settings.itemSpacing),
+    '--emot-size': toUnit(settings.emotSize || 28),
+    '--bubble-padding-x': toUnit(settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7),
+    
+    // 气泡渐变色
+    '--bubble-bg-start': settings.danmakuBubbleBgStartTransparent ? 'transparent' : (settings.danmakuBubbleBgStart || '#ffa8d7'),
+    '--bubble-bg-end': settings.danmakuBubbleBgEnd || '#ffa8d7',
+    '--sc-bubble-bg-start': settings.scBubbleBgStartTransparent ? 'transparent' : (settings.scBubbleBgStart || '#c3a4f5'),
+    '--sc-bubble-bg-end': settings.scBubbleBgEnd || '#c3a4f5',
   };
 
   // 渲染内容（简化版，不包含所有逻辑）
@@ -314,7 +321,7 @@ const ObsPreview = ({ settings }) => {
   return (
     <div className="obs-preview-wrapper">
       <div 
-        className="obs-preview-scale-container" 
+        className={`obs-preview-scale-container ${settings.style === 'bubbles' ? 'style-bubbles' : ''}`}
         style={{ ...containerStyle, transform: `scale(${scale})` }}
         ref={containerRef}
       >
@@ -337,18 +344,28 @@ const ObsPreview = ({ settings }) => {
 
       <div className="danmaku-list has-sc-timer">
         {/* SC 消息 */}
-        <div className="sc-item" style={{ '--sc-bg': '#2a60b2', '--sc-bg-light': '#4275c4' }}>
-          <div className="sc-header">
-            <div className="sc-avatar">
-              <img src={sampleSC.user.face} alt="" referrerPolicy="no-referrer" />
+        <div className="sc-wrapper superchat">
+          <div className="sc-item" style={{ '--sc-bg': '#2a60b2', '--sc-bg-light': '#4275c4' }}>
+            <div className="sc-header">
+              <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                <img 
+                  id="img"
+                  className="style-scope yt-img-shadow"
+                  src={sampleSC.user.face}
+                  alt={sampleSC.user.username}
+                  referrerPolicy="no-referrer"
+                  height="24" 
+                  width="24"
+                />
+              </yt-img-shadow>
+              <div className="sc-user-info">
+                <div className="sc-username">{sampleSC.user.username}</div>
+              </div>
+              <div className="sc-price">CN¥{sampleSC.price}</div>
             </div>
-            <div className="sc-user-info">
-              <div className="sc-username">{sampleSC.user.username}</div>
+            <div className="sc-content">
+              {sampleSC.message}
             </div>
-            <div className="sc-price">CN¥{sampleSC.price}</div>
-          </div>
-          <div className="sc-content">
-            {sampleSC.message}
           </div>
         </div>
 
@@ -359,18 +376,28 @@ const ObsPreview = ({ settings }) => {
             const colors = { bg: '#2a60b2', bgLight: '#4275c4' }; // 舰长蓝色
             const roleName = '舰长';
             return (
-              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
-                <div className="sc-header">
-                  <div className="sc-avatar">
-                    <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
+              <div key={msg.id} className="guard-wrapper">
+                <div className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                  <div className="sc-header">
+                    <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                      <img 
+                        id="img"
+                        className="style-scope yt-img-shadow"
+                        src={msg.user.face}
+                        alt={msg.user.username}
+                        referrerPolicy="no-referrer"
+                        height="24" 
+                        width="24"
+                      />
+                    </yt-img-shadow>
+                    <div className="sc-user-info">
+                      <div className="sc-username">{msg.user.username}</div>
+                    </div>
+                    <div className="sc-price">{roleName}</div>
                   </div>
-                  <div className="sc-user-info">
-                    <div className="sc-username">{msg.user.username}</div>
+                  <div className="sc-content">
+                    {msg.user.username} 开通了 {roleName}
                   </div>
-                  <div className="sc-price">{roleName}</div>
-                </div>
-                <div className="sc-content">
-                  {msg.user.username} 开通了 {roleName}
                 </div>
               </div>
             );
@@ -380,18 +407,28 @@ const ObsPreview = ({ settings }) => {
           if (msg.type === 'gift') {
             const colors = { bg: '#e54d4d', bgLight: '#ed6565' }; // 高价值礼物红色
             return (
-              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
-                <div className="sc-header">
-                  <div className="sc-avatar">
-                    <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
+              <div key={msg.id} className="sc-wrapper gift">
+                <div className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                  <div className="sc-header">
+                    <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                      <img 
+                        id="img"
+                        className="style-scope yt-img-shadow"
+                        src={msg.user.face}
+                        alt={msg.user.username}
+                        referrerPolicy="no-referrer"
+                        height="24" 
+                        width="24"
+                      />
+                    </yt-img-shadow>
+                    <div className="sc-user-info">
+                      <div className="sc-username">{msg.user.username}</div>
+                    </div>
+                    <div className="sc-price">投喂</div>
                   </div>
-                  <div className="sc-user-info">
-                    <div className="sc-username">{msg.user.username}</div>
+                  <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span>送出了 {msg.giftName} x {msg.num}</span>
                   </div>
-                  <div className="sc-price">投喂</div>
-                </div>
-                <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span>送出了 {msg.giftName} x {msg.num}</span>
                 </div>
               </div>
             );
@@ -399,30 +436,32 @@ const ObsPreview = ({ settings }) => {
 
           // 普通弹幕
           return (
-          <div key={msg.id} className="danmaku-item">
-            <div className="avatar">
-              <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
-            </div>
-            <div className="content-area">
-              <div className="username-line">
-                {msg.guardLevel > 0 && (
-                  <img 
-                    className="guard-icon"
-                    src={
-                      msg.guardLevel === 3 ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png' :
-                      msg.guardLevel === 2 ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png' :
-                      'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
-                    }
-                    alt="guard"
-                    referrerPolicy="no-referrer"
-                  />
-                )}
-                <span className={`username guard-${msg.guardLevel}`} lang={settings.usernameLang || 'zh-CN'}>
-                  {renderTextWithFallback(msg.user.username, 'username')}
-                </span>
+          <div key={msg.id} className="danmaku-wrapper">
+            <div className="danmaku-item">
+              <div className="avatar">
+                <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
               </div>
-              <div className="danmaku-text" lang={settings.danmakuLang || 'zh-CN'}>
-                {renderContent(msg)}
+              <div className="content-area">
+                <div className="username-line">
+                  {msg.guardLevel > 0 && (
+                    <img 
+                      className="guard-icon"
+                      src={
+                        msg.guardLevel === 3 ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png' :
+                        msg.guardLevel === 2 ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png' :
+                        'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
+                      }
+                      alt="guard"
+                      referrerPolicy="no-referrer"
+                    />
+                  )}
+                  <span className={`username guard-${msg.guardLevel}`} lang={settings.usernameLang || 'zh-CN'}>
+                    {renderTextWithFallback(msg.user.username, 'username')}
+                  </span>
+                </div>
+                <div className="danmaku-text" lang={settings.danmakuLang || 'zh-CN'}>
+                  {renderContent(msg)}
+                </div>
               </div>
             </div>
           </div>

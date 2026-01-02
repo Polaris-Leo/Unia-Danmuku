@@ -48,6 +48,8 @@
   /* Wait, in ObsDanmakuPage.css I set --username-stroke-width: 0.19vh (2px). */
   /* So here it should be 0.19cqh. */
   
+  --sc-gap: 2.5cqh; /* Define gap for SC header/content in preview */
+
   --username-stroke-width-neg: -0.19cqh;
   --username-stroke-color: #ffffff;
   --username-enhanced-stroke: 1;
@@ -189,6 +191,15 @@
 /* 有SC倒计时时，整体下移 */
 .obs-preview-scale-container .danmaku-list.has-sc-timer {
   top: 12cqh; /* 12vh */
+}
+
+/* 修复 Bubbles 样式下的滚动和定位问题 */
+.obs-preview-scale-container.style-bubbles .danmaku-list {
+  overflow-y: auto !important;
+}
+
+.obs-preview-scale-container.style-bubbles .danmaku-list.has-sc-timer {
+  top: 12cqh !important;
 }
 
 /* 隐藏滚动条 */

@@ -1,7 +1,5 @@
 # 依赖
 node_modules/
-package-lock.json
-yarn.lock
 
 # 日志
 logs/*.log
@@ -39,6 +37,8 @@ frontend/dist/
 
 # 数据文件
 backend/data/
+!backend/data/*.example
+!backend/data/.gitkeep
 
 # Windows
 Thumbs.db

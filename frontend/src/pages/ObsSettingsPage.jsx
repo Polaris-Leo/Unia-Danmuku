@@ -8,6 +8,7 @@ const ObsSettingsPage = () => {
   
   // 默认设置
   const defaultSettings = {
+    style: 'default',
     usernameFontFamily: 'Microsoft YaHei',
     usernameFontSize: 2.2, // vh
     usernameFontWeight: 'bold',
@@ -40,6 +41,14 @@ const ObsSettingsPage = () => {
     avatarSize: 6.0, // vh
     itemSpacing: 1.1, // vh
     emotSize: 3.3, // vh
+    bubblePaddingX: 3.7, // vh, 气泡左右内边距
+    // 气泡渐变色设置
+    danmakuBubbleBgStart: '#ffa8d7',
+    danmakuBubbleBgEnd: '#ffa8d7',
+    danmakuBubbleBgStartTransparent: true,
+    scBubbleBgStart: '#c3a4f5',
+    scBubbleBgEnd: '#c3a4f5',
+    scBubbleBgStartTransparent: true,
   };
 
   const languageOptions = [
@@ -53,6 +62,7 @@ const ObsSettingsPage = () => {
 
   const [settings, setSettings] = useState(defaultSettings);
   const [roomId, setRoomId] = useState('21514463');
+  const [blcInput, setBlcInput] = useState('');
   const [availableFonts, setAvailableFonts] = useState([
     { name: '默认 (微软雅黑)', value: 'Microsoft YaHei' },
     { name: '黑体', value: 'SimHei' },
@@ -62,6 +72,23 @@ const ObsSettingsPage = () => {
     { name: 'Helvetica', value: 'Helvetica' },
     { name: 'Times New Roman', value: 'Times New Roman' },
   ]);
+
+  // 折叠状态管理
+  const [expandedSections, setExpandedSections] = useState({
+    username: false,
+    danmaku: false,
+    bubbles: false,
+    import: false,
+    test: false,
+    layout: false
+  });
+
+  const toggleSection = (section) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
 
   // 加载自定义字体
   useEffect(() => {
@@ -203,6 +230,140 @@ const ObsSettingsPage = () => {
     }
   };
 
+
+  // 处理BLC配置导入
+  const handleImportBLC = async () => {
+    if (!blcInput.trim()) return;
+    
+    let cssContent = blcInput;
+    let changed = false;
+    const newSettings = { ...settings };
+
+    // 尝试处理 @import 或 URL
+    const urlMatch = blcInput.match(/^(https?:\/\/[^\s]+)/) || blcInput.match(/@import\s+(?:url\()?['"]?(https?:\/\/[^'"\)]+)['"]?\)?/);
+    if (urlMatch) {
+      const url = urlMatch[1] || urlMatch[2];
+      try {
+        const res = await fetch(url);
+        if (res.ok) {
+          cssContent = await res.text();
+        } else {
+          alert(`无法加载远程CSS (Status: ${res.status})，请尝试直接粘贴CSS内容。`);
+          return;
+        }
+      } catch (e) {
+        alert("无法加载远程CSS (跨域或网络错误)，请尝试直接粘贴CSS内容。");
+        return;
+      }
+    }
+
+    // 简单的CSS解析辅助函数
+    const findStyle = (selector, prop) => {
+      // 匹配 selector { ... prop: value ... }
+      // 转义特殊字符，允许 selector 中包含空格、点、井号、星号等
+      const escapedSelector = selector.replace(/[-\/\\^$*+?.()|[\]{}]/g, '\\$&').replace(/\\\*/g, '.*'); 
+      // 上面的转义可能太激进了，我们手动构建正则更安全
+      // 我们直接使用传入的 selector 字符串，假设调用者已经处理好了正则转义（如果需要）
+      // 或者我们只转义关键的正则元字符，但保留空格
+      
+      // 简化策略：直接构造正则，但在调用时注意 selector 的写法
+      // 为了匹配换行，使用 [\s\S]*? 替代 .*?
+      // 匹配 selector 后面跟着 {，然后是任意内容，直到遇到 prop:
+      const regex = new RegExp(`${selector.replace(/([.*+?^=!:${}()|\[\]\/\\])/g, "\\$1")}\\s*\\{[^}]*?${prop}\\s*:\\s*([^;!}]+)`, 'i');
+      const match = cssContent.match(regex);
+      return match ? match[1].trim() : null;
+    };
+
+    // 1. 提取颜色
+    const authorColor = findStyle('#author-name', 'color') 
+      || findStyle('.yt-live-chat-author-chip', 'color')
+      || findStyle('yt-live-chat-text-message-renderer #author-name', 'color');
+
+    if (authorColor) {
+      newSettings.usernameColor = authorColor;
+      changed = true;
+    }
+
+    const msgColor = findStyle('#message', 'color') 
+      || findStyle('.yt-live-chat-text-message-renderer', 'color')
+      || findStyle('yt-live-chat-text-message-renderer #message', 'color');
+
+    if (msgColor) {
+      newSettings.danmakuColor = msgColor;
+      changed = true;
+    }
+
+    // 2. 提取字体
+    const fontFamily = findStyle('body', 'font-family') 
+      || findStyle('*', 'font-family') 
+      || findStyle('.yt-live-chat-text-message-renderer', 'font-family')
+      || findStyle('yt-live-chat-renderer *', 'font-family');
+
+    if (fontFamily) {
+      // 去除引号
+      const cleanFont = fontFamily.replace(/['"]/g, '').split(',')[0].trim();
+      newSettings.usernameFontFamily = cleanFont;
+      newSettings.danmakuFontFamily = cleanFont;
+      changed = true;
+    }
+
+    // 3. 提取字号 (尝试转换为当前单位)
+    const fontSizeStr = findStyle('#message', 'font-size') 
+      || findStyle('.yt-live-chat-text-message-renderer', 'font-size')
+      || findStyle('yt-live-chat-renderer *', 'font-size');
+
+    if (fontSizeStr && fontSizeStr.endsWith('px')) {
+      const pxVal = parseFloat(fontSizeStr);
+      if (!isNaN(pxVal)) {
+        // 假设基准 1080p: 1vh = 10.8px
+        newSettings.danmakuFontSize = parseFloat((pxVal / 10.8).toFixed(1));
+        newSettings.usernameFontSize = parseFloat((pxVal * 0.85 / 10.8).toFixed(1)); // 用户名通常稍小
+        changed = true;
+      }
+    }
+
+    // 4. 提取头像大小
+    const avatarSizeStr = findStyle('#author-photo', 'width') 
+      || findStyle('#author-photo img', 'width')
+      || findStyle('yt-live-chat-text-message-renderer #author-photo', 'width');
+
+    if (avatarSizeStr && avatarSizeStr.endsWith('px')) {
+      const pxVal = parseFloat(avatarSizeStr);
+      if (!isNaN(pxVal)) {
+        newSettings.avatarSize = parseFloat((pxVal / 10.8).toFixed(1));
+        changed = true;
+      }
+    }
+
+    // 5. 简单的背景色检测 (判断是否为气泡风格)
+    const bgStyle = findStyle('yt-live-chat-text-message-renderer', 'background-color') 
+      || findStyle('#card', 'background-color')
+      || findStyle('yt-live-chat-text-message-renderer #message', 'background-color');
+
+    if (bgStyle && bgStyle !== 'transparent' && bgStyle !== 'rgba(0,0,0,0)') {
+      newSettings.style = 'bubbles';
+      // 尝试提取背景色作为气泡色
+      if (bgStyle.startsWith('#') || bgStyle.startsWith('rgb')) {
+        newSettings.danmakuBubbleBgStart = bgStyle;
+        newSettings.danmakuBubbleBgEnd = bgStyle;
+      }
+      changed = true;
+    }
+
+    if (changed) {
+      setSettings(newSettings);
+      alert("样式已解析并应用！\n\n已更新：\n" + 
+            (authorColor ? "- 用户名颜色\n" : "") +
+            (msgColor ? "- 弹幕颜色\n" : "") +
+            (fontFamily ? "- 字体\n" : "") +
+            (fontSizeStr ? "- 字号\n" : "") +
+            (avatarSizeStr ? "- 头像大小\n" : "")
+      );
+    } else {
+      alert("未能识别出有效的样式规则。\n请确保粘贴的是包含 #author-name, #message 等标准选择器的 CSS 代码。");
+    }
+  };
+
   // 预览
   const preview = () => {
     localStorage.setItem('obsSettings', JSON.stringify(settings));
@@ -337,12 +498,27 @@ const ObsSettingsPage = () => {
                 placeholder="输入B站直播间号"
               />
             </div>
+
+            <div className="setting-item">
+              <label>弹幕样式：</label>
+              <select
+                value={settings.style || 'default'}
+                onChange={(e) => setSettings({ ...settings, style: e.target.value })}
+              >
+                <option value="default">默认简洁样式</option>
+                <option value="bubbles">气泡样式 (Bubbles)</option>
+              </select>
+            </div>
           </div>
 
           {/* 用户名样式 */}
           <div className="setting-section">
-            <h2>用户名样式</h2>
+            <h2 onClick={() => toggleSection('username')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              用户名样式
+              <span style={{ fontSize: '0.8em', transform: expandedSections.username ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+            </h2>
             
+            <div className={`section-content ${expandedSections.username ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>字体：</label>
               <div style={{ display: 'flex', gap: '10px', flex: 1 }}>
@@ -646,12 +822,17 @@ const ObsSettingsPage = () => {
                 </div>
               </>
             )}
+            </div>
           </div>
 
           {/* 弹幕内容样式 */}
           <div className="setting-section">
-            <h2>弹幕内容样式</h2>
+            <h2 onClick={() => toggleSection('danmaku')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              弹幕内容样式
+              <span style={{ fontSize: '0.8em', transform: expandedSections.danmaku ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+            </h2>
             
+            <div className={`section-content ${expandedSections.danmaku ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>字体：</label>
               <select
@@ -898,11 +1079,191 @@ const ObsSettingsPage = () => {
                 </div>
               </>
             )}
+            </div>
+          </div>
+
+          {/* 气泡样式 */}
+          {settings.style === 'bubbles' && (
+            <div className="setting-section">
+              <h2 onClick={() => toggleSection('bubbles')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                气泡样式
+                <span style={{ fontSize: '0.8em', transform: expandedSections.bubbles ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+              </h2>
+              
+              <div className={`section-content ${expandedSections.bubbles ? 'expanded' : ''}`}>
+              <div className="setting-item">
+                <label>气泡左右内边距 (vh)：</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                  <input
+                    type="range"
+                    value={Math.round((settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7) * 10)}
+                    onChange={(e) => setSettings({ ...settings, bubblePaddingX: parseFloat(e.target.value) / 10 })}
+                    min="0"
+                    max="100"
+                    step="1"
+                    style={{ flex: 1 }}
+                  />
+                  <input
+                    type="number"
+                    value={Math.round((settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7) * 10)}
+                    onChange={(e) => setSettings({ ...settings, bubblePaddingX: parseFloat(e.target.value) / 10 })}
+                    min="0"
+                    max="100"
+                    step="1"
+                    style={{ width: '100px', flex: 'none' }}
+                  />
+                </div>
+              </div>
+
+              <div className="setting-item">
+                <label>普通弹幕气泡渐变：</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '60px' }}>顶部：</span>
+                    <input
+                      type="color"
+                      value={settings.danmakuBubbleBgEnd || '#ffa8d7'}
+                      onChange={(e) => setSettings({ ...settings, danmakuBubbleBgEnd: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      value={settings.danmakuBubbleBgEnd || '#ffa8d7'}
+                      onChange={(e) => setSettings({ ...settings, danmakuBubbleBgEnd: e.target.value })}
+                      style={{ width: '80px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '60px' }}>底部：</span>
+                    <input
+                      type="checkbox"
+                      checked={settings.danmakuBubbleBgStartTransparent}
+                      onChange={(e) => setSettings({ ...settings, danmakuBubbleBgStartTransparent: e.target.checked })}
+                    />
+                    <span onClick={() => setSettings({ ...settings, danmakuBubbleBgStartTransparent: !settings.danmakuBubbleBgStartTransparent })} style={{ cursor: 'pointer' }}>透明</span>
+                    
+                    {!settings.danmakuBubbleBgStartTransparent && (
+                      <>
+                        <input
+                          type="color"
+                          value={settings.danmakuBubbleBgStart || '#ffa8d7'}
+                          onChange={(e) => setSettings({ ...settings, danmakuBubbleBgStart: e.target.value })}
+                        />
+                        <input
+                          type="text"
+                          value={settings.danmakuBubbleBgStart || '#ffa8d7'}
+                          onChange={(e) => setSettings({ ...settings, danmakuBubbleBgStart: e.target.value })}
+                          style={{ width: '80px' }}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="setting-item">
+                <label>SC/礼物气泡渐变：</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '60px' }}>顶部：</span>
+                    <input
+                      type="color"
+                      value={settings.scBubbleBgEnd || '#c3a4f5'}
+                      onChange={(e) => setSettings({ ...settings, scBubbleBgEnd: e.target.value })}
+                    />
+                    <input
+                      type="text"
+                      value={settings.scBubbleBgEnd || '#c3a4f5'}
+                      onChange={(e) => setSettings({ ...settings, scBubbleBgEnd: e.target.value })}
+                      style={{ width: '80px' }}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ width: '60px' }}>底部：</span>
+                    <input
+                      type="checkbox"
+                      checked={settings.scBubbleBgStartTransparent}
+                      onChange={(e) => setSettings({ ...settings, scBubbleBgStartTransparent: e.target.checked })}
+                    />
+                    <span onClick={() => setSettings({ ...settings, scBubbleBgStartTransparent: !settings.scBubbleBgStartTransparent })} style={{ cursor: 'pointer' }}>透明</span>
+                    
+                    {!settings.scBubbleBgStartTransparent && (
+                      <>
+                        <input
+                          type="color"
+                          value={settings.scBubbleBgStart || '#c3a4f5'}
+                          onChange={(e) => setSettings({ ...settings, scBubbleBgStart: e.target.value })}
+                        />
+                        <input
+                          type="text"
+                          value={settings.scBubbleBgStart || '#c3a4f5'}
+                          onChange={(e) => setSettings({ ...settings, scBubbleBgStart: e.target.value })}
+                          style={{ width: '80px' }}
+                        />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              </div>
+            </div>
+          )}
+
+          {/* BLC 样式导入 */}
+          <div className="setting-section">
+            <h2 onClick={() => toggleSection('import')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              BLC 样式导入 (实验性)
+              <span style={{ fontSize: '0.8em', transform: expandedSections.import ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+            </h2>
+            
+            <div className={`section-content ${expandedSections.import ? 'expanded' : ''}`}>
+              <div className="setting-item" style={{ display: 'block' }}>
+                <div className="hint" style={{ marginBottom: '10px' }}>
+                  支持粘贴 BLC (Bilibili Live Chat) 样式的 CSS 代码或 @import 链接。
+                  <br/>
+                  系统将尝试解析并转换为当前弹幕机的样式设置。
+                </div>
+                <textarea
+                  value={blcInput}
+                  onChange={(e) => setBlcInput(e.target.value)}
+                  placeholder={`示例：\n@import url("https://...");\n\n或者：\nyt-live-chat-renderer {\n  background-color: transparent !important;\n}`}
+                  style={{ 
+                    width: '100%', 
+                    height: '200px', 
+                    fontFamily: 'monospace', 
+                    fontSize: '12px',
+                    padding: '10px',
+                    border: '1px solid #ccc',
+                    borderRadius: '4px',
+                    resize: 'vertical'
+                  }}
+                />
+                <div style={{ marginTop: '10px', display: 'flex', gap: '10px' }}>
+                  <button 
+                    onClick={handleImportBLC} 
+                    className="btn-primary"
+                    disabled={!blcInput.trim()}
+                  >
+                    分析并应用配置
+                  </button>
+                  <button 
+                    onClick={() => setBlcInput('')} 
+                    className="btn-secondary"
+                    disabled={!blcInput.trim()}
+                  >
+                    清空
+                  </button>
+                </div>
+              </div>
+            </div>
           </div>
 
           {/* 测试工具 */}
           <div className="setting-section">
-            <h2>测试工具</h2>
+            <h2 onClick={() => toggleSection('test')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              测试工具
+              <span style={{ fontSize: '0.8em', transform: expandedSections.test ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+            </h2>
+            <div className={`section-content ${expandedSections.test ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>功能测试：</label>
               <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
@@ -923,11 +1284,17 @@ const ObsSettingsPage = () => {
                 点击后，当前配置的直播间 ({roomId}) 的OBS画面将显示测试动画。
               </p>
             </div>
+            </div>
           </div>
 
           {/* 布局设置 */}
           <div className="setting-section">
-            <h2>布局设置</h2>
+            <h2 onClick={() => toggleSection('layout')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              布局设置
+              <span style={{ fontSize: '0.8em', transform: expandedSections.layout ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
+            </h2>
+            
+            <div className={`section-content ${expandedSections.layout ? 'expanded' : ''}`}>
             
             <div className="setting-item">
               <label>头像大小 (vh)：</label>
@@ -945,8 +1312,8 @@ const ObsSettingsPage = () => {
                   type="number"
                   value={Math.round(settings.avatarSize * 10)}
                   onChange={(e) => setSettings({ ...settings, avatarSize: parseFloat(e.target.value) / 10 })}
-                  min="10"
-                  max="300"
+                  min="0"
+                  max="500"
                   step="1"
                   style={{ width: '100px', flex: 'none' }}
                 />
@@ -977,6 +1344,8 @@ const ObsSettingsPage = () => {
               </div>
             </div>
 
+
+
             <div className="setting-item">
               <label>表情大小 (vh)：</label>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
@@ -999,6 +1368,7 @@ const ObsSettingsPage = () => {
                   style={{ width: '100px', flex: 'none' }}
                 />
               </div>
+            </div>
             </div>
           </div>
 

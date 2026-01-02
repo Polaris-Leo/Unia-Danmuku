@@ -6,5 +6,7 @@ dist/
 
 # Ignore data and daemon
 data/
+!data/*.example
+!data/.gitkeep
 daemon/
 public/uploads/

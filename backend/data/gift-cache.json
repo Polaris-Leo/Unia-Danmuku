@@ -1,4 +1,10 @@
 {
+  "30606": {
+    "name": "泡泡机",
+    "icon": "https://i0.hdslb.com/bfs/live/412f3820c32233fb69293f2f1185fe742918c842.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/03f77460f808e33bf3564b1092e261a00b37b4e2.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/412f3820c32233fb69293f2f1185fe742918c842.webp"
+  },
   "30706": {
     "name": "生日快乐",
     "icon": "https://i0.hdslb.com/bfs/live/d6892ec263d4e797eb77ebc10b36005b0b1d011b.webp",
@@ -16,6 +22,12 @@
     "icon": "https://i0.hdslb.com/bfs/live/35211d339d2773b5aa60b2cd799d7f0988d6846c.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/1afa68cf648f2bb0fc414ca20b6bc4cfe86c7663.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/35211d339d2773b5aa60b2cd799d7f0988d6846c.webp"
+  },
+  "30758": {
+    "name": "这个好诶",
+    "icon": "https://i0.hdslb.com/bfs/live/d39c9c5428ca145936a6e08430e8789f43f2a2ce.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/9260c680959428c45b3a2742e42ea7ae75e457ef.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/d39c9c5428ca145936a6e08430e8789f43f2a2ce.webp"
   },
   "30869": {
     "name": "心动卡",
@@ -65,6 +77,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/824714c830966d7bec381e35ef808b1f478e21ee.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/32c8ee42566501822d8ecc68b33cd2c64937266a.webp"
   },
+  "32281": {
+    "name": "绮彩权杖",
+    "icon": "https://i0.hdslb.com/bfs/live/c07301002398ddc18177df5a85633224952a5ba0.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/5cecbf274a4205ef76ed3f11c6540f0c6743363c.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/c07301002398ddc18177df5a85633224952a5ba0.webp"
+  },
   "32307": {
     "name": "欢乐派对",
     "icon": "https://i0.hdslb.com/bfs/live/6a5f6e1932744eb44513c47b97ade9507428ff7a.webp",
@@ -76,6 +94,12 @@
     "icon": "https://i0.hdslb.com/bfs/live/310e51cec038edd8131238602a894ae2360ce4d4.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/15313516b3ec0875d67130f18c0a53c582e76531.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/310e51cec038edd8131238602a894ae2360ce4d4.webp"
+  },
+  "32755": {
+    "name": "稳",
+    "icon": "https://i0.hdslb.com/bfs/live/bad6e7d2163f1cba406dcc287bfbf2b5e1b126ad.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/bac5cbb829ec697e8219af0dafdfa074e515c05c.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/bad6e7d2163f1cba406dcc287bfbf2b5e1b126ad.webp"
   },
   "32756": {
     "name": "再来亿把",
@@ -100,6 +124,12 @@
     "icon": "https://i0.hdslb.com/bfs/live/5a2012094bb875a04ea7d036edde3e9c00127ec2.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/5a2012094bb875a04ea7d036edde3e9c00127ec2.webp"
+  },
+  "34065": {
+    "name": "为你打call",
+    "icon": "https://i0.hdslb.com/bfs/live/c68f704a7a9b192c3bb622639cad62f0ac1a6edf.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/7629cbd12b0ec0547c9195c19aef33180b7c35da.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/c68f704a7a9b192c3bb622639cad62f0ac1a6edf.webp"
   },
   "34102": {
     "name": "人气票",
@@ -149,6 +179,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/24afbb083aa700d7576d60a1189d3505262d160d.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/4b18fda8bfea01d4bf1b748e77c065455548bd23.webp"
   },
+  "35207": {
+    "name": "幸运泡泡",
+    "icon": "https://i0.hdslb.com/bfs/live/00bd9e97756f17d92f78291af1cc3c5fe4e6a202.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/3ffb357cca0d74346148b96d80d01ec492a82b61.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/00bd9e97756f17d92f78291af1cc3c5fe4e6a202.webp"
+  },
   "35208": {
     "name": "星光铃铛",
     "icon": "https://i0.hdslb.com/bfs/live/fc5ee9cbb035ef94e642d3c676f741fc31e58d27.webp",
@@ -190,6 +226,36 @@
     "icon": "https://i0.hdslb.com/bfs/live/ad922a4af511ea4258d2576912ec4dd3cfce2757.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/54c66576898b11a56bf43bf38f6a99ab92958e40.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/ad922a4af511ea4258d2576912ec4dd3cfce2757.webp"
+  },
+  "35383": {
+    "name": "好运木鱼",
+    "icon": "https://i0.hdslb.com/bfs/live/ef8181da1c385b20be75cfe78fb7d7035cf55ff5.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/aa9d6b11a11d7c4b7f260403e578e363a482e092.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/ef8181da1c385b20be75cfe78fb7d7035cf55ff5.webp"
+  },
+  "35384": {
+    "name": "新岁心愿",
+    "icon": "https://i0.hdslb.com/bfs/live/5d8bc05ca4dea9b6379eb442183d90c23705dd54.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/a4ba2494417e23b9b0bc5385d36d2ed5910ca675.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/5d8bc05ca4dea9b6379eb442183d90c23705dd54.webp"
+  },
+  "35385": {
+    "name": "锦鲤摸摸",
+    "icon": "https://i0.hdslb.com/bfs/live/9aa5dfee46a983cb44f25b5c8e7d7d74aa49ada2.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/775be81b4e2c2a0c3dc282b110597a9700a14f48.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/9aa5dfee46a983cb44f25b5c8e7d7d74aa49ada2.webp"
+  },
+  "35389": {
+    "name": "财神鸭鸭",
+    "icon": "https://i0.hdslb.com/bfs/live/864c7835f3041940080d4c7e57f8e008c4e97326.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/8d8389920f84f58d56c5e559d4921cbc24960ae6.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/864c7835f3041940080d4c7e57f8e008c4e97326.webp"
+  },
+  "35399": {
+    "name": "2026",
+    "icon": "https://i0.hdslb.com/bfs/live/01705b68b495b2a749a7c15cc1c973ac3aff93a0.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/5322704cd4bb518ce87772735ddef7462b178ce1.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/01705b68b495b2a749a7c15cc1c973ac3aff93a0.webp"
   },
   "35404": {
     "name": "晚安好梦",

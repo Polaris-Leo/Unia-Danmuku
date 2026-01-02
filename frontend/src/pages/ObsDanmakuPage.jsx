@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import './ObsDanmakuPage.css';
+import './styles/Bubbles.css';
 
 // Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
 const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) => {
@@ -62,8 +63,12 @@ const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) =>
 };
 
 const ObsDanmakuPage = () => {
+  const [messages, setMessages] = useState([]);
+  const [connected, setConnected] = useState(false);
+  const [error, setError] = useState(null);
+  
   // 立即同步加载样式设置，避免第一条消息显示异常
-  const initialSettings = (() => {
+  const [customStyles, setCustomStyles] = useState(() => {
     const saved = localStorage.getItem('obsSettings');
     console.log('🔍 OBS页面加载设置:', saved);
     if (saved) {
@@ -78,12 +83,7 @@ const ObsDanmakuPage = () => {
     }
     console.warn('⚠️ 未找到保存的设置，将使用默认样式');
     return null;
-  })();
-  
-  const [messages, setMessages] = useState([]);
-  const [connected, setConnected] = useState(false);
-  const [error, setError] = useState(null);
-  const [customStyles, setCustomStyles] = useState(initialSettings);
+  });
   const [activeSCs, setActiveSCs] = useState([]); // 活跃的SC列表（倒计时中）
   const messagesContainerRef = useRef(null);
   const wsRef = useRef(null);
@@ -161,18 +161,18 @@ const ObsDanmakuPage = () => {
     if (customStyles) {
       const root = document.documentElement;
       
-      // Helper to append vh unit
-      const toVh = (val) => {
+      // Helper to append unit
+      const toUnit = (val) => {
         const num = parseFloat(val);
         if (isNaN(num)) return '0vh';
         return `${num}vh`;
       };
 
-      // 生成平滑描边阴影 (直接使用 vh 单位，与预览保持一致)
+      // 生成平滑描边阴影 (直接使用对应单位)
       const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
         if (!enhanced) {
-          const w = toVh(strokeWidth);
-          const s = toVh(shadowIntensity);
+          const w = toUnit(strokeWidth);
+          const s = toUnit(shadowIntensity);
           return `
             ${w} 0 0 ${strokeColor},
             -${w} 0 0 ${strokeColor},
@@ -196,19 +196,19 @@ const ObsDanmakuPage = () => {
           layers.forEach(layer => {
             const w = strokeWidth * layer;
             directions.forEach(dir => {
-              shadows.push(`${toVh(w * dir[0])} ${toVh(w * dir[1])} 0 ${strokeColor}`);
+              shadows.push(`${toUnit(w * dir[0])} ${toUnit(w * dir[1])} 0 ${strokeColor}`);
             });
           });
         }
         
         // 外发光
         if (glowIntensity > 0) {
-          shadows.push(`0 0 ${toVh(glowIntensity)} ${strokeColor}`);
+          shadows.push(`0 0 ${toUnit(glowIntensity)} ${strokeColor}`);
         }
         
         // 投影
         if (shadowIntensity > 0) {
-          shadows.push(`0 ${toVh(shadowIntensity * 0.5)} ${toVh(shadowIntensity)} rgba(0,0,0,0.6)`);
+          shadows.push(`0 ${toUnit(shadowIntensity * 0.5)} ${toUnit(shadowIntensity)} rgba(0,0,0,0.6)`);
         }
         
         return shadows.join(', ');
@@ -217,7 +217,7 @@ const ObsDanmakuPage = () => {
       // 所有样式都需要设置，因为气泡样式也使用了部分CSS变量
       root.style.setProperty('--username-font-family', customStyles.usernameFontFamily);
       root.style.setProperty('--username-font-family-fallback', customStyles.usernameFontFamilyFallback || 'sans-serif');
-      root.style.setProperty('--username-font-size', toVh(customStyles.usernameFontSize));
+      root.style.setProperty('--username-font-size', toUnit(customStyles.usernameFontSize));
       root.style.setProperty('--username-font-weight', customStyles.usernameFontWeight || 'bold');
       root.style.setProperty('--username-font-weight-fallback', customStyles.usernameFontWeightFallback || 'normal');
       root.style.setProperty('--username-color', customStyles.usernameColor || '#333333');
@@ -236,7 +236,7 @@ const ObsDanmakuPage = () => {
 
       root.style.setProperty('--danmaku-font-family', customStyles.danmakuFontFamily);
       root.style.setProperty('--danmaku-font-family-fallback', customStyles.danmakuFontFamilyFallback || 'sans-serif');
-      root.style.setProperty('--danmaku-font-size', toVh(customStyles.danmakuFontSize));
+      root.style.setProperty('--danmaku-font-size', toUnit(customStyles.danmakuFontSize));
       root.style.setProperty('--danmaku-font-weight', customStyles.danmakuFontWeight || 'normal');
       root.style.setProperty('--danmaku-font-weight-fallback', customStyles.danmakuFontWeightFallback || 'normal');
       root.style.setProperty('--danmaku-color', customStyles.danmakuColor || '#333333');
@@ -250,9 +250,17 @@ const ObsDanmakuPage = () => {
         customStyles.danmakuEnhancedStroke !== false
       ));
 
-      root.style.setProperty('--avatar-size', toVh(customStyles.avatarSize));
-      root.style.setProperty('--item-spacing', toVh(customStyles.itemSpacing));
-      root.style.setProperty('--emot-size', toVh(customStyles.emotSize || 28));
+      root.style.setProperty('--avatar-size', toUnit(customStyles.avatarSize));
+      root.style.setProperty('--item-spacing', toUnit(customStyles.itemSpacing));
+      root.style.setProperty('--emot-size', toUnit(customStyles.emotSize || 28));
+      root.style.setProperty('--bubble-padding-x', toUnit(customStyles.bubblePaddingX !== undefined ? customStyles.bubblePaddingX : 3.7));
+      
+      // 气泡渐变色
+      root.style.setProperty('--bubble-bg-start', customStyles.danmakuBubbleBgStartTransparent ? 'transparent' : (customStyles.danmakuBubbleBgStart || '#ffa8d7'));
+      root.style.setProperty('--bubble-bg-end', customStyles.danmakuBubbleBgEnd || '#ffa8d7');
+      root.style.setProperty('--sc-bubble-bg-start', customStyles.scBubbleBgStartTransparent ? 'transparent' : (customStyles.scBubbleBgStart || '#c3a4f5'));
+      root.style.setProperty('--sc-bubble-bg-end', customStyles.scBubbleBgEnd || '#c3a4f5');
+
       console.log('✅ CSS变量应用完成');
     } else {
       console.warn('⚠️ 没有自定义样式，将使用默认CSS样式');
@@ -574,7 +582,7 @@ const ObsDanmakuPage = () => {
 
   return (
     // 简洁样式
-    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''}`}>
+    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''}`}>
       {/* SC倒计时栏 */}
       {activeSCs.length > 0 && (
         <div className="sc-timer-bar">
@@ -623,22 +631,28 @@ const ObsDanmakuPage = () => {
           if (msg.type === 'superchat') {
             const colors = getSCColor(msg.price);
             return (
-              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
-                <div className="sc-header">
-                  <div className="sc-avatar">
-                    <img 
-                      src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
-                      alt={msg.user?.username}
-                      referrerPolicy="no-referrer"
-                    />
+              <div key={msg.id} className="sc-wrapper superchat">
+                <div className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                  <div className="sc-header">
+                    <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                      <img 
+                        id="img"
+                        className="style-scope yt-img-shadow"
+                        src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                        alt={msg.user?.username}
+                        referrerPolicy="no-referrer"
+                        height="24" 
+                        width="24"
+                      />
+                    </yt-img-shadow>
+                    <div className="sc-user-info">
+                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                    </div>
+                    <div className="sc-price">CN¥{msg.price}</div>
                   </div>
-                  <div className="sc-user-info">
-                    <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                  <div className="sc-content">
+                    {msg.message}
                   </div>
-                  <div className="sc-price">CN¥{msg.price}</div>
-                </div>
-                <div className="sc-content">
-                  {msg.message}
                 </div>
               </div>
             );
@@ -649,22 +663,28 @@ const ObsDanmakuPage = () => {
             const colors = getGuardColor(msg.guardLevel);
             const roleName = msg.guardLevel === 1 ? '总督' : (msg.guardLevel === 2 ? '提督' : '舰长');
             return (
-              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
-                <div className="sc-header">
-                  <div className="sc-avatar">
-                    <img 
-                      src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
-                      alt={msg.user?.username}
-                      referrerPolicy="no-referrer"
-                    />
+              <div key={msg.id} className={`guard-wrapper guard-level-${msg.guardLevel}`}>
+                <div className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                  <div className="sc-header">
+                    <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                      <img 
+                        id="img"
+                        className="style-scope yt-img-shadow"
+                        src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                        alt={msg.user?.username}
+                        referrerPolicy="no-referrer"
+                        height="24" 
+                        width="24"
+                      />
+                    </yt-img-shadow>
+                    <div className="sc-user-info">
+                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                    </div>
+                    <div className="sc-price">{roleName}</div>
                   </div>
-                  <div className="sc-user-info">
-                    <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                  <div className="sc-content">
+                    {msg.user?.username} 开通了 {roleName}
                   </div>
-                  <div className="sc-price">{roleName}</div>
-                </div>
-                <div className="sc-content">
-                  {msg.user?.username} 开通了 {roleName}
                 </div>
               </div>
             );
@@ -680,23 +700,29 @@ const ObsDanmakuPage = () => {
              }
 
              return (
-              <div key={msg.id} className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
-                <div className="sc-header">
-                  <div className="sc-avatar">
-                    <img 
-                      src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
-                      alt={msg.user?.username}
-                      referrerPolicy="no-referrer"
-                    />
+              <div key={msg.id} className="sc-wrapper gift">
+                <div className="sc-item" style={{ '--sc-bg': colors.bg, '--sc-bg-light': colors.bgLight }}>
+                  <div className="sc-header">
+                    <yt-img-shadow class="sc-avatar no-transition style-scope yt-live-chat-text-message-renderer" id="author-photo" height="24" width="24">
+                      <img 
+                        id="img"
+                        className="style-scope yt-img-shadow"
+                        src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                        alt={msg.user?.username}
+                        referrerPolicy="no-referrer"
+                        height="24" 
+                        width="24"
+                      />
+                    </yt-img-shadow>
+                    <div className="sc-user-info">
+                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                    </div>
+                    <div className="sc-price">投喂</div>
                   </div>
-                  <div className="sc-user-info">
-                    <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                  <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                    <span>送出了 {msg.giftName} x {msg.num}</span>
+                    {msg.giftIcon && <img src={msg.giftIcon} alt="" style={{ height: '30px' }} referrerPolicy="no-referrer" />}
                   </div>
-                  <div className="sc-price">投喂</div>
-                </div>
-                <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                  <span>送出了 {msg.giftName} x {msg.num}</span>
-                  {msg.giftIcon && <img src={msg.giftIcon} alt="" style={{ height: '30px' }} referrerPolicy="no-referrer" />}
                 </div>
               </div>
             );
@@ -704,41 +730,43 @@ const ObsDanmakuPage = () => {
           
           // 普通弹幕
           return (
-            <div key={msg.id} className="danmaku-item">
-              <div className="avatar">
-                <img 
-                  src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
-                  alt={msg.user?.username}
-                  referrerPolicy="no-referrer"
-                />
-              </div>
-              
-              <div className="content-area">
-                <div className="username-line">
-                  {guardLevel > 0 && (
-                    <img 
-                      src={
-                        guardLevel === 3 
-                          ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png'
-                          : guardLevel === 2
-                          ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png'
-                          : 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
-                      }
-                      alt={`guard-${guardLevel}`}
-                      referrerPolicy="no-referrer"
-                      className="guard-icon"
-                    />
-                  )}
-                  <span className={`username ${guardLevel > 0 ? `guard-${guardLevel}` : ''}`} lang={customStyles?.usernameLang || 'zh-CN'}>
-                    {renderTextWithFallback(
-                      msg.user?.username || '未知用户', 
-                      'username', 
-                      guardLevel > 0 ? `var(--username-color-guard${guardLevel})` : null
-                    )}
-                  </span>
+            <div key={msg.id} className={`danmaku-wrapper ${guardLevel > 0 ? `guard-level-${guardLevel}` : ''} ${msg.user?.isAdmin ? 'admin' : ''}`} data-uid={msg.user?.uid}>
+              <div className="danmaku-item">
+                <div className="avatar">
+                  <img 
+                    src={msg.user?.face || 'https://i0.hdslb.com/bfs/face/member/noface.jpg'}
+                    alt={msg.user?.username}
+                    referrerPolicy="no-referrer"
+                  />
                 </div>
-                <div className="danmaku-text" lang={customStyles?.danmakuLang || 'zh-CN'}>
-                  {renderContentWithEmoji(msg.content, msg.emots)}
+                
+                <div className="content-area">
+                  <div className="username-line">
+                    {guardLevel > 0 && (
+                      <img 
+                        src={
+                          guardLevel === 3 
+                            ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/captain-Bjw5Byb5.png'
+                            : guardLevel === 2
+                            ? 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/supervisor-u43ElIjU.png'
+                            : 'https://s1.hdslb.com/bfs/static/blive/live-pay-mono/relation/relation/assets/governor-DpDXKEdA.png'
+                        }
+                        alt={`guard-${guardLevel}`}
+                        referrerPolicy="no-referrer"
+                        className="guard-icon"
+                      />
+                    )}
+                    <span className={`username ${guardLevel > 0 ? `guard-${guardLevel}` : ''}`} lang={customStyles?.usernameLang || 'zh-CN'}>
+                      {renderTextWithFallback(
+                        msg.user?.username || '未知用户', 
+                        'username', 
+                        guardLevel > 0 ? `var(--username-color-guard${guardLevel})` : null
+                      )}
+                    </span>
+                  </div>
+                  <div className="danmaku-text" lang={customStyles?.danmakuLang || 'zh-CN'}>
+                    {renderContentWithEmoji(msg.content, msg.emots)}
+                  </div>
                 </div>
               </div>
             </div>

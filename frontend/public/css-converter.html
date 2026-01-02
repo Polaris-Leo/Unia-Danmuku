@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BLC to Unia CSS Converter</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
+            background: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 90vh;
+        }
+        .panel {
+            display: flex;
+            flex-direction: column;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h2 { margin-top: 0; }
+        textarea {
+            flex: 1;
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 14px;
+            resize: none;
+        }
+        .controls {
+            grid-column: 1 / -1;
+            display: flex;
+            gap: 10px;
+            align-items: center;
+            padding: 10px 0;
+        }
+        button {
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="controls">
+            <button onclick="convert()">Convert CSS</button>
+            <label>
+                <input type="checkbox" id="useVh" checked>
+                Convert px to vh (Base 1080px)
+            </label>
+            <label>
+                <input type="checkbox" id="fixSelectors" checked>
+                Map Selectors (BLC -> Unia)
+            </label>
+        </div>
+        <div class="panel">
+            <h2>Input (BLC CSS)</h2>
+            <textarea id="input" placeholder="Paste your YouTube Live Chat CSS here..."></textarea>
+        </div>
+        <div class="panel">
+            <h2>Output (Unia CSS)</h2>
+            <textarea id="output" placeholder="Converted CSS will appear here..."></textarea>
+        </div>
+    </div>
+
+    <script>
+        function convert() {
+            const input = document.getElementById('input').value;
+            const useVh = document.getElementById('useVh').checked;
+            const fixSelectors = document.getElementById('fixSelectors').checked;
+            
+            let css = input;
+
+            // 1. Selector Mapping
+            if (fixSelectors) {
+                const mappings = [
+                    // Global / Body
+                    { from: /yt-live-chat-app/g, to: '.obs-danmaku-simple' },
+                    { from: /yt-live-chat-renderer/g, to: '.obs-danmaku-simple' },
+                    
+                    // Message Items (Normal)
+                    { from: /yt-live-chat-text-message-renderer/g, to: '.danmaku-wrapper' },
+                    { from: /yt-live-chat-message-input-renderer/g, to: '.danmaku-wrapper' }, // Sometimes used for input, but mapped for safety
+                    
+                    // Author Types
+                    { from: /\[author-type="owner"\]/g, to: '.admin' },
+                    { from: /\[author-type="moderator"\]/g, to: '.admin' },
+                    { from: /\[author-type="member"\]/g, to: '.member' },
+                    
+                    // Inner Elements
+                    { from: /#author-name/g, to: '.username' },
+                    { from: /#message/g, to: '.danmaku-text' },
+                    { from: /yt-img-shadow/g, to: '.avatar' },
+                    { from: /img\.yt-img-shadow/g, to: '.avatar img' },
+                    
+                    // SuperChat / Paid Messages
+                    { from: /yt-live-chat-paid-message-renderer/g, to: '.sc-wrapper.superchat .sc-item' },
+                    { from: /yt-live-chat-membership-item-renderer/g, to: '.guard-wrapper .sc-item' },
+                    { from: /#card/g, to: '.sc-item' },
+                    { from: /#header/g, to: '.sc-header' },
+                    { from: /#content/g, to: '.sc-content' },
+                    { from: /#purchase-amount/g, to: '.sc-price' },
+                    
+                    // Avatars
+                    { from: /yt-live-chat-author-chip/g, to: '.username-line' },
+                    { from: /yt-live-chat-author-badge-renderer/g, to: '.guard-icon' }, // Approx
+                    
+                    // Specific Fixes for Bubbles
+                    { from: /yt-live-chat-text-message-renderer:hover/g, to: '.danmaku-wrapper:hover' },
+                ];
+
+                mappings.forEach(map => {
+                    css = css.replace(map.from, map.to);
+                });
+            }
+
+            // 2. Unit Conversion (px -> vh)
+            if (useVh) {
+                // Match numbers followed by px
+                css = css.replace(/(\d+(\.\d+)?)px/g, (match, number) => {
+                    const px = parseFloat(number);
+                    // 1080px height = 100vh => 1px = 100/1080 vh = 0.09259vh
+                    // But usually we want a bit larger scaling for readability on stream
+                    // Let's stick to standard 1080p mapping: val / 10.8
+                    if (px <= 1) return match; // Keep 1px borders as is usually
+                    const vh = (px / 10.8).toFixed(3);
+                    return `${vh}vh`;
+                });
+            }
+
+            // 3. Cleanup
+            // Remove empty blocks or invalid selectors if any (optional)
+            
+            document.getElementById('output').value = css;
+        }
+    </script>
+</body>
+</html>
