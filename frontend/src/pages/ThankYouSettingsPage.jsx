@@ -31,6 +31,11 @@ const defaultConfig = {
   highlightKeywords: false,
   highlightColor: '#ff0000',
 
+  // Bubble Style
+  bubbleEnabled: false,
+  bubbleColorStart: 'transparent',
+  bubbleColorEnd: '#ffa8d7',
+
   // Gift
   minPrice: 9.9,
   ignoreFree: true,
@@ -561,7 +566,12 @@ const ThankYouSettingsPage = () => {
                   whiteSpace: 'normal',
                   lineHeight: '1.5',
                   marginTop: toPreviewUnit(config.textSpacing || 0),
-                  flexShrink: 0
+                  flexShrink: 0,
+
+                  // Bubble Style
+                  backgroundImage: config.bubbleEnabled ? `linear-gradient(to top, ${config.bubbleColorStart}, ${config.bubbleColorEnd} 70%)` : 'none',
+                  padding: config.bubbleEnabled ? `${toPreviewUnit(config.fontSize * 0.5)} ${toPreviewUnit(config.fontSize)}` : '0',
+                  borderRadius: config.bubbleEnabled ? toPreviewUnit(config.fontSize) : '0',
                 }}>
                   {renderPreviewMessage()}
                 </div>
@@ -837,6 +847,62 @@ const ThankYouSettingsPage = () => {
                       />
                     </div>
                   </div>
+
+                  <div className="form-group">
+                    <label>启用气泡背景</label>
+                    <div className="switch-group" style={{ justifyContent: 'flex-start', marginBottom: '10px' }}>
+                      <label className="switch">
+                        <input 
+                          type="checkbox" 
+                          checked={config.bubbleEnabled}
+                          onChange={e => saveConfig({...config, bubbleEnabled: e.target.checked})}
+                        />
+                        <span className="slider round"></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {config.bubbleEnabled && (
+                    <>
+                      <div className="form-group">
+                        <label>气泡渐变起始色 (底部)</label>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input 
+                            type="color" 
+                            className="v-input-color"
+                            value={config.bubbleColorStart === 'transparent' ? '#ffffff' : config.bubbleColorStart}
+                            onChange={e => saveConfig({...config, bubbleColorStart: e.target.value})}
+                          />
+                          <input 
+                            type="text" 
+                            className="v-input"
+                            value={config.bubbleColorStart}
+                            onChange={e => saveConfig({...config, bubbleColorStart: e.target.value})}
+                            style={{ width: '120px' }}
+                            placeholder="transparent or #RRGGBB"
+                          />
+                        </div>
+                      </div>
+                      <div className="form-group">
+                        <label>气泡渐变结束色 (顶部)</label>
+                        <div style={{ display: 'flex', gap: '10px' }}>
+                          <input 
+                            type="color" 
+                            className="v-input-color"
+                            value={config.bubbleColorEnd}
+                            onChange={e => saveConfig({...config, bubbleColorEnd: e.target.value})}
+                          />
+                          <input 
+                            type="text" 
+                            className="v-input"
+                            value={config.bubbleColorEnd}
+                            onChange={e => saveConfig({...config, bubbleColorEnd: e.target.value})}
+                            style={{ width: '120px' }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <div className="form-group">
                     <label>字体粗细</label>
                     <select 

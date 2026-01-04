@@ -39,6 +39,11 @@ const ThankYouPage = () => {
     highlightKeywords: false,
     highlightColor: '#ff0000',
 
+    // Bubble Style
+    bubbleEnabled: false,
+    bubbleColorStart: 'transparent',
+    bubbleColorEnd: '#ffa8d7',
+
     // Logic
     minPrice: 9.9,
     ignoreFree: true,
@@ -383,7 +388,12 @@ const ThankYouPage = () => {
           whiteSpace: 'normal',
           lineHeight: '1.5',
           marginTop: toVh(config.textSpacing || 0),
-          flexShrink: 0
+          flexShrink: 0,
+          
+          // Bubble Style
+          backgroundImage: config.bubbleEnabled ? `linear-gradient(to top, ${config.bubbleColorStart}, ${config.bubbleColorEnd} 70%)` : 'none',
+          padding: config.bubbleEnabled ? `${toVh(config.fontSize * 0.5)} ${toVh(config.fontSize)}` : '0',
+          borderRadius: config.bubbleEnabled ? toVh(config.fontSize) : '0',
         }}>
           {renderMessage(currentGift)}
         </div>

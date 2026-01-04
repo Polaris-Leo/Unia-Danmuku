@@ -2006,5 +2006,23 @@
     "width": 20,
     "height": 20,
     "emoticon_unique": "upower_[崩坏3·光辉矢愿_吃西瓜冰]"
+  },
+  "[[原神_唔]]": {
+    "url": "https://i0.hdslb.com/bfs/emote/f00164e1fdb73d4aa84b2741d343d10a89a8a2ed.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[原神_唔]"
+  },
+  "[[Yommyko_坏笑]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/34f4c43729a06d282f59139dc8cc6a636c0f11d8.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[Yommyko_坏笑]"
+  },
+  "[[天才鸽鸽表情包_立正]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/f28242e03f09a0976572f504017bfce2ad664a6f.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_立正]"
   }
 }

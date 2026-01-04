@@ -197,6 +197,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/856d680c899ea6e07927d1659cf670413dbd60aa.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/3137f0a63a4e1ee68625200f8433c9c31c67e617.webp"
   },
+  "35301": {
+    "name": "遁符溜影",
+    "icon": "https://i0.hdslb.com/bfs/live/9b1b1e9c3ce9ddfbd7262b78add814934ae034af.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/3670800ca787026b6cd7e8297144367d4921596f.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/9b1b1e9c3ce9ddfbd7262b78add814934ae034af.webp"
+  },
   "35311": {
     "name": "好运柚叶",
     "icon": "https://i0.hdslb.com/bfs/live/0aa76c0b4ab72cc93a7e28012088fac1f53baf0d.webp",
