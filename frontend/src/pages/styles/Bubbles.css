@@ -201,7 +201,7 @@
 .style-bubbles .sc-username,
 .style-bubbles .sc-price {
   color: var(--username-color, #ffffff) !important;
-  font-family: var(--username-font-family, "Microsoft YaHei"), sans-serif !important;
+  font-family: var(--username-font-family, "Microsoft YaHei"), sans-serif;
   font-weight: var(--username-font-weight, bold) !important;
   text-shadow: var(--username-text-shadow) !important;
 }
@@ -210,7 +210,7 @@
 .style-bubbles .danmaku-text,
 .style-bubbles .sc-content {
   color: var(--danmaku-color, #ffffff) !important;
-  font-family: var(--danmaku-font-family, "Microsoft YaHei"), sans-serif !important;
+  font-family: var(--danmaku-font-family, "Microsoft YaHei"), sans-serif;
   font-weight: var(--danmaku-font-weight, normal) !important;
   text-shadow: var(--danmaku-text-shadow) !important;
 }

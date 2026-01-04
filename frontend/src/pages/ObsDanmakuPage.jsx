@@ -218,8 +218,14 @@ const ObsDanmakuPage = () => {
       };
 
       // 所有样式都需要设置，因为气泡样式也使用了部分CSS变量
-      root.style.setProperty('--username-font-family', customStyles.usernameFontFamily);
-      root.style.setProperty('--username-font-family-fallback', customStyles.usernameFontFamilyFallback || 'sans-serif');
+      // 修复：如果未设置备用字体，则默认使用主字体，避免中文回退到系统默认字体
+      // 修复：追加 , sans-serif 以确保字体族语法的完整性
+      const usernameFamily = customStyles.usernameFontFamily || 'sans-serif';
+      const usernameFallback = customStyles.usernameFontFamilyFallback || usernameFamily;
+      
+      root.style.setProperty('--username-font-family', `${usernameFamily}, sans-serif`);
+      root.style.setProperty('--username-font-family-fallback', `${usernameFallback}, sans-serif`);
+      
       root.style.setProperty('--username-font-size', toUnit(customStyles.usernameFontSize));
       root.style.setProperty('--username-font-weight', customStyles.usernameFontWeight || 'bold');
       root.style.setProperty('--username-font-weight-fallback', customStyles.usernameFontWeightFallback || 'normal');
@@ -239,8 +245,12 @@ const ObsDanmakuPage = () => {
         customStyles.usernameEnhancedStroke !== false
       ));
 
-      root.style.setProperty('--danmaku-font-family', customStyles.danmakuFontFamily);
-      root.style.setProperty('--danmaku-font-family-fallback', customStyles.danmakuFontFamilyFallback || 'sans-serif');
+      const danmakuFamily = customStyles.danmakuFontFamily || 'sans-serif';
+      const danmakuFallback = customStyles.danmakuFontFamilyFallback || danmakuFamily;
+
+      root.style.setProperty('--danmaku-font-family', `${danmakuFamily}, sans-serif`);
+      root.style.setProperty('--danmaku-font-family-fallback', `${danmakuFallback}, sans-serif`);
+      
       root.style.setProperty('--danmaku-font-size', toUnit(customStyles.danmakuFontSize));
       root.style.setProperty('--danmaku-font-weight', customStyles.danmakuFontWeight || 'normal');
       root.style.setProperty('--danmaku-font-weight-fallback', customStyles.danmakuFontWeightFallback || 'normal');
@@ -653,12 +663,14 @@ const ObsDanmakuPage = () => {
                       />
                     </yt-img-shadow>
                     <div className="sc-user-info">
-                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                      <div className="sc-username">
+                        {renderTextWithFallback(msg.user?.username || '未知用户', 'username')}
+                      </div>
                     </div>
                     <div className="sc-price">CN¥{msg.price}</div>
                   </div>
                   <div className="sc-content">
-                    {msg.message}
+                    {renderTextWithFallback(msg.message, 'danmaku')}
                   </div>
                 </div>
               </div>
@@ -685,12 +697,14 @@ const ObsDanmakuPage = () => {
                       />
                     </yt-img-shadow>
                     <div className="sc-user-info">
-                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                      <div className="sc-username">
+                        {renderTextWithFallback(msg.user?.username || '未知用户', 'username')}
+                      </div>
                     </div>
                     <div className="sc-price">{roleName}</div>
                   </div>
                   <div className="sc-content">
-                    {msg.user?.username} 开通了 {roleName}
+                    {renderTextWithFallback(`${msg.user?.username} 开通了 ${roleName}`, 'danmaku')}
                   </div>
                 </div>
               </div>
@@ -722,12 +736,14 @@ const ObsDanmakuPage = () => {
                       />
                     </yt-img-shadow>
                     <div className="sc-user-info">
-                      <div className="sc-username">{msg.user?.username || '未知用户'}</div>
+                      <div className="sc-username">
+                        {renderTextWithFallback(msg.user?.username || '未知用户', 'username')}
+                      </div>
                     </div>
                     <div className="sc-price">投喂</div>
                   </div>
                   <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span>送出了 {msg.giftName} x {msg.num}</span>
+                    <span>{renderTextWithFallback(`送出了 ${msg.giftName} x ${msg.num}`, 'danmaku')}</span>
                     {msg.giftIcon && <img src={msg.giftIcon} alt="" style={{ height: '30px' }} referrerPolicy="no-referrer" />}
                   </div>
                 </div>

@@ -228,10 +228,17 @@ const ObsPreview = ({ settings }) => {
     return shadows.join(', ');
   };
 
+  // 修复：如果未设置备用字体，则默认使用主字体
+  const usernameFamily = settings.usernameFontFamily || 'sans-serif';
+  const usernameFallback = settings.usernameFontFamilyFallback || usernameFamily;
+  
+  const danmakuFamily = settings.danmakuFontFamily || 'sans-serif';
+  const danmakuFallback = settings.danmakuFontFamilyFallback || danmakuFamily;
+
   // 构建样式对象
   const containerStyle = {
-    '--username-font-family': `${settings.usernameFontFamily}, sans-serif`,
-    '--username-font-family-fallback': `${settings.usernameFontFamilyFallback || 'sans-serif'}`,
+    '--username-font-family': `${usernameFamily}, sans-serif`,
+    '--username-font-family-fallback': `${usernameFallback}, sans-serif`,
     '--username-font-size': toUnit(settings.usernameFontSize),
     '--username-font-weight': settings.usernameFontWeight,
     '--username-font-weight-fallback': settings.usernameFontWeightFallback || 'normal',
@@ -251,8 +258,8 @@ const ObsPreview = ({ settings }) => {
       settings.usernameEnhancedStroke
     ),
     
-    '--danmaku-font-family': `${settings.danmakuFontFamily}, sans-serif`,
-    '--danmaku-font-family-fallback': `${settings.danmakuFontFamilyFallback || 'sans-serif'}`,
+    '--danmaku-font-family': `${danmakuFamily}, sans-serif`,
+    '--danmaku-font-family-fallback': `${danmakuFallback}, sans-serif`,
     '--danmaku-font-size': toUnit(settings.danmakuFontSize),
     '--danmaku-font-weight': settings.danmakuFontWeight,
     '--danmaku-font-weight-fallback': settings.danmakuFontWeightFallback || 'normal',
@@ -345,7 +352,7 @@ const ObsPreview = ({ settings }) => {
           <div className="sc-timer-avatar">
             <img src={sampleSC.user.face} alt="" referrerPolicy="no-referrer" />
           </div>
-          <div className="sc-timer-price">CN¥{sampleSC.price}</div>
+          <div className="sc-timer-price">{renderTextWithFallback(`CN¥${sampleSC.price}`, 'danmaku')}</div>
         </div>
       </div>
 
@@ -366,12 +373,12 @@ const ObsPreview = ({ settings }) => {
                 />
               </yt-img-shadow>
               <div className="sc-user-info">
-                <div className="sc-username">{sampleSC.user.username}</div>
+                <div className="sc-username">{renderTextWithFallback(sampleSC.user.username, 'username')}</div>
               </div>
               <div className="sc-price">CN¥{sampleSC.price}</div>
             </div>
             <div className="sc-content">
-              {sampleSC.message}
+              {renderTextWithFallback(sampleSC.message, 'danmaku')}
             </div>
           </div>
         </div>
@@ -398,12 +405,12 @@ const ObsPreview = ({ settings }) => {
                       />
                     </yt-img-shadow>
                     <div className="sc-user-info">
-                      <div className="sc-username">{msg.user.username}</div>
+                      <div className="sc-username">{renderTextWithFallback(msg.user.username, 'username')}</div>
                     </div>
                     <div className="sc-price">{roleName}</div>
                   </div>
                   <div className="sc-content">
-                    {msg.user.username} 开通了 {roleName}
+                    {renderTextWithFallback(`${msg.user.username} 开通了 ${roleName}`, 'danmaku')}
                   </div>
                 </div>
               </div>
@@ -429,12 +436,12 @@ const ObsPreview = ({ settings }) => {
                       />
                     </yt-img-shadow>
                     <div className="sc-user-info">
-                      <div className="sc-username">{msg.user.username}</div>
+                      <div className="sc-username">{renderTextWithFallback(msg.user.username, 'username')}</div>
                     </div>
                     <div className="sc-price">投喂</div>
                   </div>
                   <div className="sc-content" style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <span>送出了 {msg.giftName} x {msg.num}</span>
+                    <span>{renderTextWithFallback(`送出了 ${msg.giftName} x ${msg.num}`, 'danmaku')}</span>
                   </div>
                 </div>
               </div>
