@@ -36,7 +36,7 @@ docker run -d \
 ## 🌐 访问应用
 
 - **Web 界面**: http://localhost:3000
-- **健康检查**: http://localhost:3000/health
+- **健康检查**: http://localhost:3000/api/health
 - **WebSocket**: ws://localhost:3000/ws/danmaku
 
 ## 📋 Docker 文件说明

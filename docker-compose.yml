@@ -17,7 +17,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - FRONTEND_URL=https://danmuku.unia.love
+      - FRONTEND_URL=http://localhost:3000
     networks:
       - unia-network
     healthcheck:
