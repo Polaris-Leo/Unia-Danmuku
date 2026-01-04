@@ -512,7 +512,9 @@ export class BilibiliLiveWS {
       throw new Error(`获取房间信息失败: ${response.data.message || '未知错误'}`);
     }
     
-    return response.data.data.room_id;
+    const data = response.data.data;
+    this.anchorId = data.uid; // 保存主播UID
+    return data.room_id;
   }
 
   /**
@@ -914,6 +916,7 @@ export class BilibiliLiveWS {
             isAdmin: info[2][2] === 1,
             isVip: info[2][3] === 1,
             isSvip: info[2][4] === 1,
+            isAnchor: uid === this.anchorId, // 是否为主播
             guardLevel: info[7] || 0,  // 大航海等级: 0=无, 1=总督, 2=提督, 3=舰长
             face: face  // 优先使用协议中的头像，fallback到API
           },

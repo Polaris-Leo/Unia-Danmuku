@@ -16,23 +16,25 @@ const renderTextWithFallback = (text, type = 'danmaku') => {
   while ((match = asciiRegex.exec(text)) !== null) {
     // Non-ASCII part before this match (Fallback Font)
     if (match.index > lastIndex) {
+      const segment = text.substring(lastIndex, match.index);
       parts.push(
-        <span key={`fb-${lastIndex}`} style={{ 
+        <span key={`fb-${lastIndex}`} data-text={segment} style={{ 
           fontFamily: `var(--${type}-font-family-fallback)`,
           fontWeight: `var(--${type}-font-weight-fallback)`
         }}>
-          {text.substring(lastIndex, match.index)}
+          {segment}
         </span>
       );
     }
     
     // ASCII part (Main Font)
+    const segment = match[0];
     parts.push(
-      <span key={`main-${match.index}`} style={{ 
+      <span key={`main-${match.index}`} data-text={segment} style={{ 
         fontFamily: `var(--${type}-font-family)`,
         fontWeight: `var(--${type}-font-weight)`
       }}>
-        {match[0]}
+        {segment}
       </span>
     );
     
@@ -41,12 +43,13 @@ const renderTextWithFallback = (text, type = 'danmaku') => {
   
   // Remaining Non-ASCII part
   if (lastIndex < text.length) {
+    const segment = text.substring(lastIndex);
     parts.push(
-      <span key={`fb-${lastIndex}`} style={{ 
+      <span key={`fb-${lastIndex}`} data-text={segment} style={{ 
         fontFamily: `var(--${type}-font-family-fallback)`,
         fontWeight: `var(--${type}-font-weight-fallback)`
       }}>
-        {text.substring(lastIndex)}
+        {segment}
       </span>
     );
   }
@@ -152,11 +155,11 @@ const ObsPreview = ({ settings }) => {
       totalCoin: 52000
     },
     {
-      id: 10,
-      type: 'guard',
-      user: { username: '新舰长', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg' },
-      guardLevel: 3,
-      giftName: '舰长'
+      id: 11,
+      type: 'message',
+      user: { username: '主播本人', face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg', isAnchor: true },
+      message: '欢迎大家来到直播间！这是一条主播发送的弹幕。',
+      guardLevel: 0
     }
   ];
 
@@ -236,6 +239,8 @@ const ObsPreview = ({ settings }) => {
     '--username-color-guard1': settings.usernameColorGuard1,
     '--username-color-guard2': settings.usernameColorGuard2,
     '--username-color-guard3': settings.usernameColorGuard3,
+    '--username-color-anchor-start': settings.usernameColorAnchorStart || '#ff0000',
+    '--username-color-anchor-end': settings.usernameColorAnchorEnd || '#ff0000',
     
     // 动态生成阴影
     '--username-text-shadow': generateTextShadow(
@@ -252,6 +257,8 @@ const ObsPreview = ({ settings }) => {
     '--danmaku-font-weight': settings.danmakuFontWeight,
     '--danmaku-font-weight-fallback': settings.danmakuFontWeightFallback || 'normal',
     '--danmaku-color': settings.danmakuColor,
+    '--danmaku-color-anchor-start': settings.danmakuColorAnchorStart || '#ff0000',
+    '--danmaku-color-anchor-end': settings.danmakuColorAnchorEnd || '#ff0000',
     
     // 动态生成阴影
     '--danmaku-text-shadow': generateTextShadow(
@@ -436,7 +443,7 @@ const ObsPreview = ({ settings }) => {
 
           // 普通弹幕
           return (
-          <div key={msg.id} className="danmaku-wrapper">
+          <div key={msg.id} className={`danmaku-wrapper ${msg.user.isAnchor ? 'anchor' : ''}`}>
             <div className="danmaku-item">
               <div className="avatar">
                 <img src={msg.user.face} alt="" referrerPolicy="no-referrer" />
@@ -460,7 +467,18 @@ const ObsPreview = ({ settings }) => {
                   </span>
                 </div>
                 <div className="danmaku-text" lang={settings.danmakuLang || 'zh-CN'}>
-                  {renderContent(msg)}
+                  {(() => {
+                    const content = renderContent(msg);
+                    if (msg.user.isAnchor) {
+                      return (
+                        <>
+                          <div className="text-layer-stroke">{content}</div>
+                          <div className="text-layer-gradient">{content}</div>
+                        </>
+                      );
+                    }
+                    return content;
+                  })()}
                 </div>
               </div>
             </div>

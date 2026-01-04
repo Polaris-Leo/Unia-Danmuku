@@ -18,27 +18,29 @@ const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) =>
   while ((match = asciiRegex.exec(text)) !== null) {
     // Non-ASCII part before this match (Fallback Font)
     if (match.index > lastIndex) {
+      const segment = text.substring(lastIndex, match.index);
       parts.push(
-        <span key={`fb-${lastIndex}`} style={{ 
+        <span key={`fb-${lastIndex}`} data-text={segment} style={{ 
           fontFamily: `var(--${type}-font-family-fallback)`,
           fontWeight: `var(--${type}-font-weight-fallback)`,
           fontSize: `var(--${type}-font-size)`,
           color: colorStyle
         }}>
-          {text.substring(lastIndex, match.index)}
+          {segment}
         </span>
       );
     }
     
     // ASCII part (Main Font)
+    const segment = match[0];
     parts.push(
-      <span key={`main-${match.index}`} style={{ 
+      <span key={`main-${match.index}`} data-text={segment} style={{ 
         fontFamily: `var(--${type}-font-family)`,
         fontWeight: `var(--${type}-font-weight)`,
         fontSize: `var(--${type}-font-size)`,
         color: colorStyle
       }}>
-        {match[0]}
+        {segment}
       </span>
     );
     
@@ -47,14 +49,15 @@ const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) =>
   
   // Remaining Non-ASCII part
   if (lastIndex < text.length) {
+    const segment = text.substring(lastIndex);
     parts.push(
-      <span key={`fb-${lastIndex}`} style={{ 
+      <span key={`fb-${lastIndex}`} data-text={segment} style={{ 
         fontFamily: `var(--${type}-font-family-fallback)`,
         fontWeight: `var(--${type}-font-weight-fallback)`,
         fontSize: `var(--${type}-font-size)`,
         color: colorStyle
       }}>
-        {text.substring(lastIndex)}
+        {segment}
       </span>
     );
   }
@@ -224,6 +227,8 @@ const ObsDanmakuPage = () => {
       root.style.setProperty('--username-color-guard1', customStyles.usernameColorGuard1 || '#ff1a75');
       root.style.setProperty('--username-color-guard2', customStyles.usernameColorGuard2 || '#9b39f4');
       root.style.setProperty('--username-color-guard3', customStyles.usernameColorGuard3 || '#1fa3f1');
+      root.style.setProperty('--username-color-anchor-start', customStyles.usernameColorAnchorStart || '#ff0000');
+      root.style.setProperty('--username-color-anchor-end', customStyles.usernameColorAnchorEnd || '#ff0000');
       
       // 动态生成用户名阴影
       root.style.setProperty('--username-text-shadow', generateTextShadow(
@@ -240,6 +245,8 @@ const ObsDanmakuPage = () => {
       root.style.setProperty('--danmaku-font-weight', customStyles.danmakuFontWeight || 'normal');
       root.style.setProperty('--danmaku-font-weight-fallback', customStyles.danmakuFontWeightFallback || 'normal');
       root.style.setProperty('--danmaku-color', customStyles.danmakuColor || '#333333');
+      root.style.setProperty('--danmaku-color-anchor-start', customStyles.danmakuColorAnchorStart || '#ff0000');
+      root.style.setProperty('--danmaku-color-anchor-end', customStyles.danmakuColorAnchorEnd || '#ff0000');
       
       // 动态生成弹幕内容阴影
       root.style.setProperty('--danmaku-text-shadow', generateTextShadow(
@@ -730,7 +737,7 @@ const ObsDanmakuPage = () => {
           
           // 普通弹幕
           return (
-            <div key={msg.id} className={`danmaku-wrapper ${guardLevel > 0 ? `guard-level-${guardLevel}` : ''} ${msg.user?.isAdmin ? 'admin' : ''}`} data-uid={msg.user?.uid}>
+            <div key={msg.id} className={`danmaku-wrapper ${guardLevel > 0 ? `guard-level-${guardLevel}` : ''} ${msg.user?.isAdmin ? 'admin' : ''} ${msg.user?.isAnchor ? 'anchor' : ''}`} data-uid={msg.user?.uid}>
               <div className="danmaku-item">
                 <div className="avatar">
                   <img 
@@ -765,7 +772,18 @@ const ObsDanmakuPage = () => {
                     </span>
                   </div>
                   <div className="danmaku-text" lang={customStyles?.danmakuLang || 'zh-CN'}>
-                    {renderContentWithEmoji(msg.content, msg.emots)}
+                    {(() => {
+                      const content = renderContentWithEmoji(msg.content, msg.emots);
+                      if (msg.user?.isAnchor) {
+                        return (
+                          <>
+                            <div className="text-layer-stroke">{content}</div>
+                            <div className="text-layer-gradient">{content}</div>
+                          </>
+                        );
+                      }
+                      return content;
+                    })()}
                   </div>
                 </div>
               </div>

@@ -16,6 +16,8 @@ const ObsSettingsPage = () => {
     usernameColorGuard1: '#ff1a75', // 总督
     usernameColorGuard2: '#9b39f4', // 提督
     usernameColorGuard3: '#1fa3f1', // 舰长
+    usernameColorAnchorStart: '#ff0000', // 主播渐变起始
+    usernameColorAnchorEnd: '#ff0000', // 主播渐变结束
     usernameStrokeWidth: 0.2, // vh
     usernameStrokeColor: '#ffffff',
     usernameEnhancedStroke: true, // 启用增强描边
@@ -29,6 +31,8 @@ const ObsSettingsPage = () => {
     danmakuFontSize: 2.6, // vh
     danmakuFontWeight: 'normal',
     danmakuColor: '#333333',
+    danmakuColorAnchorStart: '#ff0000', // 主播弹幕渐变起始
+    danmakuColorAnchorEnd: '#ff0000', // 主播弹幕渐变结束
     danmakuStrokeWidth: 0.2, // vh
     danmakuStrokeColor: '#ffffff',
     danmakuEnhancedStroke: true, // 启用增强描边
@@ -479,6 +483,41 @@ const ObsSettingsPage = () => {
     }
   };
 
+  // 发送主播测试消息
+  const handleTestAnchor = async () => {
+    if (!roomId) {
+      alert('请先输入直播间ID');
+      return;
+    }
+    const msg = {
+      type: 'danmaku',
+      user: {
+        uid: 888888,
+        username: '主播本人',
+        face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg',
+        isAnchor: true,
+        isAdmin: true
+      },
+      content: '这是一条主播发送的测试弹幕，应该显示为渐变色！',
+      timestamp: Date.now()
+    };
+
+    try {
+      const res = await fetch('/api/danmaku/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ roomId, data: msg })
+      });
+      const data = await res.json();
+      if (!data.success) {
+        alert('发送失败: ' + data.message);
+      }
+    } catch (err) {
+      console.error(err);
+      alert('请求失败，请确保后端服务已启动');
+    }
+  };
+
   return (
     <div className="obs-settings-page">
       <div className="obs-settings-layout">
@@ -719,6 +758,36 @@ const ObsSettingsPage = () => {
                 value={settings.usernameColorGuard1}
                 onChange={(e) => setSettings({ ...settings, usernameColorGuard1: e.target.value })}
                 placeholder="#ff1a75"
+              />
+            </div>
+
+            <div className="setting-item">
+              <label>主播颜色(渐变始)：</label>
+              <input
+                type="color"
+                value={settings.usernameColorAnchorStart}
+                onChange={(e) => setSettings({ ...settings, usernameColorAnchorStart: e.target.value })}
+              />
+              <input
+                type="text"
+                value={settings.usernameColorAnchorStart}
+                onChange={(e) => setSettings({ ...settings, usernameColorAnchorStart: e.target.value })}
+                placeholder="#ff0000"
+              />
+            </div>
+
+            <div className="setting-item">
+              <label>主播颜色(渐变终)：</label>
+              <input
+                type="color"
+                value={settings.usernameColorAnchorEnd}
+                onChange={(e) => setSettings({ ...settings, usernameColorAnchorEnd: e.target.value })}
+              />
+              <input
+                type="text"
+                value={settings.usernameColorAnchorEnd}
+                onChange={(e) => setSettings({ ...settings, usernameColorAnchorEnd: e.target.value })}
+                placeholder="#ff0000"
               />
             </div>
 
@@ -976,6 +1045,36 @@ const ObsSettingsPage = () => {
                 value={settings.danmakuColor}
                 onChange={(e) => setSettings({ ...settings, danmakuColor: e.target.value })}
                 placeholder="#333333"
+              />
+            </div>
+
+            <div className="setting-item">
+              <label>主播弹幕(渐变始)：</label>
+              <input
+                type="color"
+                value={settings.danmakuColorAnchorStart}
+                onChange={(e) => setSettings({ ...settings, danmakuColorAnchorStart: e.target.value })}
+              />
+              <input
+                type="text"
+                value={settings.danmakuColorAnchorStart}
+                onChange={(e) => setSettings({ ...settings, danmakuColorAnchorStart: e.target.value })}
+                placeholder="#ff0000"
+              />
+            </div>
+
+            <div className="setting-item">
+              <label>主播弹幕(渐变终)：</label>
+              <input
+                type="color"
+                value={settings.danmakuColorAnchorEnd}
+                onChange={(e) => setSettings({ ...settings, danmakuColorAnchorEnd: e.target.value })}
+              />
+              <input
+                type="text"
+                value={settings.danmakuColorAnchorEnd}
+                onChange={(e) => setSettings({ ...settings, danmakuColorAnchorEnd: e.target.value })}
+                placeholder="#ff0000"
               />
             </div>
 
@@ -1266,7 +1365,7 @@ const ObsSettingsPage = () => {
             <div className={`section-content ${expandedSections.test ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>功能测试：</label>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
                 <button 
                   onClick={handleTestFlow} 
                   className="btn-test-flow"
@@ -1278,6 +1377,13 @@ const ObsSettingsPage = () => {
                   className="btn-test-sc"
                 >
                   <span className="icon">💰</span> 发送测试SC
+                </button>
+                <button 
+                  onClick={handleTestAnchor} 
+                  className="btn-test-anchor"
+                  style={{ background: 'linear-gradient(45deg, #ff0000, #ff5500)', color: 'white', border: 'none' }}
+                >
+                  <span className="icon">🎤</span> 发送主播消息
                 </button>
               </div>
               <p className="hint" style={{ marginTop: '0.625rem', width: '100%' }}>

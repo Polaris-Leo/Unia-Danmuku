@@ -119,6 +119,7 @@ router.post('/test-flow', (req, res) => {
     { type: 'guard', delay: 1500, username: '新舰长', guardLevel: 3, giftName: '舰长' },
     { type: 'danmaku', delay: 1800, username: '欢迎团', content: '欢迎舰长！' },
     { type: 'danmaku', delay: 2000, username: '欢迎团', content: '欢迎欢迎！' },
+    { type: 'danmaku', delay: 2200, username: '主播本人', content: '欢迎大家来到直播间！', isAnchor: true },
     { type: 'gift', delay: 2500, username: '富哥', giftName: '告白气球', num: 1, price: 520, totalCoin: 52000 }, // 52元
     { type: 'superchat', delay: 3500, username: 'SC大佬', price: 30, message: '加油加油！支持一下' },
     { type: 'danmaku', delay: 4000, username: '刷屏怪', content: '2333333333333333333' },
@@ -132,7 +133,8 @@ router.post('/test-flow', (req, res) => {
         uid: 10000 + Math.floor(Math.random() * 90000),
         username: event.username,
         face: 'https://i0.hdslb.com/bfs/face/member/noface.jpg',
-        guardLevel: event.guardLevel || 0
+        guardLevel: event.guardLevel || 0,
+        isAnchor: event.isAnchor || false
       };
 
       let msg = {

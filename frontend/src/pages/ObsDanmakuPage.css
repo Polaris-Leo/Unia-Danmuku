@@ -520,3 +520,105 @@ html, body {
   --item-spacing: 16px;
 }
 */
+
+
+
+/* 主播样式 - 修正版 (使用双层结构实现完美描边) */
+.danmaku-wrapper.anchor .username span {
+  position: relative;
+  z-index: 1;
+  background-image: linear-gradient(to right, var(--username-color-anchor-start), var(--username-color-anchor-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  text-shadow: none !important;
+  -webkit-text-stroke: 0 !important;
+  filter: none !important;
+}
+
+.danmaku-wrapper.anchor .username span::before {
+  content: attr(data-text);
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: -1;
+  color: transparent;
+  text-shadow: var(--username-text-shadow);
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+}
+
+.danmaku-wrapper.anchor .danmaku-text {
+  position: relative;
+}
+
+/* 底层：负责描边 */
+.danmaku-wrapper.anchor .text-layer-stroke {
+  position: relative;
+  z-index: 0;
+  color: transparent;
+  /* 使用全局定义的 text-shadow 变量，确保与设置一致 */
+  text-shadow: var(--danmaku-text-shadow) !important;
+  /* 确保换行行为一致 */
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* 顶层：负责渐变填充 */
+.danmaku-wrapper.anchor .text-layer-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  
+  background-image: linear-gradient(to right, var(--danmaku-color-anchor-start), var(--danmaku-color-anchor-end));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent !important;
+  -webkit-text-fill-color: transparent !important;
+  
+  /* 移除所有阴影和滤镜 */
+  text-shadow: none !important;
+  -webkit-text-stroke: 0 !important;
+  filter: none !important;
+  
+  /* 确保换行行为一致 */
+  white-space: pre-wrap;
+  word-break: break-word;
+  pointer-events: none;
+}
+
+/* 确保两层中的 span 样式一致 */
+.danmaku-wrapper.anchor .text-layer-stroke span,
+.danmaku-wrapper.anchor .text-layer-gradient span {
+  font-family: inherit;
+  font-weight: inherit;
+  font-size: inherit;
+  /* 颜色由父层控制 */
+  color: inherit !important;
+  -webkit-text-fill-color: inherit !important;
+  background: none !important;
+  -webkit-background-clip: border-box !important;
+  background-clip: border-box !important;
+  text-shadow: inherit !important;
+}
+
+/* 移除旧的 span 样式 */
+.danmaku-wrapper.anchor .danmaku-text span {
+  background: none;
+  -webkit-background-clip: border-box;
+  background-clip: border-box;
+  color: inherit;
+  -webkit-text-fill-color: inherit;
+  text-shadow: none;
+  filter: none;
+}
+
+.danmaku-wrapper.anchor .danmaku-text span::before {
+  display: none !important;
+}
+
