@@ -219,7 +219,8 @@
 
 /* 测试按钮样式 */
 .btn-test-flow,
-.btn-test-sc {
+.btn-test-sc,
+.btn-test-anchor {
   padding: 0.625rem 1.25rem; /* 10px 20px */
   border: none;
   border-radius: 0.5rem; /* 8px */
@@ -264,8 +265,23 @@
   transform: translateY(0) scale(0.98);
 }
 
+.btn-test-anchor {
+  background: linear-gradient(135deg, #ff5500 0%, #ff0000 100%);
+}
+
+.btn-test-anchor:hover {
+  background: linear-gradient(135deg, #ff7733 0%, #ff3333 100%);
+  transform: translateY(-0.125rem) scale(1.02);
+  box-shadow: 0 0.375rem 1rem rgba(255, 0, 0, 0.4);
+}
+
+.btn-test-anchor:active {
+  transform: translateY(0) scale(0.98);
+}
+
 .btn-test-flow .icon,
-.btn-test-sc .icon {
+.btn-test-sc .icon,
+.btn-test-anchor .icon {
   font-size: 1.125rem; /* 18px */
   filter: drop-shadow(0 0.125rem 0.125rem rgba(0,0,0,0.2)); /* 0 2px 2px */
 }

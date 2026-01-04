@@ -1365,7 +1365,7 @@ const ObsSettingsPage = () => {
             <div className={`section-content ${expandedSections.test ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>功能测试：</label>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flex: 1, justifyContent: 'center' }}>
                 <button 
                   onClick={handleTestFlow} 
                   className="btn-test-flow"
@@ -1381,14 +1381,10 @@ const ObsSettingsPage = () => {
                 <button 
                   onClick={handleTestAnchor} 
                   className="btn-test-anchor"
-                  style={{ background: 'linear-gradient(45deg, #ff0000, #ff5500)', color: 'white', border: 'none' }}
                 >
                   <span className="icon">🎤</span> 发送主播消息
                 </button>
               </div>
-              <p className="hint" style={{ marginTop: '0.625rem', width: '100%' }}>
-                点击后，当前配置的直播间 ({roomId}) 的OBS画面将显示测试动画。
-              </p>
             </div>
             </div>
           </div>
