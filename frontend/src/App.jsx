@@ -8,6 +8,8 @@ import ObsSettingsPage from './pages/ObsSettingsPage';
 import MonitorPage from './pages/MonitorPage';
 import ThankYouPage from './pages/ThankYouPage';
 import ThankYouSettingsPage from './pages/ThankYouSettingsPage';
+import ClockPage from './pages/ClockPage';
+import ClockSettingsPage from './pages/ClockSettingsPage';
 
 function App() {
   return (
@@ -21,6 +23,8 @@ function App() {
         <Route path="/monitor" element={<MonitorPage />} />
         <Route path="/thankyou" element={<ThankYouPage />} />
         <Route path="/thankyou-settings" element={<ThankYouSettingsPage />} />
+        <Route path="/clock" element={<ClockPage />} />
+        <Route path="/clock-settings" element={<ClockSettingsPage />} />
       </Routes>
     </BrowserRouter>
   );

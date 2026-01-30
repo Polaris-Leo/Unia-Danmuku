@@ -2042,5 +2042,337 @@
     "width": 20,
     "height": 20,
     "emoticon_unique": "upower_[鸣潮·共鸣与群星_逼近]"
+  },
+  "[抽烟]": {
+    "url": "https://i0.hdslb.com/bfs/live/a3618a787426182ccba5c3be3fbf83e592d70f8b.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116289"
+  },
+  "[蠕动]": {
+    "url": "https://i0.hdslb.com/bfs/live/c7449a71123e0e6e6f8e8a3e1775bca4da41c4f3.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116288"
+  },
+  "[吃饭]": {
+    "url": "https://i0.hdslb.com/bfs/live/889861d561718f77baa6e321d4cc023914394241.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116290"
+  },
+  "[开弓]": {
+    "url": "https://i0.hdslb.com/bfs/live/c2813159d4cdad224fd805596cf091c7a16a6916.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116294"
+  },
+  "[敬礼]": {
+    "url": "https://i0.hdslb.com/bfs/live/ace9577efad240bf72625885e198cfb0d6ec20ba.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116293"
+  },
+  "[流口水]": {
+    "url": "https://i0.hdslb.com/bfs/live/f49ccc7729864502bc39c04f7eacdc0689e39abd.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116297"
+  },
+  "[瞪眼]": {
+    "url": "https://i0.hdslb.com/bfs/live/1bcfa718f327982685b5edfbe97a63478678dc3e.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116296"
+  },
+  "[拿来]": {
+    "url": "https://i0.hdslb.com/bfs/live/7b90b33910392c536ae5fc2a09f46881929d9a02.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116298"
+  },
+  "[可爱]": {
+    "url": "https://i0.hdslb.com/bfs/live/7239e91b0c752abf45eb63e22ad2af2803d1334d.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_116295"
+  },
+  "[[胡桃Usa堕令时_禁止]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/6f005c7a7ce4cdc1d30b39489debc1b6eb933b38.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[胡桃Usa堕令时_禁止]"
+  },
+  "[[胡小波动态表情包_抱心]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/fd6a6208ff359e7df3d4e81ccd6b83876b5e09a1.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[胡小波动态表情包_抱心]"
+  },
+  "[[胡桃Usa_贴贴]]": {
+    "url": "https://i0.hdslb.com/bfs/emote/a08b4b43ca64994552d9bcd9bb1bd34f5cb8bee5.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[胡桃Usa_贴贴]"
+  },
+  "[[鸣潮·共鸣与群星_来咯]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/1db7d6ac52053d57345f8b07cab23048cfe90254.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸣潮·共鸣与群星_来咯]"
+  },
+  "[[鸣潮·共鸣与群星_问号]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/0a49fdfda7d1b55d293920cdd0537bd4e1383808.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸣潮·共鸣与群星_问号]"
+  },
+  "[[少女风物诗表情包_捏脸]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e3d9ee9592eb5748198669978653ba1bd031c957.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[少女风物诗表情包_捏脸]"
+  },
+  "[[胡桃Usa_永远爱你]]": {
+    "url": "https://i0.hdslb.com/bfs/emote/4cc76cd28b2c7ecaa24c5889c33302d98bdc29c5.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[胡桃Usa_永远爱你]"
+  },
+  "[[少女风物诗表情包_加载中]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/0cc936d82178c5bde561a470bd2e0b3e073c9b5f.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[少女风物诗表情包_加载中]"
+  },
+  "[[夜鹭夜师傅_疑问]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/7e5d04b418b59afcc1c785493586fcc947d401cf.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[夜鹭夜师傅_疑问]"
+  },
+  "[[猫你太美_嘻嘻]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/1a895dffaf7fc500b8f60a5db493040c20da4df6.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[猫你太美_嘻嘻]"
+  },
+  "[[鸽一品天才集_你鸽来咯]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/9cac01ab5a445a0b456697ab82bd4ea4226bea75.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_你鸽来咯]"
+  },
+  "[天才]": {
+    "url": "https://i0.hdslb.com/bfs/garb/7666b4a81bb41f0d16b86b5baa38dba88ef303da.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4910271_35359"
+  },
+  "[[鸽一品天才集_为你点赞]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/40bff98767ddbabc7550c0015d9b8b91219471d9.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_为你点赞]"
+  },
+  "[[胡桃Usa堕令时_在家吗]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/ec1ff2e9438df2f9b35a889a7c8ac1fe904bcaf5.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[胡桃Usa堕令时_在家吗]"
+  },
+  "[[UPOWER_11399495_鸽叫]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/4097b5cd9730080ef78bd8c19e899f88e97f51a3.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_11399495_鸽叫]"
+  },
+  "[[妮喃梦呓gif_诶]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e16fb338c41e715a31580553dadb17e5b196cc68.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[妮喃梦呓gif_诶]"
+  },
+  "[[天才鸽鸽表情包_吃嘻瓜]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/871c8cfc102dd2a14223dd43e9974554c3009a4a.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_吃嘻瓜]"
+  },
+  "[[巴老师的小号_大笑]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/bcfd23267d14d644e7391044843c0b7942a7cac8.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[巴老师的小号_大笑]"
+  },
+  "[亲亲]": {
+    "count": 1,
+    "descript": "[亲亲]",
+    "emoji": "[亲亲]",
+    "emoticon_id": 256,
+    "emoticon_unique": "emoji_256",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/10662d9c0d6ddb3203ecf50e77788b959d4d1928.png",
+    "width": 20
+  },
+  "[[巴老师的小号_问号]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e60d1dccf5a02399d1a5f104b6a92eeb260b0fdd.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[巴老师的小号_问号]"
+  },
+  "[[UPOWER_11399495_震撼]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/add84d843f6d4c2e0af51bf9a2909239c8c370f5.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_11399495_震撼]"
+  },
+  "[冷]": {
+    "count": 1,
+    "descript": "[冷]",
+    "emoji": "[冷]",
+    "emoticon_id": 243,
+    "emoticon_unique": "emoji_243",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/b804118a1bdb8f3bec67d9b108d5ade6e3aa93a9.png",
+    "width": 20
+  },
+  "[[鸣潮·共鸣与群星_捏捏]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/item/da81b7cf658330c7ae6aa4ad59276e6d7b4e48c3.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸣潮·共鸣与群星_捏捏]"
+  },
+  "[[UPOWER_11399495_来点]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/c0bf06e6d96b2749f37269a1f47abe14e6780da8.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_11399495_来点]"
+  },
+  "[[鸽一品天才集_喜欢]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/c664d44b66cb89bc7625c9df48f8692e2deb1279.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_喜欢]"
+  },
+  "[[UPOWER_11399495_揍你]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/da8a0bd8abe202b8dc18819468a33e8f308f8b42.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_11399495_揍你]"
+  },
+  "[[鸽一品天才集_好好好]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/96639c074d727cf80f5a53a214def6919b961fd5.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_好好好]"
+  },
+  "[[天才鸽鸽表情包_摸鱼]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/2daea41632ac1d610d2d39b327947fd246f3e208.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[天才鸽鸽表情包_摸鱼]"
+  },
+  "[[鸽一品天才集_吃瘪]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/57830639363b8c3ed1b12f802be5a1ea162342a3.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[鸽一品天才集_吃瘪]"
+  },
+  "[[UPOWER_11399495_哈特]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/ed305b3a434ad402e96df7d88d784ddd6ff0060b.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[UPOWER_11399495_哈特]"
+  },
+  "[[玺月兔兔女仆装扮表情包_老婆]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e148181ac0627baf04453e1ff504b01113cbad0a.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[玺月兔兔女仆装扮表情包_老婆]"
+  },
+  "[疼]": {
+    "count": 3,
+    "descript": "[疼]",
+    "emoji": "[疼]",
+    "emoticon_id": 228,
+    "emoticon_unique": "emoji_228",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/492b10d03545b7863919033db7d1ae3ef342df2f.png",
+    "width": 20
+  },
+  "[[四季烤鱼表情包_看戏]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/1a69ed78ad43d5d6fac3a7fe935e9c08192613f2.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[四季烤鱼表情包_看戏]"
+  },
+  "[[四季烤鱼表情包_汗流浃背]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/fd5c6ab31813d4238e396001cf79621912304347.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[四季烤鱼表情包_汗流浃背]"
+  },
+  "[[自由自在_哇塞]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/fc827e8f69e930f934d2e7e300917c85ea187d1d.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[自由自在_哇塞]"
+  },
+  "[[C酱兔兔纪念装扮_快看]]": {
+    "url": "https://i0.hdslb.com/bfs/emote/6a7d86083a10951c285bb79953064f54380c0b02.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[C酱兔兔纪念装扮_快看]"
+  },
+  "[[孤独摇滚_害怕]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/e76dc53ea9673330a6caeef40fde478dbb211f5b.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[孤独摇滚_害怕]"
+  },
+  "[[C酱兔兔纪念装扮_害怕]]": {
+    "url": "https://i0.hdslb.com/bfs/emote/2bb2e9df4cc0d4e3849fe3b366efa47ee2240134.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[C酱兔兔纪念装扮_害怕]"
+  },
+  "[[雪绘新收藏集表情包_正在加载]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/0deead5b838f811a5daf194ed4a5e5c5339de714.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[雪绘新收藏集表情包_正在加载]"
+  },
+  "[[孤独摇滚_惊呆]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/00c2cdbab293583c73f51735086d05172a8ae49c.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[孤独摇滚_惊呆]"
+  },
+  "[哈欠]": {
+    "count": 1,
+    "descript": "[哈欠]",
+    "emoji": "[哈欠]",
+    "emoticon_id": 253,
+    "emoticon_unique": "emoji_253",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/6e496946725cd66e7ff1b53021bf1cc0fc240288.png",
+    "width": 20
+  },
+  "[嘘]": {
+    "count": 1,
+    "descript": "[嘘]",
+    "emoji": "[嘘]",
+    "emoticon_id": 234,
+    "emoticon_unique": "emoji_234",
+    "height": 20,
+    "url": "https://i0.hdslb.com/bfs/live/b6226219384befa5da1d437cb2ff4ba06c303844.png",
+    "width": 20
+  },
+  "[[樱宝表情包_可爱捏]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/04a92c7aadc9002217ff33d37510ef3d65c486dc.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[樱宝表情包_可爱捏]"
   }
 }

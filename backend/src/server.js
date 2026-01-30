@@ -13,6 +13,7 @@ import historyRoutes from './routes/history.js';
 import thankyouRoutes from './routes/thankyou.js';
 import fontRoutes from './routes/fonts.js';
 import obsRoutes from './routes/obs.js';
+import clockRoutes from './routes/clock.js';
 import { roomManager } from './services/roomManager.js';
 import { sortAllHistory, repairOverlappingSessions } from './utils/historyStorage.js';
 
@@ -42,6 +43,7 @@ app.use('/api/history', historyRoutes);
 app.use('/api/thankyou', thankyouRoutes);
 app.use('/api/fonts', fontRoutes);
 app.use('/api/obs', obsRoutes);
+app.use('/api/clock', clockRoutes);
 
 // 健康检查
 app.get('/api/health', (req, res) => {

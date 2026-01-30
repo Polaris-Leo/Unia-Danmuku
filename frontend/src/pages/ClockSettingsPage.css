@@ -1,0 +1,197 @@
+/* Independent CSS for Clock Settings Page */
+/* Modeled after ObsSettingsPage.css but decoupled */
+
+.clock-settings-page {
+  min-height: 100vh;
+  background: #ffffff;
+  padding: 20px;
+  font-family: "Microsoft YaHei", sans-serif;
+  color: #333;
+}
+
+.clock-settings-layout {
+  display: flex; /* Changed from grid to flex column */
+  flex-direction: column;
+  gap: 30px;
+  max-width: 800px; /* Reduced width for better vertical reading */
+  margin: 0 auto;
+}
+
+/* Settings Column */
+.clock-settings-container h1 {
+  text-align: center;
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 28px;
+}
+
+.clock-setting-section {
+  margin-bottom: 10px;
+  border-bottom: 1px solid #e0e0e0;
+  background: white;
+  border-radius: 8px; /* Optional rounded look */
+}
+
+.clock-section-header {
+  padding: 15px 10px;
+  cursor: pointer;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  background-color: #f9f9f9;
+  border-radius: 8px 8px 0 0;
+  transition: background-color 0.2s;
+}
+
+.clock-section-header:hover {
+  background-color: #f0f0f0;
+}
+
+.clock-section-content {
+  padding: 20px 10px;
+  background-color: #fff;
+  border: 1px solid #f0f0f0;
+  border-top: none;
+  border-radius: 0 0 8px 8px;
+}
+
+.clock-form-group {
+  margin-bottom: 20px;
+}
+
+.clock-form-group label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.clock-form-control {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 14px;
+  transition: border-color 0.3s;
+  box-sizing: border-box; 
+}
+
+.clock-form-control:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+.clock-color-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+input[type="color"].clock-form-control {
+  height: 40px;
+  padding: 2px;
+  width: 60px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.clock-color-input-wrapper input[type="text"].clock-form-control {
+  flex: 1;
+}
+
+/* Checkbox Style */
+.clock-checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.clock-checkbox-wrapper input[type="checkbox"] {
+  width: 18px;
+  height: 18px;
+}
+
+/* Preview Column (Sticky Top) */
+.clock-preview-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+  background-color: #ffffff;
+  padding: 10px 0 20px 0; /* Add bottom padding for separation */
+  border-bottom: 1px solid #eee;
+  /* Box shadow to indicate it's floating when scrolled? Optional. */
+}
+
+.clock-preview-container {
+  background: transparent;
+  background-image: linear-gradient(45deg, #eee 25%, transparent 25%), linear-gradient(-45deg, #eee 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #eee 75%), linear-gradient(-45deg, transparent 75%, #eee 75%);
+  background-size: 20px 20px;
+  background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); /* Reduced shadow specifically for top bar style */
+  
+  width: 100%;
+  height: 140px; /* Specific height for top-bar style */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  /* Use container query logic simulated by transform scale in JS, or hardcoded scale here if we had fixed size */
+}
+
+/* Inner Clock Display wrapper simulates a viewport */
+.clock-preview-inner {
+    width: 1920px; /* Reference Full HD width */
+    height: 1080px; /* Reference Full HD height */
+    /* background: rgba(0,255,0,0.1); Optional debug bg */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transform-origin: center center;
+    flex-shrink: 0; /* Prevent shrinking in flex container */
+    /* Transformation will be applied inline in JSX to fit the container */
+}
+
+
+/* Save Button area */
+.clock-save-actions {
+  margin-top: 30px;
+  text-align: center;
+  padding: 20px;
+}
+
+.clock-btn-primary {
+  background-color: #1976d2;
+  color: white;
+  border: none;
+  padding: 12px 40px;
+  font-size: 16px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background-color 0.2s;
+}
+
+.clock-btn-primary:hover {
+  background-color: #1565c0;
+}
+
+.clock-btn-primary:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.clock-message {
+  margin-top: 15px;
+  font-size: 14px;
+  color: #666;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .clock-preview-container {
+      height: 110px; /* Even smaller for mobile */
+  }
+}

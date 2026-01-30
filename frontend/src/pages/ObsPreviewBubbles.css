@@ -1,0 +1,938 @@
+/* Bubbles Style adapted for Unia-Danmuku (Preview) */
+/* Source: User provided Bubbles.css */
+/* Mapped to Unia structure: .danmaku-wrapper, .sc-wrapper, .guard-wrapper */
+
+/* ==========================================================================
+   Global Reset & Layout
+   ========================================================================== */
+
+/* Transparent background for all wrappers */
+.style-bubbles .danmaku-wrapper,
+.style-bubbles .sc-wrapper,
+.style-bubbles .guard-wrapper,
+.style-bubbles .username {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.style-bubbles .danmaku-list {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
+.style-bubbles .danmaku-list::-webkit-scrollbar {
+  display: none !important;
+}
+
+.style-bubbles .content-area,
+.style-bubbles .danmaku-text,
+.style-bubbles .sc-content {
+  overflow: visible !important;
+}
+
+.style-bubbles .danmaku-wrapper a,
+.style-bubbles .guard-wrapper a {
+  text-decoration: none !important;
+}
+
+/* ==========================================================================
+   Emoji & Image Sizing
+   ========================================================================== */
+
+/* General Images in text */
+.style-bubbles .danmaku-text img {
+  width: auto !important;
+  height: auto !important;
+  max-width: 100% !important;
+  position: relative;
+  z-index: 1;
+}
+
+/* Small Emoji (Inline) */
+.style-bubbles .danmaku-text .emote-small,
+.style-bubbles .danmaku-text .emoji {
+  height: var(--danmaku-font-size) !important;
+  width: auto !important;
+  vertical-align: middle !important;
+}
+
+/* Large Emoji (Stickers) */
+.style-bubbles .danmaku-text .emote-large,
+.style-bubbles .danmaku-text .emoji[id^=official],
+.style-bubbles .danmaku-text .emoji[id^=room],
+.style-bubbles .danmaku-text .emoji[id^=upower] {
+  height: var(--emot-size, 11.11vh) !important;
+  width: auto !important;
+  vertical-align: middle !important;
+}
+
+.style-bubbles .danmaku-text img[display="block"] {
+  width: 11.11vh !important; /* 120px */
+  height: fit-content !important;
+  border-radius: 0.37vh; /* 4px */
+  position: relative;
+  z-index: 1;
+}
+
+.style-bubbles .danmaku-text img[display="inline"] {
+  width: 11.11vh !important; /* 120px */
+  height: fit-content !important;
+  margin: 0vh 0.19vh 0vh 0.19vh !important; /* 0 2px */
+  position: relative;
+  z-index: 1;
+  top: 0.93vh !important; /* 10px */
+  border-radius: 0vh;
+}
+
+/* Reset Medals/Badges (Unia puts them in username-line) */
+.style-bubbles .danmaku-wrapper .guard-icon,
+.style-bubbles .danmaku-wrapper .medal-icon {
+  margin: 0vh !important;
+  padding: 0vh !important;
+  border: 0vh solid transparent !important;
+  background: transparent !important;
+  /* overflow: visible !important; Removed to fix deprecation warning */
+}
+
+/* ==========================================================================
+   Reset for SC/Gift/Guard Containers
+   ========================================================================== */
+
+.style-bubbles .sc-wrapper,
+.style-bubbles .sc-item,
+.style-bubbles .sc-header,
+.style-bubbles .sc-content {
+  border: 0vh solid transparent !important;
+  background-color: transparent !important;
+  box-shadow: 0vh 0vh transparent !important;
+  border-radius: 0vh !important;
+  margin: 0vh 0vh !important;
+  padding: 0vh 0vh !important;
+  overflow: visible !important;
+}
+
+/* Apply Item Spacing (Overrides Reset) */
+.style-bubbles .danmaku-wrapper,
+.style-bubbles .sc-wrapper {
+  margin-bottom: var(--item-spacing, 0vh) !important;
+}
+
+/* Extra spacing above SC/Gift messages & Left margin for avatar frame */
+.style-bubbles .sc-wrapper {
+  margin-top: calc(var(--item-spacing, 0vh) * 2) !important;
+  margin-left: 0vh !important; /* Removed extra left margin */
+  --sc-avatar-size: calc(var(--avatar-size, 7.78vh) * 0.95); /* Define slightly smaller avatar size for SC */
+}
+
+.style-bubbles .sc-wrapper[data-price="0"] .sc-content {
+  display: flex !important;
+  visibility: visible !important;
+}
+
+.style-bubbles .guard-wrapper,
+.style-bubbles .guard-wrapper .sc-item,
+.style-bubbles .guard-wrapper .sc-header,
+.style-bubbles .guard-wrapper .sc-avatar {
+  background-color: transparent !important;
+  padding: 0vh 0vh !important;
+  overflow: visible !important;
+}
+
+.style-bubbles .guard-wrapper {
+  position: relative !important;
+}
+
+/* Decoration: Ship 3 (Whale Bubble) - Removed */
+.style-bubbles .guard-wrapper::after {
+  display: none !important;
+}
+
+/* Restore decoration to sc-avatar */
+.style-bubbles .guard-wrapper .sc-avatar::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  width: 580px !important;
+  height: 580px !important;
+  top: -77px !important;
+  left: -77px !important;
+  
+  /* Layer 1 (Top): Bubble, Layer 2 (Bottom): Frame */
+  background-image: 
+    url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/user-iam-bf.png"),
+    url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/mem-3-yis.png") !important;
+    
+  background-size: 220px 260px, 100% 100% !important;
+  background-repeat: no-repeat, no-repeat !important;
+  /* Bubble: left 57px, top 263px; Frame: center */
+  background-position: 57px 263px, center center !important;
+  
+  z-index: 10 !important;
+  pointer-events: none !important;
+}
+
+/* Hide elements that shouldn't be shown */
+.style-bubbles .sc-header-subtext,
+.style-bubbles .sc-timer-bar {
+  /* display: none !important; */ /* Optional: hide timer if desired */
+}
+
+/* ==========================================================================
+   Fonts & Text Styles
+   ========================================================================== */
+
+.style-bubbles .guard-wrapper .sc-header::before,
+.style-bubbles .sc-price,
+.style-bubbles .username,
+.style-bubbles .sc-username,
+.style-bubbles .danmaku-text,
+.style-bubbles .sc-content {
+  /* color: #ffffff !important; Removed to allow custom colors */
+  /* font-family: ...; Removed to allow custom fonts */
+  word-break: break-all;
+  letter-spacing: 0.09vh; /* 1px */
+  overflow: visible !important;
+  position: relative;
+  z-index: 10 !important;
+}
+
+/* Usernames (General) */
+.style-bubbles .username,
+.style-bubbles .sc-username,
+.style-bubbles .sc-price {
+  color: var(--username-color, #ffffff) !important;
+  font-family: var(--username-font-family, "Microsoft YaHei"), sans-serif;
+  font-weight: var(--username-font-weight, bold) !important;
+  text-shadow: var(--username-text-shadow) !important;
+}
+
+/* Messages (General) */
+.style-bubbles .danmaku-text,
+.style-bubbles .sc-content {
+  color: var(--danmaku-color, #ffffff) !important;
+  font-family: var(--danmaku-font-family, "Microsoft YaHei"), sans-serif;
+  font-weight: var(--danmaku-font-weight, normal) !important;
+  text-shadow: var(--danmaku-text-shadow) !important;
+}
+
+/* Normal Danmaku Username */
+.style-bubbles .danmaku-wrapper .username {
+  font-size: var(--username-font-size, 1.85vh) !important;
+}
+
+/* Normal Danmaku Message */
+.style-bubbles .danmaku-wrapper .danmaku-text {
+  font-size: var(--danmaku-font-size, 2.31vh) !important;
+}
+
+/* Member Danmaku - Inherit custom styles */
+.style-bubbles .danmaku-wrapper.member .danmaku-text,
+.style-bubbles .danmaku-wrapper.member .username {
+  /* text-shadow: 0vh 0vh 0.37vh rgba(58,7,120,0.85); Removed to use custom shadow */
+}
+
+/* SC/Paid Message Fonts */
+.style-bubbles .sc-wrapper .sc-username {
+  font-size: var(--username-font-size, 1.85vh) !important;
+}
+
+.style-bubbles .sc-wrapper .sc-price {
+  font-size: var(--username-font-size, 1.85vh) !important;
+}
+
+.style-bubbles .sc-wrapper .sc-content {
+  font-size: var(--danmaku-font-size, 2.31vh) !important;
+}
+
+/* Guard Fonts */
+.style-bubbles .guard-wrapper .sc-username {
+  font-size: calc(var(--username-font-size, 1.85vh) * 1.3) !important;
+}
+
+/* ==========================================================================
+   Layout: Normal Danmaku
+   ========================================================================== */
+
+.style-bubbles .danmaku-wrapper {
+  display: flex !important;
+  width: calc(100% - 1.85vh); /* 20px */
+  padding: 0.56vh 0.93vh !important; /* 6px 10px */
+  position: relative;
+  overflow: visible !important;
+}
+
+.style-bubbles .danmaku-wrapper .danmaku-item {
+  width: calc(100% - 2.78vh) !important; /* 30px */
+  height: calc(100% + 0vh) !important;
+  min-height: 0vh;
+  margin: 0.46vh 0vh 0vh 2.78vh !important; /* 5px 0 0 30px */
+  padding: 0vh !important;
+  position: relative;
+  overflow: visible !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  display: flex;
+  flex-direction: row;
+}
+
+/* Avatar */
+.style-bubbles .danmaku-wrapper .avatar {
+  margin: 0vh 1.48vh 0.46vh 0.28vh !important; /* 0 16px 5px 3px */
+  display: flex !important;
+  position: relative;
+  overflow: visible !important;
+  z-index: 50;
+  flex-shrink: 0;
+}
+
+.style-bubbles .danmaku-wrapper .avatar img {
+  width: var(--avatar-size, 7.78vh) !important; /* 84px */
+  height: var(--avatar-size, 7.78vh) !important; /* 84px */
+  border-radius: 50% !important; /* 1000px */
+}
+
+.style-bubbles .danmaku-wrapper .avatar::before {
+  content: "";
+  width: calc(var(--avatar-size, 7.78vh) * 1.166); /* 98px */
+  height: calc(var(--avatar-size, 7.78vh) * 1.25); /* 105px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/user-yis.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: left top;
+  display: flex;
+  position: absolute;
+  top: calc(var(--avatar-size, 7.78vh) * -0.048); /* -4px */
+  left: calc(var(--avatar-size, 7.78vh) * -0.12); /* -10px */
+  z-index: 10;
+}
+
+/* Content Area */
+.style-bubbles .danmaku-wrapper .content-area {
+  max-width: calc(100% + 0vh);
+  height: calc(100% + 0vh);
+  min-height: 0vh;
+  position: relative;
+  display: flex !important;
+  flex-direction: column;
+  align-self: flex-start !important;
+  align-items: flex-start !important;
+  justify-content: flex-start !important;
+  flex-grow: 1;
+}
+
+/* Username Line */
+.style-bubbles .danmaku-wrapper .username-line {
+  width: calc(100% - 2.13vh) !important; /* 23px */
+  margin: 0vh 0vh 0vh 0.2vh !important; /* Reduced from 1.0vh to 0.2vh */
+  position: relative;
+  justify-content: flex-start;
+  align-items: center !important; /* Changed from flex-end to center */
+  display: flex;
+  gap: 0vh !important; /* Reduced gap between icon and username */
+}
+
+/* Guard Icon Adjustment */
+.style-bubbles .danmaku-wrapper .guard-icon {
+  margin-bottom: 0vh !important; /* Reset margin */
+  margin-right: 0vh !important; /* Ensure no right margin */
+  transform: translateY(0.1vh); /* Move down slightly (was -0.1vh) */
+}
+
+/* Message Bubble */
+.style-bubbles .danmaku-wrapper .danmaku-text {
+  max-width: calc(100% - 4.63vh); /* 50px */
+  height: calc(100% + 0vh);
+  min-height: 3.15vh; /* 34px */
+  margin: 0vh 1.57vh 0.74vh 0vh; /* 0 17px 8px 0 */
+  padding: 1.02vh var(--bubble-padding-x, 3.70vh) 1.02vh var(--bubble-padding-x, 3.70vh); /* 11px 40px (Increased horizontal padding) */
+  box-shadow: 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff, 0vh 0.28vh 0.28vh 0vh rgba(78,3,46,0.21);
+  border-radius: 0.46vh 2em 2em 2em; /* 5px */
+  background-image: linear-gradient(to top, var(--bubble-bg-start, transparent), var(--bubble-bg-end, #ffa8d7) 70%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+}
+
+/* Character on Bubble */
+.style-bubbles .danmaku-wrapper .danmaku-text::before {
+  content: "";
+  width: 4.44vh; /* 48px */
+  height: 5.19vh; /* 56px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/user-iam-bf.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  display: flex;
+  position: absolute;
+  top: calc(100% - 3.24vh); /* 35px */
+  left: calc(100% - 2.13vh); /* 23px */
+  z-index: 10;
+}
+
+/* ==========================================================================
+   Layout: Member (Fan Club)
+   ========================================================================== */
+
+.style-bubbles .danmaku-wrapper.member .danmaku-item {
+  width: calc(100% - 2.78vh - 3.70vh) !important; /* 30px - 40px */
+  margin-top: 1.20vh !important; /* 13px */
+  margin-right: 3.70vh !important; /* 40px */
+  padding: 0vh !important;
+}
+
+.style-bubbles .danmaku-wrapper.member .avatar::before {
+  width: calc(var(--avatar-size, 7.78vh) * 1.357); /* 114px */
+  height: calc(var(--avatar-size, 7.78vh) * 1.333); /* 112px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/mem-3-yis.png");
+  top: calc(var(--avatar-size, 7.78vh) * -0.154); /* -13px */
+  left: calc(var(--avatar-size, 7.78vh) * -0.249); /* -21px */
+}
+
+.style-bubbles .danmaku-wrapper.member .username {
+  padding: 0vh 0.93vh 0vh 0.93vh; /* 0 10px */
+  box-shadow: 0vh 0vh 1.20vh #fcf9fe inset, 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff !important;
+  border-radius: 1em;
+  background-image: linear-gradient(to top, #c3a4f5, #c3a4f5);
+}
+
+.style-bubbles .danmaku-wrapper.member .username-line {
+  width: calc(100% - 0.93vh) !important; /* 10px */
+  margin: 0vh 0vh 0vh 0.93vh !important; /* 0 0 0 10px */
+}
+
+.style-bubbles .danmaku-wrapper.member .danmaku-text {
+  max-width: calc(100% - 5.00vh); /* 54px */
+  margin: 0.74vh 0vh 0.37vh 0.37vh; /* 8px 0 4px 4px */
+  padding: 1.02vh var(--bubble-padding-x, 3.70vh) 1.02vh var(--bubble-padding-x, 3.70vh); /* 11px 40px (Increased horizontal padding) */
+  box-shadow: 0vh 0vh 1.20vh rgba(252,249,254,1) inset, 0vh 0vh 1.48vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff, 0vh 0.09vh 0.28vh 0vh rgba(38,5,5,0.34);
+  background-image: linear-gradient(to top, transparent, #c3a4f5 70%);
+}
+
+.style-bubbles .danmaku-wrapper.member .danmaku-text::after {
+  content: "";
+  width: calc(100% + 0.46vh); /* 5px */
+  height: calc(100% + 0.46vh);
+  border: 0.19vh solid #ffffff; /* 2px */
+  border-radius: 0.46vh 2em 2em 2em; /* 5px */
+  display: flex;
+  position: absolute;
+  top: -0.37vh; /* -4px */
+  left: -0.37vh;
+  z-index: 10;
+  opacity: 0.4;
+}
+
+.style-bubbles .danmaku-wrapper.member .danmaku-text::before {
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/mem-3-iam-bf.png");
+}
+
+/* ==========================================================================
+   Layout: Gift (Paid Message)
+   ========================================================================== */
+
+.style-bubbles .sc-wrapper {
+  display: flex !important;
+  width: calc(100% - 1.85vh); /* 20px */
+  padding: 0.56vh 0.93vh !important; /* 6px 10px */
+  position: relative;
+  overflow: visible !important;
+}
+
+.style-bubbles .sc-wrapper .sc-item {
+  max-width: calc(100% - 2vh) !important; /* Increased max-width */
+  width: fit-content !important;
+  margin: 0.46vh 1vh 0vh 2.78vh !important; /* Match danmaku-item margin */
+  position: relative;
+  overflow: visible !important;
+}
+
+.style-bubbles .sc-wrapper .sc-header {
+  width: calc(100% - 0vh) !important;
+  position: static !important;
+  display: flex !important;
+  flex-direction: row !important; /* Corrected to row for Left-to-Right */
+  justify-content: flex-start !important; /* Align left */
+  align-items: center !important;
+  padding-left: calc(var(--sc-avatar-size) + var(--sc-gap, 2.5vh)) !important; /* Increased gap */
+  gap: 1.5vh !important; /* Reduced gap */
+}
+
+/* SC Avatar - Match Guard Style Proportions */
+.style-bubbles .sc-wrapper yt-img-shadow.sc-avatar,
+.style-bubbles .sc-wrapper .sc-avatar {
+  position: absolute !important;
+  top: -0.5vh !important; /* Slight adjustment */
+  left: 0vh !important;
+  width: var(--sc-avatar-size) !important;
+  height: var(--sc-avatar-size) !important;
+  margin: 0vh 1.48vh 0.46vh 0.28vh !important;
+  z-index: 50 !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  overflow: visible !important;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.style-bubbles .sc-wrapper .sc-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  margin: 5% !important;
+  border-radius: 50% !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+  object-fit: cover !important;
+  display: block !important;
+}
+
+/* Avatar Decoration Ring (Frame) - Switched to User style to remove top bubble */
+.style-bubbles .sc-wrapper .sc-avatar::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  width: calc(var(--sc-avatar-size) * 1.38) !important;
+  height: calc(var(--sc-avatar-size) * 1.38) !important;
+  top: calc(var(--sc-avatar-size) * -0.18) !important;
+  left: calc(var(--sc-avatar-size) * -0.25) !important;
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/mem-3-yis.png") !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: left top !important;
+  z-index: 2 !important;
+  pointer-events: none !important;
+}
+
+
+
+/* SC Price */
+.style-bubbles .sc-wrapper .sc-price {
+  margin-left: 0vh !important; /* Handled by header padding */
+  padding: 0.6vh 2.5vh !important; /* Increased padding */
+  box-shadow: 0vh 0vh 1.20vh #fcf9fe inset, 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff !important;
+  border-radius: 1em;
+  background-image: linear-gradient(to top, var(--sc-bg, #ffaf67), var(--sc-bg, #ffaf67));
+  white-space: nowrap;
+  width: fit-content;
+}
+
+/* SC Username */
+.style-bubbles .sc-wrapper .sc-username {
+  margin-left: 0vh !important; /* Removed margin */
+  padding: 0.6vh 2.5vh !important; /* Increased padding */
+  box-shadow: 0vh 0vh 1.20vh #fcf9fe inset, 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff !important;
+  border-radius: 1em;
+  background-image: linear-gradient(to top, var(--sc-bg-light, #c3a4f5), var(--sc-bg-light, #c3a4f5));
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* SC User Info Container */
+.style-bubbles .sc-wrapper .sc-user-info {
+  width: fit-content !important;
+  flex: 0 1 auto !important; /* Prevent stretching */
+  margin: 0 !important; /* Handled by gap */
+}
+
+/* SC Content */
+.style-bubbles .sc-wrapper .sc-content {
+  width: auto !important; /* Allow auto width */
+  max-width: calc(100% - var(--sc-avatar-size) - 1vh) !important; /* Reduced subtraction to fill more space */
+  margin: 0.74vh 0.5vh 0.74vh 0vh !important; /* Reduced right margin */
+  margin-left: calc(var(--sc-avatar-size) + var(--sc-gap, 2.5vh)) !important; /* Dynamic left margin - Increased gap */
+  padding: 1.02vh var(--bubble-padding-x, 3.70vh) 1.02vh var(--bubble-padding-x, 3.70vh) !important; /* 11px 40px (Increased horizontal padding) */
+  box-shadow: 0vh 0vh 1.20vh rgba(252,249,254,1) inset, 0vh 0vh 1.48vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff, 0vh 0.09vh 0.28vh 0vh rgba(38,5,5,0.34) !important;
+  border-radius: 0.46vh 2em 2em 2em !important;
+  background-image: linear-gradient(to top, var(--sc-bubble-bg-start, transparent), var(--sc-bg-light, #c3a4f5) 70%) !important;
+  display: flex;
+  justify-content: flex-start; /* Left align text */
+  align-items: center;
+  flex-wrap: wrap;
+  position: relative;
+  text-align: left;
+}
+
+.style-bubbles .sc-wrapper .sc-content::before {
+  content: "";
+  width: 10.28vh; /* 111px */
+  height: 8.15vh; /* 88px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/paid-con-bf.png");
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  background-position: center center;
+  display: flex;
+  position: absolute;
+  top: calc(100% - 7.22vh); /* 78px */
+  left: calc(100% - 0vh);
+  z-index: 10;
+}
+
+/* ==========================================================================
+   Layout: SuperChat (Specific)
+   ========================================================================== */
+
+/* .style-bubbles .sc-wrapper.superchat .sc-avatar::before removed to use common style */
+
+.style-bubbles .sc-wrapper.superchat .sc-content {
+  box-shadow: 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 2.13vh #fcf9fe inset, 0vh 0vh 0.28vh #ffffff, 0vh 0.28vh 0.28vh 0vh rgba(78,3,46,0.21) !important;
+  background-image: linear-gradient(to top, var(--sc-bubble-bg-start, transparent), var(--sc-bg-light, #c3a4f5) 70%) !important;
+}
+
+.style-bubbles .sc-wrapper.superchat .sc-content::before,
+.style-bubbles .sc-wrapper.gift .sc-content::before {
+  width: 4.44vh; /* 48px */
+  height: 5.19vh; /* 56px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/user-iam-bf.png");
+  top: calc(100% - 3.24vh); /* 35px */
+  left: calc(100% - 2.13vh); /* 23px */
+}
+
+/* ==========================================================================
+   Layout: Guard (Membership) - Responsive Version (Container Queries)
+   ========================================================================== */
+
+/* 1. Main Wrapper */
+.style-bubbles .guard-wrapper {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important; /* Fill container width */
+  height: auto !important;
+  aspect-ratio: 1500 / 480 !important; /* Maintain aspect ratio */
+  margin: 2% 0 0 4% !important; /* Relative margins - Reduced bottom margin */
+  padding: 0 !important;
+  background: transparent !important;
+  overflow: visible !important;
+  animation: rc1 0.5s ease-out forwards !important;
+  container-type: inline-size !important; /* Enable Container Queries */
+}
+
+/* 2. Background Ship Hull (sc-item) */
+.style-bubbles .guard-wrapper .sc-item {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-4.png") !important;
+  background-size: contain !important;
+  background-repeat: no-repeat !important;
+  background-position: center bottom !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  animation: float-ship 4s ease-in-out infinite !important;
+  overflow: visible !important;
+}
+
+/* Hide default content text */
+.style-bubbles .guard-wrapper .sc-content {
+  display: none !important;
+}
+
+/* 3. Avatar (Left Side) */
+.style-bubbles .guard-wrapper .sc-avatar {
+  position: absolute !important;
+  top: 5cqw !important; /* 75px */
+  left: 2cqw !important; /* 30px */
+  width: 17.04cqw !important; /* 255.6px */
+  height: 17.04cqw !important; /* 255.6px */
+  margin: 0 !important;
+  z-index: 50 !important;
+  display: flex !important;
+  justify-content: center;
+  align-items: center;
+  overflow: visible !important;
+  border-radius: 0 !important; /* Disable container border-radius to prevent clipping */
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+.style-bubbles .guard-wrapper .sc-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  border-radius: 50% !important;
+  border: none !important;
+  box-shadow: none !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Avatar Decoration Ring (Frame) */
+.style-bubbles .guard-wrapper .sc-avatar::before {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  width: 23.2cqw !important; /* 348px */
+  height: 23.2cqw !important; /* 348px */
+  top: -2.8cqw !important; /* -42px */
+  left: -4.2cqw !important; /* -63px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/mem-3-yis.png") !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+  z-index: 2 !important;
+  animation: none !important;
+  pointer-events: none !important;
+}
+
+/* Small Bubble Decoration */
+.style-bubbles .guard-wrapper .sc-avatar::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  width: 8.8cqw !important; /* 132px */
+  height: 10.4cqw !important; /* 156px */
+  bottom: -0.8cqw !important; /* -12px */
+  left: -0.8cqw !important; /* -12px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/user-iam-bf.png") !important;
+  background-size: 100% 100% !important;
+  background-repeat: no-repeat !important;
+  z-index: 3 !important;
+  pointer-events: none !important;
+}
+/* 4. Header & Price Containers */
+.style-bubbles .guard-wrapper .sc-header,
+.style-bubbles .guard-wrapper .sc-price {
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: transparent !important;
+  background-color: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+  pointer-events: none !important;
+  font-size: 0 !important;
+  color: transparent !important;
+  display: block !important;
+  /* Ensure no text rendering */
+  text-indent: -9999px !important;
+  line-height: 0 !important;
+}
+
+/* Common style for the 4 Title Characters */
+.style-bubbles .guard-wrapper .sc-header::before,
+.style-bubbles .guard-wrapper .sc-header::after,
+.style-bubbles .guard-wrapper .sc-price::before,
+.style-bubbles .guard-wrapper .sc-price::after
+{
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  background-repeat: no-repeat !important;
+  background-size: contain !important;
+  z-index: 20 !important;
+  opacity: 0;
+  animation: pop-in 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards !important;
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* Positioning the 4 Characters (Responsive) */
+/* Char 1: 舰 */
+.style-bubbles .guard-wrapper .sc-header::before {
+  width: 16cqw !important; /* 240px */
+  height: 14.4cqw !important; /* 216px */
+  top: 3.5cqw !important; /* Moved down */
+  left: 22cqw !important; /* 330px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship3-1.png") !important;
+  animation-delay: 0.1s !important;
+}
+
+/* Char 2: 长 */
+.style-bubbles .guard-wrapper .sc-header::after {
+  width: 13.6cqw !important; /* 204px */
+  height: 13.84cqw !important; /* 207.6px */
+  top: 4.5cqw !important; /* Moved down */
+  left: 37.2cqw !important; /* 558px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship3-2.png") !important;
+  background-color: transparent !important;
+  animation-delay: 0.2s !important;
+}
+
+/* Char 3: 登 */
+.style-bubbles .guard-wrapper .sc-price::before {
+  width: 15.84cqw !important; /* 237.6px */
+  height: 14cqw !important; /* 210px */
+  top: 3.5cqw !important; /* Moved down */
+  left: 50cqw !important; /* 750px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship3-3.png") !important;
+  animation-delay: 0.3s !important;
+}
+
+/* Char 4: 船 */
+.style-bubbles .guard-wrapper .sc-price::after {
+  width: 14.4cqw !important; /* 216px */
+  height: 13.04cqw !important; /* 195.6px */
+  top: 4.5cqw !important; /* Moved down */
+  left: 64cqw !important; /* 960px */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship3-4.png") !important;
+  animation-delay: 0.4s !important;
+}
+
+/* 5. User Info (Username Pill) */
+.style-bubbles .guard-wrapper .sc-user-info {
+  position: absolute !important;
+  top: 22cqw !important; /* Adjusted vertical position */
+  left: 22cqw !important; /* Aligned with Char 1 */
+  width: auto !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  z-index: 30 !important;
+  text-indent: 0 !important;
+}
+
+.style-bubbles .guard-wrapper .sc-username {
+  font-family: var(--username-font-family, "Microsoft YaHei", sans-serif) !important;
+  font-size: 6cqw !important; /* Increased size */
+  font-weight: var(--username-font-weight, bold) !important;
+  color: #fff !important;
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-an-af.png"), linear-gradient(to right, #e2b0f5, #a3a3ec) !important;
+  background-size: 4.28cqw 2.88cqw, 100% 100% !important;
+  background-repeat: no-repeat !important;
+  background-position: left 0.32cqw top -0.88cqw, center center !important;
+  padding: 0.8cqw 0cqw !important; /* Reduced horizontal padding */
+  border-radius: 3.04cqw !important; /* 45.6px */
+  box-shadow: 0px 0px 0.6cqw #fcf9fe inset, 0px 0px 0.6cqw rgba(252,249,254,0.5) inset, 0 0.4cqw 1.04cqw rgba(163, 163, 236, 0.4) !important;
+  white-space: nowrap !important;
+  text-shadow: 0 0.24cqw 0.4cqw rgba(0,0,0,0.2) !important;
+  margin: 0 !important;
+  overflow: visible !important;
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  line-height: 1.2 !important;
+  text-indent: 0 !important;
+  min-width: 56.4cqw !important; /* Match width of 4 chars (78.4 - 22) */
+  width: 56.4cqw !important;      /* Fixed width */
+  text-align: center !important;
+  position: relative !important;
+  z-index: 30 !important;
+}
+
+.style-bubbles .guard-wrapper .sc-username::before {
+  content: "" !important;
+  width: calc(100% + 1.12cqw) !important; /* 16.8px */
+  height: 100% !important;
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-an-bfl.png"), url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-an-bfl.png") !important;
+  background-size: 0.8cqw 0.76cqw !important; /* 12px 11.4px */
+  background-repeat: no-repeat !important;
+  background-position: left center, right center !important;
+  position: absolute !important;
+  top: 0px !important;
+  left: -0.56cqw !important; /* -8.4px */
+  z-index: 40 !important;
+  pointer-events: none !important;
+}
+
+.style-bubbles .guard-wrapper .sc-username::after {
+  content: "" !important;
+  width: calc(100% + 0.28cqw) !important; /* 4.2px */
+  height: calc(100% + 0.28cqw) !important; /* 4.2px */
+  border: 0.08cqw solid #ffffff !important; /* 1.2px */
+  border-radius: 3.04cqw !important; /* 45.6px */
+  display: flex !important;
+  position: absolute !important;
+  top: -0.2cqw !important; /* -3px */
+  left: -0.2cqw !important; /* -3px */
+  z-index: 10 !important;
+  opacity: 0.4 !important;
+  pointer-events: none !important;
+}
+
+.style-bubbles .guard-wrapper .sc-username span {
+  color: inherit !important;
+  font-family: inherit !important;
+  font-weight: inherit !important;
+  text-shadow: inherit !important;
+  position: relative !important;
+  z-index: 50 !important;
+}
+
+/* 6. Decoration: "NEW MEMBER" Text - Removed (Duplicate) */
+.style-bubbles .guard-wrapper .sc-item::before {
+  display: none !important;
+}
+
+/* Decoration: Line/Bar (New Member) */
+.style-bubbles .guard-wrapper .sc-user-info::before {
+  content: "" !important;
+  position: absolute !important;
+  width: 56.4cqw !important; /* Match width of 4 chars */
+  height: 2.2cqw !important; /* 30px */
+  top: -2.5cqw !important; /* Position above username */
+  left: 0cqw !important; /* Align left */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-5.png") !important;
+  background-size: 100% 100% !important;
+  z-index: 10 !important;
+  opacity: 0.8;
+}
+
+/* Decoration: Right Wing (Ship 2) */
+.style-bubbles .guard-wrapper .sc-user-info::after {
+  content: "" !important;
+  position: absolute !important;
+  width: 14cqw !important; /* 210px */
+  height: 16cqw !important; /* 240px */
+  top: -12cqw !important; /* -180px */
+  left: 50cqw !important; /* Moved right from 44cqw */
+  background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship-2.png") !important;
+  background-size: 100% 100% !important;
+  z-index: -2 !important;
+  pointer-events: none !important;
+}
+
+/* ==========================================================================
+   Animations
+   ========================================================================== */
+
+@keyframes float-ship {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-0.96cqw); } /* -14.4px */
+}
+
+@keyframes rotate-wheel {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes rc1 {
+  0% { opacity: 0; transform: translateY(50px); }
+  30% { opacity: 1; transform: none; }
+  100% { opacity: 1; }
+}
+
+@keyframes pop-in {
+  0% { opacity: 0; transform: scale(0.5) translateY(100px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ==========================================================================
+   Level Overrides (Icons)
+   ========================================================================== */
+
+/* Level 2 (Admiral) */
+.style-bubbles .guard-wrapper.guard-level-2 .sc-header::before { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship2-1.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-2 .sc-header::after { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship2-2.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-2 .sc-price::before { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship2-3.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-2 .sc-price::after { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship2-4.png") !important; }
+
+/* Level 1 (Governor) */
+.style-bubbles .guard-wrapper.guard-level-1 .sc-header::before { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship1-1.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-1 .sc-header::after { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship1-2.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-1 .sc-price::before { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship1-3.png") !important; }
+.style-bubbles .guard-wrapper.guard-level-1 .sc-price::after { background-image: url("https://test-1320021822.cos.ap-nanjing.myqcloud.com/Bubbles/ship1-4.png") !important; }

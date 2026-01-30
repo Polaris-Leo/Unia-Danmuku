@@ -1,4 +1,10 @@
 {
+  "1": {
+    "name": "辣条",
+    "icon": "https://i0.hdslb.com/bfs/live/07d4dad91d7f68d92cb6a324ad9395ae2adefd47.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/d57afb7c5596359970eb430655c6aef501a268ab.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/07d4dad91d7f68d92cb6a324ad9395ae2adefd47.webp"
+  },
   "30606": {
     "name": "泡泡机",
     "icon": "https://i0.hdslb.com/bfs/live/412f3820c32233fb69293f2f1185fe742918c842.webp",
@@ -65,6 +71,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/e051dfd4557678f8edcac4993ed00a0935cbd9cc.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/32b799120e1614fa6275b6d15da7a52b21dd019d.webp"
   },
+  "32125": {
+    "name": "电影票",
+    "icon": "https://i0.hdslb.com/bfs/live/0879943234303141c3a0ca680df239a278ac1e37.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/20864a10beaea541c7dce264d5bbc56676d63e4f.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/0879943234303141c3a0ca680df239a278ac1e37.webp"
+  },
   "32126": {
     "name": "棉花糖",
     "icon": "https://i0.hdslb.com/bfs/live/3dfb753065c967653dc35be1df85322188a88625.webp",
@@ -107,6 +119,18 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/3710a5cb43d5cf3eadb19ba5bcfa4fd0231cbb08.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/02dede166baee3c1467286301f0934df690cd3e2.webp"
   },
+  "32760": {
+    "name": "口水黄豆",
+    "icon": "https://i0.hdslb.com/bfs/live/36fb73791f66e7b314a71aba2f67ddf1f67314f9.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/1e70a12a59c48fd29febe9db3ec9a930c39ffa07.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/36fb73791f66e7b314a71aba2f67ddf1f67314f9.webp"
+  },
+  "32767": {
+    "name": "黄金麦克风",
+    "icon": "https://i0.hdslb.com/bfs/live/63586731741d62fb6ae613470a6d99f1c0c94b2b.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/1cd618250b1fe4925903a36a3b2498fddb258acd.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/63586731741d62fb6ae613470a6d99f1c0c94b2b.webp"
+  },
   "33988": {
     "name": "人气票",
     "icon": "https://i0.hdslb.com/bfs/live/5a2012094bb875a04ea7d036edde3e9c00127ec2.webp",
@@ -124,6 +148,12 @@
     "icon": "https://i0.hdslb.com/bfs/live/5a2012094bb875a04ea7d036edde3e9c00127ec2.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/7164c955ec0ed7537491d189b821cc68f1bea20d.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/5a2012094bb875a04ea7d036edde3e9c00127ec2.webp"
+  },
+  "34034": {
+    "name": "你币有了",
+    "icon": "https://i0.hdslb.com/bfs/live/4e557a3417ed75437ec1bf117aafff7e86899c12.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/c5d999c88303502ac5797e33c769c417ab252434.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/4e557a3417ed75437ec1bf117aafff7e86899c12.webp"
   },
   "34065": {
     "name": "为你打call",
@@ -190,6 +220,18 @@
     "icon": "https://i0.hdslb.com/bfs/live/fc5ee9cbb035ef94e642d3c676f741fc31e58d27.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/a2e8254f5c533a9b3f00201a8878c37fffd40651.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/fc5ee9cbb035ef94e642d3c676f741fc31e58d27.webp"
+  },
+  "35209": {
+    "name": "梦雾纸签",
+    "icon": "https://i0.hdslb.com/bfs/live/1464e4f3ed6ff17e8504a22d6b7496e95a898c1d.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/ee4281781ecf14bef08e3114b1a7c4e8a548d7f4.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/1464e4f3ed6ff17e8504a22d6b7496e95a898c1d.webp"
+  },
+  "35228": {
+    "name": "秋日奶茶",
+    "icon": "https://i0.hdslb.com/bfs/live/b38c24f51e400a196df8d2d921aaccfe8383a91e.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/7bdcf0fc55d2a820e92dba589382e8ac05ef57bc.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/b38c24f51e400a196df8d2d921aaccfe8383a91e.webp"
   },
   "35289": {
     "name": "快乐小狗",
@@ -274,5 +316,11 @@
     "icon": "https://i0.hdslb.com/bfs/live/382a04eef9cd0bc16df0da8d7e674a0a3f1b2744.webp",
     "staticIcon": "https://s1.hdslb.com/bfs/live/da895ccba3ad555d011eac06ac54b9b6d2f66bf5.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/382a04eef9cd0bc16df0da8d7e674a0a3f1b2744.webp"
+  },
+  "35431": {
+    "name": "千纸鹤",
+    "icon": "https://i0.hdslb.com/bfs/live/dfb8aa1727bd88e0b65c0c88c38087e3a1ec0f24.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/1df7d4dafaa27939fbc2670353ba59a50bd7a5f0.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/dfb8aa1727bd88e0b65c0c88c38087e3a1ec0f24.webp"
   }
 }

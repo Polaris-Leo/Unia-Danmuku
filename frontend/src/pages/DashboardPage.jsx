@@ -109,6 +109,9 @@ function DashboardPage() {
               <li onClick={() => navigate('/obs-settings')} style={{cursor: 'pointer'}}>
                 ⚙️ OBS样式设置 →
               </li>
+              <li onClick={() => navigate('/clock-settings')} style={{cursor: 'pointer'}}>
+                ⏰ 时钟设置 →
+              </li>
               <li onClick={() => navigate('/thankyou-settings')} style={{cursor: 'pointer'}}>
                 🎁 答谢姬设置 →
               </li>

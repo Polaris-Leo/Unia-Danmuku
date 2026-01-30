@@ -104,4 +104,38 @@ export const getHistoryData = async (roomId, sessionId) => {
   return response.data;
 };
 
+/**
+ * 获取 OBS 预览设置
+ */
+export const getObsSettings = async () => {
+    const response = await api.get('/obs/settings');
+    return response.data;
+};
+  
+/**
+ * 保存 OBS 预览设置
+ * @param {Object} settings
+ */
+export const saveObsSettings = async (settings) => {
+    const response = await api.post('/obs/settings', settings);
+    return response.data;
+};
+
+/**
+ * 获取时钟设置
+ */
+export const getClockSettings = async () => {
+    const response = await api.get('/clock/settings');
+    return response.data;
+};
+  
+/**
+ * 保存时钟设置
+ * @param {Object} settings
+ */
+export const saveClockSettings = async (settings) => {
+    const response = await api.post('/clock/settings', settings);
+    return response.data;
+};
+
 export default api;

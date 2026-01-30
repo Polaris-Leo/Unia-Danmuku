@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ObsPreview.css';
-import './styles/Bubbles.css';
+import './ObsPreviewBubbles.css';
 
 // Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
 const renderTextWithFallback = (text, type = 'danmaku') => {
