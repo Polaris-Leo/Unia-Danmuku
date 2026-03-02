@@ -6,7 +6,7 @@ const router = express.Router();
 // GET /api/captains
 router.get('/', async (req, res) => {
     try {
-        const { uid, username, levels, startDate, endDate, room_id, page = 1, limit = 20 } = req.query;
+        const { uid, username, levels, startDate, endDate, room_id, source_stream_id, page = 1, limit = 20 } = req.query;
 
         // Add default room filtering if needed
         const filters = {
@@ -15,7 +15,8 @@ router.get('/', async (req, res) => {
             levels,
             startDate,
             endDate,
-            roomId: room_id
+            roomId: room_id,
+            source_stream_id: source_stream_id
         };
 
         const result = await captainManager.getCaptains(filters, { page: parseInt(page), limit: parseInt(limit) });
@@ -59,7 +60,8 @@ router.post('/', async (req, res) => {
 // 托管字体文件
 router.post('/import', async (req, res) => {
     try {
-        const stats = await captainManager.importFromHistory();
+        const { force } = req.body;
+        const stats = await captainManager.importFromHistory(force);
         res.json({
             success: true,
             data: stats

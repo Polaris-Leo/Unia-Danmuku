@@ -153,12 +153,34 @@ class CaptainManager {
 
     /**
      * Import historical data from guard.jsonl files
+     * @param {boolean} force - If true, clear existing data before import
      * @returns {Promise<Object>} stats
      */
-    async importFromHistory() {
-        console.log('[CaptainManager] Starting history import...');
+    async importFromHistory(force = false) {
+        console.log(`[CaptainManager] Starting history import... (Force: ${force})`);
         const historyDir = path.join(process.cwd(), 'data', 'history');
         if (!fs.existsSync(historyDir)) return { added: 0, skipped: 0 };
+
+        // If force, backup and clear existing data
+        if (force) {
+             const backupDir = path.join(process.cwd(), 'data', `captains_backup_${Date.now()}`);
+             if (fs.existsSync(CAPTAINS_DIR)) {
+                 try {
+                     await fs.promises.cp(CAPTAINS_DIR, backupDir, { recursive: true });
+                     console.log(`[CaptainManager] Backed up captains to ${backupDir}`);
+                     
+                     // Delete content of captains dir
+                     await fs.promises.rm(CAPTAINS_DIR, { recursive: true, force: true });
+                     await fs.promises.mkdir(CAPTAINS_DIR, { recursive: true });
+                     
+                     // Must re-init since folder was deleted
+                     this.initialized = false;
+                     await this.init();
+                 } catch (e) {
+                     console.error('[CaptainManager] Backup/Clear failed:', e);
+                 }
+             }
+        }
 
         let addedCount = 0;
         let skippedCount = 0;
@@ -195,7 +217,7 @@ class CaptainManager {
                                 let ts = event.timestamp ? event.timestamp * 1000 : 0; // Convert sec to ms
                                 
                                 // Fix invalid timestamp
-                                if (ts === 0) ts = parseInt(sessionId); // Fallback to session start
+                                if (ts === 0) ts = parseInt(sessionId) * 1000; // Fallback to session start (seconds -> ms)
 
                                 if (uid && level) {
                                     // CHECK DUPLICATE
@@ -215,6 +237,7 @@ class CaptainManager {
                                         num: event.num || 1, // Store num from event
                                         price: event.price || 0,
                                         room_id: parseInt(roomId),
+                                        source_stream_id: String(sessionId),
                                         id: `import-${roomId}-${uid}-${ts}`
                                     };
 
@@ -240,8 +263,9 @@ class CaptainManager {
         async getCaptains(filters = {}, pagination = { page: 1, limit: 50 }) {
         if (!this.initialized) await this.init();
 
-        const { uid: queryUid, username, levels, startDate, endDate, roomId } = filters;
+        const { uid: queryUid, username, levels, startDate, endDate, roomId, source_stream_id } = filters;
         const page = pagination.page || 1;
+
         const limit = pagination.limit || 20;
 
         // Filter values
@@ -258,6 +282,7 @@ class CaptainManager {
         const filterEnd = endDate ? parseInt(endDate) : null;
         const searchName = username ? username.toLowerCase() : null;
         const filterRoomId = roomId ? String(roomId) : null;
+        const filterSourceStreamId = source_stream_id ? String(source_stream_id) : null;
 
         let matchingRecords = [];
         let files = this._getAllFiles(filterRoomId);
@@ -298,6 +323,8 @@ class CaptainManager {
                     const recordRoomId = record.room_id ? String(record.room_id) : '';
                     if (filterRoomId && recordRoomId !== filterRoomId) continue;
                     
+                    if (filterSourceStreamId && record.source_stream_id !== filterSourceStreamId) continue;
+
                     if (filterUid && record.uid !== filterUid) continue;
                     if (searchName && (!record.username || !record.username.toLowerCase().includes(searchName))) continue;
                     

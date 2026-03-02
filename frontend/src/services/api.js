@@ -124,9 +124,10 @@ export const getCaptainStats = async (roomId) => {
 
 /**
  * 导入历史舰长数据
+ * @param {boolean} force 是否强制重新导入（覆盖现有数据）
  */
-export const importCaptainHistory = async () => {
-  const response = await api.post('/captains/import');
+export const importCaptainHistory = async (force = false) => {
+  const response = await api.post('/captains/import', { force });
   return response.data;
 };
 /**

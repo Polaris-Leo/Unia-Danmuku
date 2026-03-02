@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
-import { getCaptains, getCaptainStats, importCaptainHistory, getMonitoredRooms } from '../services/api';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { getCaptains, getCaptainStats, importCaptainHistory, getMonitoredRooms, getHistorySessions } from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import XLSX from 'xlsx-js-style';
 import './CaptainPage.css';
@@ -15,6 +15,22 @@ const CaptainPage = () => {
     const [importing, setImporting] = useState(false);
     const [exporting, setExporting] = useState(false);
     const [streamerInfo, setStreamerInfo] = useState(null);
+    const [sessions, setSessions] = useState([]);
+    const [isSessionDropdownOpen, setIsSessionDropdownOpen] = useState(false);
+    const sessionDropdownRef = useRef(null);
+    
+    // Close dropdown when clicking outside
+    useEffect(() => {
+        function handleClickOutside(event) {
+            if (sessionDropdownRef.current && !sessionDropdownRef.current.contains(event.target)) {
+                setIsSessionDropdownOpen(false);
+            }
+        }
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
 
     const [filters, setFilters] = useState({
         username: '',
@@ -22,10 +38,37 @@ const CaptainPage = () => {
         levels: [], 
         startDate: '',
         endDate: '',
+        sessionId: '', // Add sessionId filter
         page: 1,
         limit: 20,
     });
     const [totalItems, setTotalItems] = useState(0);
+
+    // Filter sessions based on date range
+    const filteredSessions = sessions.filter(sid => {
+        const sessionTime = parseInt(sid) * 1000;
+        
+        let start = null;
+        let end = null;
+
+        if (filters.startDate) {
+            // Treat input as local time YYYY-MM-DD 00:00:00
+            start = new Date(filters.startDate + 'T00:00:00').getTime();
+            // Fallback if Date parsing fails (e.g. old browser), though unlikely for standard input
+            if (isNaN(start)) start = new Date(filters.startDate).getTime(); 
+        }
+
+        if (filters.endDate) {
+            // Treat input as local time YYYY-MM-DD 23:59:59
+            end = new Date(filters.endDate + 'T23:59:59.999').getTime();
+            if (isNaN(end)) end = new Date(filters.endDate).getTime() + 86400000 - 1;
+        }
+
+        if (start && sessionTime < start) return false;
+        if (end && sessionTime > end) return false;
+
+        return true;
+    });
 
     const levels = {
         1: { name: '总督', className: 'level-1' },
@@ -45,13 +88,21 @@ const CaptainPage = () => {
         const fetchStreamerInfo = async () => {
             if (!roomId) return;
             try {
+                // Fetch room info for header
                 const res = await getMonitoredRooms();
                 if (res.rooms && Array.isArray(res.rooms)) {
                     const info = res.rooms.find(r => String(r.roomId) === String(roomId));
                     if (info) setStreamerInfo(info);
                 }
+                
+                // Fetch available sessions for filter
+                const historyRes = await getHistorySessions(roomId);
+                if (historyRes.success && Array.isArray(historyRes.sessions)) {
+                    // Sort nearest first
+                    setSessions(historyRes.sessions.sort((a,b) => b - a));
+                }
             } catch (err) {
-                console.error("Failed to load streamer info:", err);
+                console.error("Failed to load streamer info or sessions:", err);
             }
         };
         fetchStreamerInfo();
@@ -79,6 +130,7 @@ const CaptainPage = () => {
                 levels: filters.levels.join(','), // Send as CSV
                 startDate: toTimestamp(filters.startDate),
                 endDate: filters.endDate ? toTimestamp(filters.endDate) + 86400000 - 1 : null, 
+                source_stream_id: filters.sessionId,
                 page: filters.page,
                 limit: filters.limit,
                 room_id: roomId // Use from URL
@@ -100,9 +152,9 @@ const CaptainPage = () => {
     }, []);
 
     useEffect(() => {
-        // Fetch when page/limit/levels changes including mount
+        // Fetch when page/limit/levels/sessionId changes including mount
         fetchData();
-    }, [filters.page, filters.limit, filters.levels, roomId]);
+    }, [filters.page, filters.limit, filters.levels, filters.sessionId, roomId]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -115,6 +167,7 @@ const CaptainPage = () => {
             username: '',
             uid: '',
             levels: [],
+            sessionId: '',
             startDate: '',
             endDate: '',
             page: 1,
@@ -149,13 +202,34 @@ const CaptainPage = () => {
     };
 
     const handleImport = async () => {
-        if (!window.confirm('确定要扫描所有历史文件并导入舰长记录吗？这可能需要几分钟。')) return;
+        // Simple confirmation with clearer options
+        const mode = window.confirm(
+            '【导入模式选择】\n\n' +
+            '点击「确定」：增量导入（仅添加新数据，速度快，不影响现有标签）\n' +
+            '点击「取消」：强制覆盖导入（清除并重建所有数据，用于修复“缺失直播场次”等问题）'
+        );
         
+        if (mode) {
+             // Incremental
+             doImport(false);
+        } else {
+             // Force re-import
+             if (window.confirm('警告：强制重导会清除当前的舰长列表并从历史日志重新生成。\n\n确定要继续吗？')) {
+                 doImport(true);
+             }
+        }
+    };
+
+    const doImport = async (force) => {
         setImporting(true);
         try {
-            const res = await importCaptainHistory();
+            const res = await importCaptainHistory(force);
             if (res.success) {
-                alert(`导入完成！新增 ${res.data.added} 条记录，跳过 ${res.data.skipped} 条。`);
+                if (force) {
+                     alert(`数据已重置并重新导入！共导入 ${res.data.added} 条记录。`);
+                } else {
+                     alert(`增量导入完成！新增 ${res.data.added} 条记录，跳过 ${res.data.skipped} 条。`);
+                }
                 fetchData();
                 fetchStats();
             } else {
@@ -182,6 +256,7 @@ const CaptainPage = () => {
                 startDate: filters.startDate ? toTimestamp(filters.startDate) : null,
                 endDate: filters.endDate ? toTimestamp(filters.endDate) + 86400000 - 1 : null,
                 room_id: roomId,
+                source_stream_id: filters.sessionId,
                 page: 1,
                 limit: 100000 // Large limit to get all
             });
@@ -194,12 +269,16 @@ const CaptainPage = () => {
             const items = res.data.items;
 
             // Prepare data for Excel
-            const headers = ['序号', '时间', 'UID', '用户名', '大航海等级', '数量'];
+            const headers = ['序号', '直播场次', '时间', 'UID', '用户名', '大航海等级', '数量'];
             const excelData = items.map((item, index) => {
                 const levelName = levels[item.guard_level]?.name || '未知';
                 const quantity = item.num ? `${item.num}个月` : '-';
+                // source_stream_id matches the folder name which is a unix timestamp in seconds
+                const sessionTime = item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-';
+                
                 return [
                     index + 1,
+                    sessionTime,
                     formatDate(item.timestamp),
                     item.uid,
                     item.username,
@@ -217,6 +296,7 @@ const CaptainPage = () => {
             // Set column widths
             const wscols = [
                 {wch: 8},  // 序号
+                {wch: 22}, // 直播场次
                 {wch: 22}, // 时间
                 {wch: 15}, // UID
                 {wch: 20}, // 用户名
@@ -316,6 +396,61 @@ const CaptainPage = () => {
                     <div className="search-panel">
                         <h3 className="panel-title">筛选条件</h3>
                         <form onSubmit={handleSearch} className="filter-form vertical">
+                            {/* Session Filter Custom Dropdown */}
+                            <div className="input-group" style={{zIndex: 51}}>
+                                <label>直播场次</label>
+                                <div 
+                                    className="custom-select-container" 
+                                    ref={sessionDropdownRef}
+                                >
+                                    <div 
+                                        className={`custom-select-trigger ${isSessionDropdownOpen ? 'active' : ''}`}
+                                        onClick={() => setIsSessionDropdownOpen(!isSessionDropdownOpen)}
+                                    >
+                                        <span>
+                                            {filters.sessionId 
+                                                ? formatDate(parseInt(filters.sessionId) * 1000) 
+                                                : "所有场次"
+                                            }
+                                        </span>
+                                        <svg className="custom-select-arrow" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                                        </svg>
+                                    </div>
+                                    
+                                    {isSessionDropdownOpen && (
+                                        <div className="custom-select-options">
+                                            <div 
+                                                className={`custom-select-option ${!filters.sessionId ? 'selected' : ''}`}
+                                                onClick={() => {
+                                                    handleInputChange({ target: { name: 'sessionId', value: '' } });
+                                                    setIsSessionDropdownOpen(false);
+                                                }}
+                                            >
+                                                所有场次
+                                            </div>
+                                            {filteredSessions.map(sid => (
+                                                <div 
+                                                    key={sid} 
+                                                    className={`custom-select-option ${filters.sessionId === sid ? 'selected' : ''}`}
+                                                    onClick={() => {
+                                                        handleInputChange({ target: { name: 'sessionId', value: sid } });
+                                                        setIsSessionDropdownOpen(false);
+                                                    }}
+                                                >
+                                                    {formatDate(parseInt(sid) * 1000)}
+                                                </div>
+                                            ))}
+                                            {filteredSessions.length === 0 && (
+                                                <div className="custom-select-option disabled" style={{cursor: 'default', color: '#9ca3af', textAlign: 'center'}}>
+                                                    无符合日期范围的直播场次
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
                             <div className="input-group">
                                 <label>UID</label>
                                 <input
@@ -366,7 +501,7 @@ const CaptainPage = () => {
                                     </label>
                                 </div>
                             </div>
-
+                            
                             <div className="input-group">
                                 <label>日期范围</label>
                                 <div className="date-inputs-vertical">
@@ -417,6 +552,7 @@ const CaptainPage = () => {
                                     <thead>
                                         <tr>
                                             <th>#</th>
+                                            <th>直播场次</th>
                                             <th>时间</th>
                                             <th>UID</th>
                                             <th>用户名</th>
@@ -428,6 +564,9 @@ const CaptainPage = () => {
                                         {captains.map((item, index) => (
                                             <tr key={item.id || item.timestamp + item.uid}>
                                                 <td>{((filters.page - 1) * filters.limit) + index + 1}</td>
+                                                <td>
+                                                    {item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-'}
+                                                </td>
                                                 <td>{formatDate(item.timestamp)}</td>
                                                 <td>{item.uid}</td>
                                                 <td>{item.username}</td>
