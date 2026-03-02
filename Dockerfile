@@ -13,6 +13,9 @@ RUN npm run build
 FROM node:18-alpine
 WORKDIR /app
 
+# 换源加速 (解决 dl-cdnlink 连接慢的问题)
+RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
+
 # 安装 dumb-init 用于信号处理
 RUN apk add --no-cache dumb-init
 
