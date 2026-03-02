@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCaptains, getCaptainStats, importCaptainHistory, getMonitoredRooms } from '../services/api';
 import { useNavigate, useSearchParams } from 'react-router-dom';
+import XLSX from 'xlsx-js-style';
 import './CaptainPage.css';
 
 const CaptainPage = () => {
@@ -12,6 +13,7 @@ const CaptainPage = () => {
     const [stats, setStats] = useState({ totalRecords: 0, uniqueCaptains: 0 });
     const [loading, setLoading] = useState(false);
     const [importing, setImporting] = useState(false);
+    const [exporting, setExporting] = useState(false);
     const [streamerInfo, setStreamerInfo] = useState(null);
 
     const [filters, setFilters] = useState({
@@ -63,8 +65,6 @@ const CaptainPage = () => {
             console.error('Failed to fetch stats:', error);
         }
     };
-
-    // Removed fetchRooms since we use roomId from URL
 
     useEffect(() => {
         fetchStats();
@@ -169,6 +169,99 @@ const CaptainPage = () => {
         }
     };
 
+    const handleExport = async () => {
+        if (!captains.length) return alert('当前没有数据可导出');
+        setExporting(true);
+
+        try {
+            // Re-fetch all matching data
+            const res = await getCaptains({
+                username: filters.username,
+                uid: filters.uid,
+                levels: filters.levels || [],
+                startDate: filters.startDate ? toTimestamp(filters.startDate) : null,
+                endDate: filters.endDate ? toTimestamp(filters.endDate) + 86400000 - 1 : null,
+                room_id: roomId,
+                page: 1,
+                limit: 100000 // Large limit to get all
+            });
+
+            if (!res || !res.success || !res.data || !res.data.items) {
+                alert('导出失败: 获取数据失败');
+                return;
+            }
+
+            const items = res.data.items;
+
+            // Prepare data for Excel
+            const headers = ['序号', '时间', 'UID', '用户名', '大航海等级', '数量'];
+            const excelData = items.map((item, index) => {
+                const levelName = levels[item.guard_level]?.name || '未知';
+                const quantity = item.num ? `${item.num}个月` : '-';
+                return [
+                    index + 1,
+                    formatDate(item.timestamp),
+                    item.uid,
+                    item.username,
+                    levelName,
+                    quantity
+                ];
+            });
+
+            // Add headers
+            excelData.unshift(headers);
+
+            // Create worksheet
+            const ws = XLSX.utils.aoa_to_sheet(excelData);
+
+            // Set column widths
+            const wscols = [
+                {wch: 8},  // 序号
+                {wch: 22}, // 时间
+                {wch: 15}, // UID
+                {wch: 20}, // 用户名
+                {wch: 12}, // 等级
+                {wch: 10}  // 数量
+            ];
+            ws['!cols'] = wscols;
+
+            // Add styles to header row
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for (let C = range.s.c; C <= range.e.c; ++C) {
+                const address = XLSX.utils.encode_cell({ r: 0, c: C }); // Row 0 is header
+                if (!ws[address]) continue;
+                ws[address].s = {
+                    font: {
+                        name: "宋体",
+                        sz: 11,
+                        bold: true,
+                        color: { rgb: "000000" }
+                    },
+                    alignment: {
+                        horizontal: "center",
+                        vertical: "center"
+                    },
+                    fill: {
+                        fgColor: { rgb: "EFEFEF" } // Light gray background like before
+                    }
+                };
+            }
+
+            // Create workbook and add worksheet
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Sheet1");
+
+            // Write file
+            XLSX.writeFile(wb, `captain_export_${streamerInfo?.uname || 'unknown'}_${new Date().toISOString().slice(0,10)}.xlsx`);
+
+        } catch (err) {
+            console.error(err);
+            alert('导出发生错误');
+        } finally {
+            setExporting(false);
+        }
+    };
+
     const formatDate = (ts) => {
         return new Date(ts).toLocaleString();
     };
@@ -186,6 +279,9 @@ const CaptainPage = () => {
                     </div>
                 </div>
                 <div className="header-actions">
+                    <button className="btn-modern secondary" onClick={handleExport} disabled={exporting}>
+                        <i className="icon-export"></i> {exporting ? '导出中...' : '导出表格'}
+                    </button>
                     <button className="btn-modern secondary" onClick={handleImport} disabled={importing}>
                         <i className="icon-import"></i> {importing ? '导入中...' : '导入历史数据'}
                     </button>
