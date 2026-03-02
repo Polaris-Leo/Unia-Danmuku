@@ -44,6 +44,19 @@ const CaptainPage = () => {
     });
     const [totalItems, setTotalItems] = useState(0);
 
+    const EXPORT_COLUMNS = [
+        { key: 'index', label: '序号', width: 8 },
+        { key: 'source_stream_id', label: '直播场次', width: 22 },
+        { key: 'timestamp', label: '时间', width: 22 },
+        { key: 'uid', label: 'UID', width: 15 },
+        { key: 'username', label: '用户名', width: 20 },
+        { key: 'guard_level', label: '大航海等级', width: 12 },
+        { key: 'num', label: '数量', width: 10 }
+    ];
+
+    const [showExportModal, setShowExportModal] = useState(false);
+    const [selectedColumns, setSelectedColumns] = useState(EXPORT_COLUMNS.map(c => c.key));
+
     // Filter sessions based on date range
     const filteredSessions = sessions.filter(sid => {
         const sessionTime = parseInt(sid) * 1000;
@@ -243,9 +256,14 @@ const CaptainPage = () => {
         }
     };
 
-    const handleExport = async () => {
+    const handleExport = () => {
         if (!captains.length) return alert('当前没有数据可导出');
+        setShowExportModal(true);
+    }
+
+    const confirmExport = async () => {
         setExporting(true);
+        setShowExportModal(false);
 
         try {
             // Re-fetch all matching data
@@ -268,23 +286,26 @@ const CaptainPage = () => {
 
             const items = res.data.items;
 
-            // Prepare data for Excel
-            const headers = ['序号', '直播场次', '时间', 'UID', '用户名', '大航海等级', '数量'];
+            // Define column map for data extraction
+            const columnMap = {
+                'index': (item, index) => index + 1,
+                'source_stream_id': (item) => item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-',
+                'timestamp': (item) => formatDate(item.timestamp),
+                'uid': (item) => item.uid,
+                'username': (item) => item.username,
+                'guard_level': (item) => levels[item.guard_level]?.name || '未知',
+                'num': (item) => item.num ? `${item.num}个月` : '-'
+            };
+
+            // Filter active columns
+            const activeCols = EXPORT_COLUMNS.filter(col => selectedColumns.includes(col.key));
+            
+            // Prepare headers
+            const headers = activeCols.map(col => col.label);
+            
+            // Prepare data rows
             const excelData = items.map((item, index) => {
-                const levelName = levels[item.guard_level]?.name || '未知';
-                const quantity = item.num ? `${item.num}个月` : '-';
-                // source_stream_id matches the folder name which is a unix timestamp in seconds
-                const sessionTime = item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-';
-                
-                return [
-                    index + 1,
-                    sessionTime,
-                    formatDate(item.timestamp),
-                    item.uid,
-                    item.username,
-                    levelName,
-                    quantity
-                ];
+                return activeCols.map(col => columnMap[col.key](item, index));
             });
 
             // Add headers
@@ -294,15 +315,7 @@ const CaptainPage = () => {
             const ws = XLSX.utils.aoa_to_sheet(excelData);
 
             // Set column widths
-            const wscols = [
-                {wch: 8},  // 序号
-                {wch: 22}, // 直播场次
-                {wch: 22}, // 时间
-                {wch: 15}, // UID
-                {wch: 20}, // 用户名
-                {wch: 12}, // 等级
-                {wch: 10}  // 数量
-            ];
+            const wscols = activeCols.map(col => ({wch: col.width}));
             ws['!cols'] = wscols;
 
             // Add styles to header row
@@ -348,6 +361,46 @@ const CaptainPage = () => {
 
     return (
         <div className="captain-container">
+            {/* Export Modal */}
+            {showExportModal && (
+                <div className="modal-overlay" onClick={() => setShowExportModal(false)}>
+                    <div className="modal-content" onClick={e => e.stopPropagation()}>
+                        <div className="modal-header">
+                            <h3 className="modal-title">导出选项</h3>
+                            <button className="modal-close" onClick={() => setShowExportModal(false)}>×</button>
+                        </div>
+                        <div className="modal-body">
+                            <h4 style={{marginBottom: '10px', fontSize: '14px', color: '#4b5563'}}>选择导出列：</h4>
+                            <div className="column-selector">
+                                {EXPORT_COLUMNS.map(col => (
+                                    <label key={col.key} className="column-checkbox">
+                                        <input 
+                                            type="checkbox" 
+                                            checked={selectedColumns.includes(col.key)}
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setSelectedColumns([...selectedColumns, col.key]);
+                                                } else {
+                                                    // Prevent deselecting all
+                                                    if (selectedColumns.length > 1) {
+                                                        setSelectedColumns(selectedColumns.filter(k => k !== col.key));
+                                                    }
+                                                }
+                                            }}
+                                        />
+                                        <span>{col.label}</span>
+                                    </label>
+                                ))}
+                            </div>
+                        </div>
+                        <div className="modal-footer">
+                            <button className="btn-modern outline" onClick={() => setShowExportModal(false)}>取消</button>
+                            <button className="btn-modern primary" onClick={confirmExport}>确认导出</button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
             {/* Header Section */}
             <header className="page-header">
                 <div className="header-content">
