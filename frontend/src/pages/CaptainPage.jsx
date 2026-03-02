@@ -48,7 +48,7 @@ const CaptainPage = () => {
         { key: 'index', label: '序号', width: 8 },
         { key: 'source_stream_id', label: '直播场次', width: 22 },
         { key: 'timestamp', label: '时间', width: 22 },
-        { key: 'uid', label: 'UID', width: 15 },
+        { key: 'uid', label: 'UID', width: 20 },
         { key: 'username', label: '用户名', width: 20 },
         { key: 'guard_level', label: '大航海等级', width: 12 },
         { key: 'num', label: '数量', width: 10 }
@@ -288,13 +288,13 @@ const CaptainPage = () => {
 
             // Define column map for data extraction
             const columnMap = {
-                'index': (item, index) => index + 1,
-                'source_stream_id': (item) => item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-',
-                'timestamp': (item) => formatDate(item.timestamp),
-                'uid': (item) => item.uid,
-                'username': (item) => item.username,
-                'guard_level': (item) => levels[item.guard_level]?.name || '未知',
-                'num': (item) => item.num ? `${item.num}个月` : '-'
+                'index': (item, index) => ({ v: index + 1, t: 'n' }),
+                'source_stream_id': (item) => ({ v: item.source_stream_id ? formatDate(parseInt(item.source_stream_id) * 1000) : '-', t: 's' }),
+                'timestamp': (item) => ({ v: formatDate(item.timestamp), t: 's' }),
+                'uid': (item) => ({ v: String(item.uid), t: 's' }), // Force string type for UID
+                'username': (item) => ({ v: item.username, t: 's' }),
+                'guard_level': (item) => ({ v: levels[item.guard_level]?.name || '未知', t: 's' }),
+                'num': (item) => ({ v: item.num ? `${item.num}个月` : '-', t: 's' })
             };
 
             // Filter active columns
@@ -303,42 +303,43 @@ const CaptainPage = () => {
             // Prepare headers
             const headers = activeCols.map(col => col.label);
             
-            // Prepare data rows
+            // Prepare data rows (we use cell objects to control types)
             const excelData = items.map((item, index) => {
-                return activeCols.map(col => columnMap[col.key](item, index));
+                return activeCols.map(col => {
+                    const cell = columnMap[col.key](item, index);
+                    // Standard text wrapping for address and id-like columns
+                    return { ...cell, s: { ...cell.s, alignment: { vertical: 'center', horizontal: 'center' } } };
+                });
             });
 
+            // Create headers as cell objects
+            const headerRow = activeCols.map(col => ({
+                v: col.label,
+                t: 's',
+                s: {
+                    font: { name: "宋体", sz: 11, bold: true, color: { rgb: "000000" } },
+                    alignment: { horizontal: "center", vertical: "center" },
+                    fill: { fgColor: { rgb: "EFEFEF" } }
+                }
+            }));
+            
             // Add headers
-            excelData.unshift(headers);
+            excelData.unshift(headerRow);
 
-            // Create worksheet
+            // Create worksheet from data with cell objects
             const ws = XLSX.utils.aoa_to_sheet(excelData);
 
             // Set column widths
             const wscols = activeCols.map(col => ({wch: col.width}));
             ws['!cols'] = wscols;
 
-            // Add styles to header row
-            const range = XLSX.utils.decode_range(ws['!ref']);
-            for (let C = range.s.c; C <= range.e.c; ++C) {
-                const address = XLSX.utils.encode_cell({ r: 0, c: C }); // Row 0 is header
-                if (!ws[address]) continue;
-                ws[address].s = {
-                    font: {
-                        name: "宋体",
-                        sz: 11,
-                        bold: true,
-                        color: { rgb: "000000" }
-                    },
-                    alignment: {
-                        horizontal: "center",
-                        vertical: "center"
-                    },
-                    fill: {
-                        fgColor: { rgb: "EFEFEF" } // Light gray background like before
-                    }
-                };
-            }
+            // Header styling is now handled in the headerRow object itself, 
+            // no need to apply it separately via loop unless we want to reinforce it.
+            // The previous separate loop is actually redundant if we pass style in the cell object.
+            // However, aoa_to_sheet might not respect `s` property perfectly in all environments/versions without explicit options or if using basic `xlsx`.
+            // But `xlsx-js-style` supports it. So passing `s` in cell object is correct.
+
+            // Create workbook and add worksheet
 
             // Create workbook and add worksheet
             const wb = XLSX.utils.book_new();
