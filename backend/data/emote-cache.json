@@ -2374,5 +2374,23 @@
     "width": 20,
     "height": 20,
     "emoticon_unique": "upower_[樱宝表情包_可爱捏]"
+  },
+  "[安静]": {
+    "url": "https://i0.hdslb.com/bfs/live/321d183e7a80c96246a33157a168766ce2fd83bd.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_117885"
+  },
+  "[146]": {
+    "url": "https://i0.hdslb.com/bfs/live/092e943acf8efd5c723325af1f90f789075ba112.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_117810"
+  },
+  "[桂霞]": {
+    "url": "https://i0.hdslb.com/bfs/live/56fb1ff71ceaa12e74802aa575df9fbdb0e11c82.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_4788550_117886"
   }
 }

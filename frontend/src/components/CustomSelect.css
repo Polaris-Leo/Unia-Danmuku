@@ -1,0 +1,88 @@
+.custom-select-container {
+    position: relative;
+    user-select: none;
+    width: 200px;
+    font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.custom-select-trigger {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    font-size: 14px;
+    font-weight: 400;
+    color: #333;
+    height: 40px;
+    line-height: 40px;
+    background: #ffffff;
+    cursor: pointer;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px; /* Rounded corners for the input */
+    transition: all 0.2s;
+}
+
+.custom-select-trigger:hover {
+    border-color: #007bff;
+}
+
+.custom-select-trigger.open {
+    border-color: #007bff;
+    border-radius: 8px 8px 0 0; /* Open triggers have flat bottom if connected */
+    /* Or we can keep it rounded if the dropdown floats */
+    border-bottom: 1px solid #e0e0e0; /* Separate trigger from dropdown */
+}
+
+/* The actual dropdown list */
+.custom-select-options {
+    position: absolute;
+    display: block;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: #ffffff;
+    border: 1px solid #e0e0e0;
+    border-top: 0;
+    border-radius: 0 0 8px 8px; /* Rounded bottom corners */
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    z-index: 1000; /* High z-index to float over other content */
+    max-height: 200px;
+    overflow-y: auto;
+    margin-top: 4px; /* Slight separation for "floating" effect */
+    border-top: 1px solid #e0e0e0; /* Restore top border if separated */
+    border-radius: 8px; /* Fully rounded if floating separately */
+}
+
+/* Individual option */
+.custom-select-option {
+    position: relative;
+    display: block;
+    padding: 0 16px;
+    font-size: 14px;
+    color: #333;
+    line-height: 40px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.custom-select-option:hover {
+    background-color: #f0f7ff;
+    color: #007bff;
+}
+
+.custom-select-option.selected {
+    background-color: #e6f2ff;
+    color: #007bff;
+    font-weight: 600;
+}
+
+.custom-select-arrow {
+    font-size: 10px;
+    color: #999;
+    transition: transform 0.2s;
+}
+
+.custom-select-trigger.open .custom-select-arrow {
+    transform: rotate(180deg);
+}

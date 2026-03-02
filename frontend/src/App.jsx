@@ -10,6 +10,7 @@ import ThankYouPage from './pages/ThankYouPage';
 import ThankYouSettingsPage from './pages/ThankYouSettingsPage';
 import ClockPage from './pages/ClockPage';
 import ClockSettingsPage from './pages/ClockSettingsPage';
+import CaptainPage from './pages/CaptainPage';
 
 function App() {
   return (
@@ -25,6 +26,7 @@ function App() {
         <Route path="/thankyou-settings" element={<ThankYouSettingsPage />} />
         <Route path="/clock" element={<ClockPage />} />
         <Route path="/clock-settings" element={<ClockSettingsPage />} />
+        <Route path="/captains" element={<CaptainPage />} />
       </Routes>
     </BrowserRouter>
   );

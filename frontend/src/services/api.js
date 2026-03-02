@@ -103,7 +103,32 @@ export const getHistoryData = async (roomId, sessionId) => {
   const response = await api.get(`/history/${roomId}/${sessionId}`);
   return response.data;
 };
+/**
+ * 获取舰长列表
+ * @param {object} params
+ */
+export const getCaptains = async (params) => {
+  const response = await api.get('/captains', { params });
+  return response.data;
+};
 
+/**
+ * 获取舰长统计
+ * @param {string} roomId
+ */
+export const getCaptainStats = async (roomId) => {
+  const params = roomId ? { room_id: roomId } : {};
+  const response = await api.get('/captains/stats', { params });
+  return response.data;
+};
+
+/**
+ * 导入历史舰长数据
+ */
+export const importCaptainHistory = async () => {
+  const response = await api.post('/captains/import');
+  return response.data;
+};
 /**
  * 获取 OBS 预览设置
  */

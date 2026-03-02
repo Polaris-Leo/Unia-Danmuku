@@ -84,6 +84,15 @@ function DashboardPage() {
               <button className="action-btn outline" onClick={() => navigate('/monitor')}>
                 📡 后台监控配置
               </button>
+              <button className="action-btn outline" onClick={() => {
+                if (roomId) {
+                  navigate(`/captains?roomId=${roomId}`);
+                } else {
+                  alert('请输入直播间号');
+                }
+              }}>
+                🛳️ 舰长信息
+              </button>
             </div>
           </div>
 
