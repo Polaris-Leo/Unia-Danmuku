@@ -2392,5 +2392,23 @@
     "width": 162,
     "height": 162,
     "emoticon_unique": "room_4788550_117886"
+  },
+  "[[孤独摇滚_害羞]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/c6094c00aec22fadca1c06fdf5cdd77715b9666d.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[孤独摇滚_害羞]"
+  },
+  "[[孤独摇滚_打]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/3633e93cc05ebb977f8f49078c80a0c478d6caa3.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[孤独摇滚_打]"
+  },
+  "[[孤独摇滚_举起手来]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/35cc9f7f604ba6a1e59519d0985bef161d41f189.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[孤独摇滚_举起手来]"
   }
 }

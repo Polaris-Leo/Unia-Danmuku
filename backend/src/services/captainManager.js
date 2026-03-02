@@ -312,8 +312,8 @@ class CaptainManager {
             }
         }
         
-        // Sort by timestamp desc
-        matchingRecords.sort((a, b) => b.timestamp - a.timestamp);
+        // Sort by timestamp asc (Oldest first)
+        matchingRecords.sort((a, b) => a.timestamp - b.timestamp);
 
         const total = matchingRecords.length;
         // Pagination logic
