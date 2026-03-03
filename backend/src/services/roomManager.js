@@ -1,6 +1,7 @@
 import fs from 'fs';
 import path from 'path';
 import { BilibiliLiveWS } from './bilibiliLiveWS.js';
+import { captainManager } from './captainManager.js';
 import { loadCookies } from '../utils/cookieStorage.js';
 import { loadHistory, saveMessage } from '../utils/historyStorage.js';
 
@@ -176,7 +177,25 @@ class RoomManager {
 
     liveWS.onDanmaku = (data) => broadcast(data);
     liveWS.onGift = (data) => broadcast(data);
-    liveWS.onGuard = (data) => broadcast(data);
+    liveWS.onGuard = (data) => {
+      broadcast(data);
+      // Automatically add to captain manager for live updates
+      const currentSessionId = liveWS.currentSessionId ? String(liveWS.currentSessionId) : String(Math.floor(Date.now() / 1000));
+      captainManager.addCaptain({
+        uid: data.user.uid,
+        username: data.user.username,
+        guard_level: data.guardLevel,
+        timestamp: data.timestamp * 1000,
+        entry_type: 'live',
+        days: data.days || 0,
+        num: data.num || 1,
+        price: data.price || 0,
+        room_id: parseInt(roomId),
+        source_stream_id: currentSessionId
+      }).catch(err => {
+        console.error('[RoomManager] Failed to auto-add captain:', err);
+      });
+    };
     liveWS.onWelcome = (data) => broadcast(data);
     liveWS.onWatched = (data) => broadcast(data);
     liveWS.onRankCount = (data) => broadcast({ type: 'rank', num: data.count });

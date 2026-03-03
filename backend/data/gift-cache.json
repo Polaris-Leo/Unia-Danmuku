@@ -323,6 +323,12 @@
     "staticIcon": "https://s1.hdslb.com/bfs/live/1df7d4dafaa27939fbc2670353ba59a50bd7a5f0.png",
     "dynamicIcon": "https://i0.hdslb.com/bfs/live/dfb8aa1727bd88e0b65c0c88c38087e3a1ec0f24.webp"
   },
+  "35432": {
+    "name": "鼓鼓掌",
+    "icon": "https://i0.hdslb.com/bfs/live/353e3de2d989a2cc0e68526a1965019aaf94081d.webp",
+    "staticIcon": "https://s1.hdslb.com/bfs/live/d927e689c3f33642e5283fc44469794eef017d94.png",
+    "dynamicIcon": "https://i0.hdslb.com/bfs/live/353e3de2d989a2cc0e68526a1965019aaf94081d.webp"
+  },
   "35485": {
     "name": "胖虎花灯",
     "icon": "https://i0.hdslb.com/bfs/live/31d11138c8ffc764e5517632ce8fc278ff5babc6.webp",
