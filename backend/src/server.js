@@ -98,17 +98,28 @@ app.use((err, req, res, next) => {
   });
 });
 
-// 启动服务器
-const startServer = async () => {
-  // 1. 先修复重叠数据 (将误入旧场次的新数据移动到新场次)
-  await repairOverlappingSessions();
-  // 2. 再整理数据顺序 (确保文件内按时间戳排序)
-  await sortAllHistory();
+// 后台异步执行数据检查与修复，不阻塞服务器启动
+const runBackgroundRepair = async () => {
+  try {
+    console.log('🔍 [后台] 开始数据检查与修复...');
+    // 1. 先修复重叠数据 (将误入旧场次的新数据移动到新场次)
+    await repairOverlappingSessions();
+    // 2. 再整理数据顺序 (确保文件内按时间戳排序)
+    await sortAllHistory();
+    console.log('✅ [后台] 数据检查与修复完成');
+  } catch (err) {
+    console.error('❌ [后台] 数据检查与修复出错:', err);
+  }
+};
 
+// 启动服务器
+const startServer = () => {
   server.listen(PORT, () => {
     console.log(`🚀 Server is running on http://localhost:${PORT}`);
     console.log(`📱 Frontend URL: ${process.env.FRONTEND_URL}`);
     console.log(`🌐 WebSocket URL: ws://localhost:${PORT}/ws/danmaku`);
+    // 服务器启动后，在后台异步执行数据检查与修复
+    runBackgroundRepair();
   });
 };
 
