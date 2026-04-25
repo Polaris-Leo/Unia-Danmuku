@@ -96,12 +96,12 @@ const ObsDanmakuPage = () => {
   useEffect(() => {
     const loadConfig = async () => {
       try {
-        console.log('🔄 开始从后端加载OBS配置...');
-        const res = await fetch(`/api/obs/settings?t=${Date.now()}`);
+        console.log('🔄 开始从后端加载OBS配置...', `模板: ${templateId}`);
+        const res = await fetch(`/api/obs/settings?template=${templateId}&t=${Date.now()}`);
         const data = await res.json();
-        
+
         if (data.success && data.settings && Object.keys(data.settings).length > 0) {
-          console.log('✅ 成功加载OBS配置:', data.settings);
+          console.log('✅ 成功加载OBS配置:', data.settings, `模板: ${data.template}`);
           setCustomStyles(data.settings);
           setError(null);
         } else {
@@ -115,15 +115,16 @@ const ObsDanmakuPage = () => {
     };
 
     loadConfig();
-    
+
     // 每10秒轮询一次配置，确保OBS能同步最新的修改
     const interval = setInterval(loadConfig, 10000);
     return () => clearInterval(interval);
-  }, []);
+  }, [templateId]);
 
-  // 检测是否开启测试模式（URL包含 ?test=true）
+  // 检测是否开启测试模式（URL包含 ?test=true）和模板选择（URL包含 ?template=1）
   const params = new URLSearchParams(window.location.search);
   const testMode = params.get('test') === 'true';
+  const templateId = params.get('template') || 'default';
 
   // 加载自定义字体
   useEffect(() => {
@@ -599,7 +600,7 @@ const ObsDanmakuPage = () => {
 
   return (
     // 简洁样式
-    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''}`}>
+    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''} ${templateId !== 'default' ? `template-${templateId}` : ''}`}>
       {/* SC倒计时栏 */}
       {activeSCs.length > 0 && (
         <div className="sc-timer-bar">

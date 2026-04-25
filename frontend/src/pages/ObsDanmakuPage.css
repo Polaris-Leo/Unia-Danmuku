@@ -247,6 +247,58 @@ html, body {
   top: 12vh; /* 调整为12vh，减少空隙 */
 }
 
+/* 模板1样式 - 右上角缩小版 */
+.template-1 {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 35vh;
+  height: 50vh;
+  background: transparent;
+  z-index: 100;
+}
+
+.template-1 .danmaku-list {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0.5vh;
+  overflow-y: auto;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
+
+/* 模板1的SC倒计时栏隐藏或调整位置 */
+.template-1 .sc-timer-bar {
+  display: none; /* 缩小版不显示SC倒计时栏 */
+}
+
+/* 模板1的弹幕项样式调整 */
+.template-1 .danmaku-wrapper {
+  margin-bottom: var(--item-spacing);
+}
+
+.template-1 .danmaku-item {
+  padding: 0.3vh;
+}
+
+.template-1 .avatar img {
+  width: var(--avatar-size);
+  height: var(--avatar-size);
+}
+
+/* 模板1的SC/Guard/Gift样式调整 */
+.template-1 .sc-wrapper,
+.template-1 .guard-wrapper {
+  margin-bottom: 0.5vh;
+}
+
+.template-1 .sc-item {
+  padding: 0.4vh;
+}
+
 /* 隐藏滚动条 */
 .danmaku-list::-webkit-scrollbar {
   display: none;

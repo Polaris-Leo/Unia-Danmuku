@@ -64,7 +64,14 @@ const ObsSettingsPage = () => {
     { value: 'en', label: '英语 (en)' },
   ];
 
+  // 模板选项
+  const templateOptions = [
+    { value: 'default', label: '默认模板 (全屏)' },
+    { value: '1', label: '模板1 (右上角缩小版)' },
+  ];
+
   const [settings, setSettings] = useState(defaultSettings);
+  const [currentTemplate, setCurrentTemplate] = useState('default');
   const [roomId, setRoomId] = useState('21514463');
   const [blcInput, setBlcInput] = useState('');
   const [availableFonts, setAvailableFonts] = useState([
@@ -137,14 +144,14 @@ const ObsSettingsPage = () => {
   // 加载保存的设置
   useEffect(() => {
     // 优先从后端加载设置
-    fetch('/api/obs/settings')
+    fetch(`/api/obs/settings?template=${currentTemplate}`)
       .then(res => res.json())
       .then(data => {
         if (data.success && data.settings && Object.keys(data.settings).length > 0) {
-          console.log('✅ 从后端加载设置:', data.settings);
-          setSettings(prev => ({ ...prev, ...data.settings }));
-          // 同时更新localStorage作为备份
-          localStorage.setItem('obsSettings', JSON.stringify(data.settings));
+          console.log('✅ 从后端加载设置:', data.settings, `模板: ${data.template}`);
+          setSettings({ ...defaultSettings, ...data.settings });
+          // 同时更新localStorage作为备份（带模板ID）
+          localStorage.setItem(`obsSettings_${currentTemplate}`, JSON.stringify(data.settings));
         } else {
           // 后端没有设置，尝试从localStorage加载
           loadFromLocalStorage();
@@ -156,11 +163,11 @@ const ObsSettingsPage = () => {
       });
 
     const loadFromLocalStorage = () => {
-      const saved = localStorage.getItem('obsSettings');
+      const saved = localStorage.getItem(`obsSettings_${currentTemplate}`);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
-          
+
           // 自动迁移：检测是否为旧的像素值（如果字号大于10，通常意味着是像素值）
           // 将其转换为 vh (基于 1080p: 1vh = 10.8px)
           if (parsed.usernameFontSize && parsed.usernameFontSize > 10) {
@@ -174,21 +181,21 @@ const ObsSettingsPage = () => {
             parsed.usernameStrokeWidth = toVhVal(parsed.usernameStrokeWidth);
             parsed.usernameGlowIntensity = toVhVal(parsed.usernameGlowIntensity);
             parsed.usernameShadowIntensity = toVhVal(parsed.usernameShadowIntensity);
-            
+
             parsed.danmakuFontSize = toVhVal(parsed.danmakuFontSize);
             parsed.danmakuStrokeWidth = toVhVal(parsed.danmakuStrokeWidth);
             parsed.danmakuGlowIntensity = toVhVal(parsed.danmakuGlowIntensity);
             parsed.danmakuShadowIntensity = toVhVal(parsed.danmakuShadowIntensity);
-            
+
             parsed.avatarSize = toVhVal(parsed.avatarSize);
             parsed.itemSpacing = toVhVal(parsed.itemSpacing);
             parsed.emotSize = toVhVal(parsed.emotSize);
-            
+
             console.log('✅ 迁移完成:', parsed);
           }
 
           // 合并默认设置，确保新添加的设置项（如emotSize）有默认值
-          setSettings(prev => ({ ...prev, ...parsed }));
+          setSettings({ ...defaultSettings, ...parsed });
         } catch (e) {
           console.error('Failed to parse settings', e);
         }
@@ -199,24 +206,25 @@ const ObsSettingsPage = () => {
     if (savedRoom) {
       setRoomId(savedRoom);
     }
-  }, []);
+  }, [currentTemplate]);
 
   // 保存设置
   const saveSettings = async () => {
-    // 保存到 localStorage
-    localStorage.setItem('obsSettings', JSON.stringify(settings));
+    // 保存到 localStorage（带模板ID）
+    localStorage.setItem(`obsSettings_${currentTemplate}`, JSON.stringify(settings));
     localStorage.setItem('obsRoomId', roomId);
 
     // 保存到后端
     try {
-      const res = await fetch('/api/obs/settings', {
+      const res = await fetch(`/api/obs/settings?template=${currentTemplate}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings)
       });
       const data = await res.json();
       if (data.success) {
-        alert('设置已保存！(已同步到OBS)');
+        const templateName = currentTemplate === 'default' ? '默认模板' : `模板${currentTemplate}`;
+        alert(`${templateName}设置已保存！(已同步到OBS)`);
       } else {
         alert('保存到后端失败: ' + data.message);
       }
@@ -370,9 +378,10 @@ const ObsSettingsPage = () => {
 
   // 预览
   const preview = () => {
-    localStorage.setItem('obsSettings', JSON.stringify(settings));
+    localStorage.setItem(`obsSettings_${currentTemplate}`, JSON.stringify(settings));
     localStorage.setItem('obsRoomId', roomId);
-    window.open(`/obs?room=${roomId}`, '_blank');
+    const templateParam = currentTemplate !== 'default' ? `&template=${currentTemplate}` : '';
+    window.open(`/obs?room=${roomId}${templateParam}`, '_blank');
   };
 
   // 返回主页
@@ -386,9 +395,11 @@ const ObsSettingsPage = () => {
       alert('请输入直播间号');
       return;
     }
-    const obsLink = `${window.location.origin}/obs?room=${roomId}`;
+    const templateParam = currentTemplate !== 'default' ? `&template=${currentTemplate}` : '';
+    const obsLink = `${window.location.origin}/obs?room=${roomId}${templateParam}`;
+    const templateName = currentTemplate === 'default' ? '默认模板' : `模板${currentTemplate}`;
     navigator.clipboard.writeText(obsLink).then(() => {
-      alert('OBS链接已复制！\n请在OBS中添加浏览器源，并粘贴此链接。');
+      alert(`${templateName}OBS链接已复制！\n请在OBS中添加浏览器源，并粘贴此链接。`);
     }).catch(() => {
       alert('复制失败，请手动复制：\n' + obsLink);
     });
@@ -547,6 +558,19 @@ const ObsSettingsPage = () => {
                 <option value="default">默认简洁样式</option>
                 <option value="bubbles">气泡样式 (Bubbles)</option>
               </select>
+            </div>
+
+            <div className="setting-item">
+              <label>选择模板：</label>
+              <select
+                value={currentTemplate}
+                onChange={(e) => setCurrentTemplate(e.target.value)}
+              >
+                {templateOptions.map((opt) => (
+                  <option key={opt.value} value={opt.value}>{opt.label}</option>
+                ))}
+              </select>
+              <span className="hint">切换模板以设置不同的OBS弹幕样式（如右上角缩小版）</span>
             </div>
           </div>
 
