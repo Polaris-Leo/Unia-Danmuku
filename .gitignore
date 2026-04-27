@@ -49,6 +49,9 @@ desktop.ini
 *.temp
 *-temp.js
 
+# Claude Code
+.claude/
+
 # PM2
 .pm2/
 
