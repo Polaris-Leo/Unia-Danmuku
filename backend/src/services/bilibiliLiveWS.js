@@ -33,6 +33,7 @@ export class BilibiliLiveWS {
     this.isRateLimited = false;  // 是否处于限速状态
     this.rateLimitTime = null;   // 限速触发时间
     this.rateLimitCD = 5 * 60 * 1000;  // CD时间：5分钟
+    this._intentionalDisconnect = false; // 是否为主动断开（防止误触重连）
     
     this.currentSessionId = null; // 当前直播场次ID (开播时间戳)
     this.lastSessionId = null;    // 上一次直播场次ID
@@ -458,11 +459,13 @@ export class BilibiliLiveWS {
    * 连接直播间
    */
   async connect() {
-    // 如果已有连接，先断开
+    // 如果已有连接，先断开（标记为主动断开，防止触发重连）
     if (this.ws) {
       console.log('⚠️ 检测到已有连接，正在断开...');
+      this._intentionalDisconnect = true;
       this.disconnect();
     }
+    this._intentionalDisconnect = false; // 重置标志，新连接关闭时才允许触发重连
 
     try {
       // 1. 获取真实房间号
@@ -1189,13 +1192,16 @@ export class BilibiliLiveWS {
   handleClose() {
     console.log('🔌 WebSocket连接已关闭');
     this.isConnected = false;
-    
+
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
-    
-    if (this.onClose) this.onClose();
+
+    // 仅在非主动断开时触发 onClose（防止 connect() 内部 disconnect() 误触重连）
+    if (!this._intentionalDisconnect) {
+      if (this.onClose) this.onClose();
+    }
   }
 
   /**
@@ -1203,15 +1209,16 @@ export class BilibiliLiveWS {
    */
   disconnect() {
     if (this.ws) {
+      this.ws.onclose = null; // 解除回调，避免触发 handleClose
       this.ws.close();
       this.ws = null;
     }
-    
+
     if (this.heartbeatTimer) {
       clearInterval(this.heartbeatTimer);
       this.heartbeatTimer = null;
     }
-    
+
     this.isConnected = false;
   }
 }
