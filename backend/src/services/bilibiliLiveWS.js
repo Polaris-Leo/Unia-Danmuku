@@ -2,6 +2,7 @@ import WebSocket from 'ws';
 import axios from 'axios';
 import pako from 'pako';
 import zlib from 'zlib';
+import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { getCookieString } from '../utils/cookieStorage.js';
@@ -57,6 +58,9 @@ export class BilibiliLiveWS {
     this.onError = null;         // 错误
     this.onConnect = null;       // 连接成功
     this.onClose = null;         // 连接关闭
+    this.buvid = '';             // buvid3 cookie（新版认证包需要）
+    this._wbiKey = '';           // WBI签名密钥缓存
+    this._wbiKeyExpiry = 0;      // WBI密钥过期时间
     this.anchorId = null;        // 主播UID
   }
 
@@ -472,17 +476,22 @@ export class BilibiliLiveWS {
       const realRoomId = await this.getRealRoomId();
       this.roomId = realRoomId;
       console.log(`🏠 真实房间号: ${realRoomId}`);
-      
-      // 2. 获取认证信息
+
+      // 2. 获取 buvid（如果还没有）
+      if (!this.buvid) {
+        await this.initBuvid();
+      }
+
+      // 3. 获取认证信息（新接口 + WBI签名）
       this.authInfo = await this.getDanmuInfo();
       
-      // 3. 选择服务器
+      // 4. 选择服务器
       const host = this.authInfo.host_list[0];
       const wsUrl = `wss://${host.host}:${host.wss_port}/sub`;
       
       console.log(`🔌 正在连接直播间 ${this.roomId}...`);
-      
-      // 4. 建立WebSocket连接
+
+      // 5. 建立WebSocket连接
       this.ws = new WebSocket(wsUrl);
       this.ws.binaryType = 'arraybuffer';
       
@@ -521,18 +530,102 @@ export class BilibiliLiveWS {
   }
 
   /**
-   * 获取弹幕服务器信息
+   * 获取 buvid（访问 bilibili.com 主站，让服务器种下 buvid3 cookie）
+   */
+  async initBuvid() {
+    try {
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      };
+      if (this.cookies) {
+        headers['Cookie'] = getCookieString(this.cookies);
+      }
+      const response = await axios.get('https://www.bilibili.com/', { headers, timeout: 5000 });
+      // 从 Set-Cookie 头提取 buvid3
+      const setCookies = response.headers['set-cookie'] || [];
+      for (const c of setCookies) {
+        const m = c.match(/buvid3=([^;]+)/);
+        if (m) {
+          this.buvid = m[1];
+          console.log('🍪 已获取 buvid3');
+          return;
+        }
+      }
+      // 如果 cookie 中已有 buvid3，直接用
+      if (this.cookies && this.cookies.buvid3) {
+        this.buvid = this.cookies.buvid3;
+      }
+    } catch (e) {
+      console.log('⚠️  获取 buvid3 失败:', e.message);
+    }
+  }
+
+  /**
+   * 获取 WBI 签名密钥（有效期约12小时，会自动缓存）
+   */
+  async getWbiKey() {
+    const now = Date.now();
+    if (this._wbiKey && now < this._wbiKeyExpiry) {
+      return this._wbiKey;
+    }
+    try {
+      const headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+      };
+      if (this.cookies) {
+        headers['Cookie'] = getCookieString(this.cookies);
+      }
+      const response = await axios.get('https://api.bilibili.com/x/web-interface/nav', { headers, timeout: 5000 });
+      const wbiImg = response.data?.data?.wbi_img;
+      if (!wbiImg) throw new Error('wbi_img not found');
+
+      const imgKey = wbiImg.img_url.split('/').pop().split('.')[0];
+      const subKey = wbiImg.sub_url.split('/').pop().split('.')[0];
+      const shuffled = imgKey + subKey;
+      const KEY_INDEX = [
+        46, 47, 18, 2, 53, 8, 23, 32, 15, 50, 10, 31, 58, 3, 45, 35,
+        27, 43, 5, 49, 33, 9, 42, 19, 29, 28, 14, 39, 12, 38, 41, 13
+      ];
+      this._wbiKey = KEY_INDEX.map(i => shuffled[i] || '').join('');
+      this._wbiKeyExpiry = now + 11.5 * 60 * 60 * 1000; // 缓存11.5小时
+      console.log('🔑 WBI密钥已更新');
+      return this._wbiKey;
+    } catch (e) {
+      console.log('⚠️  获取WBI密钥失败:', e.message);
+      return '';
+    }
+  }
+
+  /**
+   * 对参数进行 WBI 签名
+   */
+  async addWbiSign(params) {
+    const wbiKey = await this.getWbiKey();
+    if (!wbiKey) return params;
+
+    const wts = String(Math.floor(Date.now() / 1000));
+    const paramsToSign = { ...params, wts };
+    const sorted = Object.keys(paramsToSign).sort().reduce((acc, k) => {
+      // 过滤特殊字符
+      acc[k] = String(paramsToSign[k]).replace(/[!'()*]/g, '');
+      return acc;
+    }, {});
+    const query = new URLSearchParams(sorted).toString();
+    const wRid = crypto.createHash('md5').update(query + wbiKey).digest('hex');
+    return { ...params, wts, w_rid: wRid };
+  }
+
+  /**
+   * 获取弹幕服务器信息（新版接口 + WBI签名）
    */
   async getDanmuInfo() {
-    // 使用旧版API（不需要Wbi签名），但仍然传递Cookie以获取完整权限
-    const url = 'https://api.live.bilibili.com/room/v1/Danmu/getConf';
+    const url = 'https://api.live.bilibili.com/xlive/web-room/v1/index/getDanmuInfo';
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
       'Referer': `https://live.bilibili.com/${this.roomId}`,
       'Origin': 'https://live.bilibili.com'
     };
-    
-    // 添加Cookie以获取完整权限
+
     if (this.cookies) {
       const cookieStr = getCookieString(this.cookies);
       headers['Cookie'] = cookieStr;
@@ -543,26 +636,19 @@ export class BilibiliLiveWS {
     } else {
       console.log('⚠️  未使用Cookie，将以游客身份连接，用户信息将被脱敏！');
     }
-    
-    const response = await axios.get(url, {
-      params: { 
-        room_id: this.roomId, 
-        platform: 'pc', 
-        player: 'web' 
-      },
-      headers
-    });
-    
+
+    const params = await this.addWbiSign({ id: this.roomId, type: 0 });
+
+    const response = await axios.get(url, { params, headers, timeout: 8000 });
+
     if (response.data.code !== 0) {
       throw new Error(`获取弹幕服务器信息失败: ${response.data.code} - ${response.data.message || response.data.msg || '未知错误'}`);
     }
-    
+
     const data = response.data.data;
-    
-    // 旧版API返回的数据格式需要转换
     return {
       token: data.token,
-      host_list: data.host_server_list || data.host_list || []
+      host_list: data.host_list || []
     };
   }
 
@@ -606,7 +692,8 @@ export class BilibiliLiveWS {
       protover: 3,  // 使用brotli压缩
       platform: 'web',
       type: 2,
-      key: this.authInfo.token
+      key: this.authInfo.token,
+      ...(this.buvid ? { buvid: this.buvid } : {})
     };
     
     const authStr = JSON.stringify(authData);
