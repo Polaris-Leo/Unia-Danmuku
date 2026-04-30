@@ -1,12 +1,15 @@
 import axios from 'axios';
 import QRCode from 'qrcode';
 
+const USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36';
+
 /**
  * B站API基础配置
  */
 const BILIBILI_API = {
   QR_GENERATE: 'https://passport.bilibili.com/x/passport-login/web/qrcode/generate',
-  QR_POLL: 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll'
+  QR_POLL: 'https://passport.bilibili.com/x/passport-login/web/qrcode/poll',
+  FINGER_SPI: 'https://api.bilibili.com/x/frontend/finger/spi',
 };
 
 /**
@@ -115,6 +118,33 @@ export const QR_CODE_STATUS = {
   NOT_SCANNED: 86101,   // 未扫码
   SCANNED: 86090        // 已扫码未确认
 };
+
+/**
+ * 用登录后的Cookie从B站指纹接口获取合法的 buvid3 / buvid4
+ * @param {Object} cookieObj - 已登录的cookie键值对
+ * @returns {Promise<{buvid3: string, buvid4: string} | null>}
+ */
+export async function fetchBuvid(cookieObj) {
+  try {
+    const cookieStr = Object.entries(cookieObj).map(([k, v]) => `${k}=${v}`).join('; ');
+    const response = await axios.get(BILIBILI_API.FINGER_SPI, {
+      headers: {
+        'User-Agent': USER_AGENT,
+        'Referer': 'https://www.bilibili.com/',
+        'Cookie': cookieStr,
+      },
+      timeout: 5000,
+    });
+    if (response.data.code === 0 && response.data.data) {
+      const { b_3, b_4 } = response.data.data;
+      console.log('🍪 已从指纹接口获取 buvid3/buvid4');
+      return { buvid3: b_3, buvid4: b_4 };
+    }
+  } catch (e) {
+    console.warn('⚠️  获取buvid失败:', e.message);
+  }
+  return null;
+}
 
 /**
  * 获取状态码对应的消息

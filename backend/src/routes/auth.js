@@ -1,5 +1,5 @@
 import express from 'express';
-import { generateQRCode, pollQRCode } from '../services/bilibiliAuth.js';
+import { generateQRCode, pollQRCode, fetchBuvid } from '../services/bilibiliAuth.js';
 import { saveCookies, loadCookies, clearCookies } from '../utils/cookieStorage.js';
 
 const router = express.Router();
@@ -45,18 +45,28 @@ router.get('/qrcode/poll', async (req, res) => {
     // 如果登录成功，设置cookie
     if (result.data.code === 0 && result.cookies) {
       const cookieObj = {};
-      
-      // 设置从B站返回的cookie
+
       result.cookies.forEach(cookie => {
-        res.cookie(cookie.name, cookie.value, {
+        cookieObj[cookie.name] = cookie.value;
+      });
+
+      // 登录成功后立即获取与账号绑定的 buvid3/buvid4，避免后续连接时被风控
+      const buvid = await fetchBuvid(cookieObj);
+      if (buvid) {
+        cookieObj.buvid3 = buvid.buvid3;
+        cookieObj.buvid4 = buvid.buvid4;
+      }
+
+      // 设置从B站返回的cookie
+      Object.entries(cookieObj).forEach(([name, value]) => {
+        res.cookie(name, value, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
           maxAge: 30 * 24 * 60 * 60 * 1000 // 30天
         });
-        cookieObj[cookie.name] = cookie.value;
       });
-      
+
       // 保存Cookie到本地文件
       saveCookies(cookieObj);
     }
