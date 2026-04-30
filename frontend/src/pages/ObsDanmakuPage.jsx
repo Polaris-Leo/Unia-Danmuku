@@ -91,6 +91,11 @@ const ObsDanmakuPage = () => {
   const messagesContainerRef = useRef(null);
   const wsRef = useRef(null);
   const isClosingRef = useRef(false);
+
+  // 检测是否开启测试模式（URL包含 ?test=true）和模板选择（URL包含 ?template=1）
+  const params = new URLSearchParams(window.location.search);
+  const testMode = params.get('test') === 'true';
+  const templateId = params.get('template') || 'default';
   
   // 从后端加载配置 (用于OBS浏览器源，无法访问localStorage的情况)
   useEffect(() => {
@@ -120,11 +125,6 @@ const ObsDanmakuPage = () => {
     const interval = setInterval(loadConfig, 10000);
     return () => clearInterval(interval);
   }, [templateId]);
-
-  // 检测是否开启测试模式（URL包含 ?test=true）和模板选择（URL包含 ?template=1）
-  const params = new URLSearchParams(window.location.search);
-  const testMode = params.get('test') === 'true';
-  const templateId = params.get('template') || 'default';
 
   // 加载自定义字体
   useEffect(() => {
