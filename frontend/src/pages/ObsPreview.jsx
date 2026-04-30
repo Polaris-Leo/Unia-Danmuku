@@ -279,6 +279,8 @@ const ObsPreview = ({ settings }) => {
     '--avatar-size': toUnit(settings.avatarSize),
     '--item-spacing': toUnit(settings.itemSpacing),
     '--emot-size': toUnit(settings.emotSize || 28),
+    '--danmaku-line-height': settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5,
+    '--username-content-spacing': toUnit(settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37),
     '--bubble-padding-x': toUnit(settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7),
     
     // 气泡渐变色

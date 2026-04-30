@@ -271,6 +271,8 @@ const ObsDanmakuPage = () => {
       root.style.setProperty('--avatar-size', toUnit(customStyles.avatarSize));
       root.style.setProperty('--item-spacing', toUnit(customStyles.itemSpacing));
       root.style.setProperty('--emot-size', toUnit(customStyles.emotSize || 28));
+      root.style.setProperty('--danmaku-line-height', customStyles.danmakuLineHeight !== undefined ? customStyles.danmakuLineHeight : 1.5);
+      root.style.setProperty('--username-content-spacing', toUnit(customStyles.usernameContentSpacing !== undefined ? customStyles.usernameContentSpacing : 0.37));
       root.style.setProperty('--bubble-padding-x', toUnit(customStyles.bubblePaddingX !== undefined ? customStyles.bubblePaddingX : 3.7));
       
       // 气泡渐变色

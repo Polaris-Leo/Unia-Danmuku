@@ -42,6 +42,8 @@ const ObsSettingsPage = () => {
     danmakuFontFamilyFallback2: '', // 弹幕备用字体2
     danmakuFontWeightFallback: 'normal', // 弹幕备用字体粗细
     danmakuLang: 'zh-CN', // 弹幕语言变体
+    danmakuLineHeight: 1.5, // 弹幕行间距
+    usernameContentSpacing: 0.37, // 用户名和弹幕内容间距 vh
     avatarSize: 6.0, // vh
     itemSpacing: 1.1, // vh
     emotSize: 3.3, // vh
@@ -1202,6 +1204,30 @@ const ObsSettingsPage = () => {
                 </div>
               </>
             )}
+
+            <div className="setting-item">
+              <label>行间距：</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                <input
+                  type="range"
+                  value={Math.round((settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5) * 10)}
+                  onChange={(e) => setSettings({ ...settings, danmakuLineHeight: parseFloat(e.target.value) / 10 })}
+                  min="5"
+                  max="40"
+                  step="1"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="number"
+                  value={Math.round((settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5) * 10)}
+                  onChange={(e) => setSettings({ ...settings, danmakuLineHeight: parseFloat(e.target.value) / 10 })}
+                  min="5"
+                  max="40"
+                  step="1"
+                  style={{ width: '100px', flex: 'none' }}
+                />
+              </div>
+            </div>
             </div>
           </div>
 
@@ -1463,6 +1489,30 @@ const ObsSettingsPage = () => {
                   value={Math.round(settings.itemSpacing * 10)}
                   onChange={(e) => setSettings({ ...settings, itemSpacing: parseFloat(e.target.value) / 10 })}
                   min="0"
+                  max="50"
+                  step="1"
+                  style={{ width: '100px', flex: 'none' }}
+                />
+              </div>
+            </div>
+
+            <div className="setting-item">
+              <label>用户名/内容间距 (vh)：</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
+                <input
+                  type="range"
+                  value={Math.round((settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37) * 10)}
+                  onChange={(e) => setSettings({ ...settings, usernameContentSpacing: parseFloat(e.target.value) / 10 })}
+                  min="-20"
+                  max="50"
+                  step="1"
+                  style={{ flex: 1 }}
+                />
+                <input
+                  type="number"
+                  value={Math.round((settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37) * 10)}
+                  onChange={(e) => setSettings({ ...settings, usernameContentSpacing: parseFloat(e.target.value) / 10 })}
+                  min="-20"
                   max="50"
                   step="1"
                   style={{ width: '100px', flex: 'none' }}
