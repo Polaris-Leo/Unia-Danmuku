@@ -804,10 +804,28 @@ input[type="date"] {
     font-weight: 500;
 }
 
-.column-checkbox input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-    accent-color: #4f46e5;
+.sortable-th {
+    cursor: pointer;
+    user-select: none;
 }
+
+.sortable-th:hover {
+    background-color: #f1f5f9;
+    color: #1e293b;
+}
+
+.sort-icon {
+    margin-left: 4px;
+    font-size: 11px;
+    opacity: 0.3;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+.sort-icon.active {
+    opacity: 1;
+    color: #3b82f6;
+}
+
+
 

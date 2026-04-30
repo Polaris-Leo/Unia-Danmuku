@@ -263,7 +263,7 @@ class CaptainManager {
         async getCaptains(filters = {}, pagination = { page: 1, limit: 50 }) {
         if (!this.initialized) await this.init();
 
-        const { uid: queryUid, username, levels, startDate, endDate, roomId, source_stream_id } = filters;
+        const { uid: queryUid, username, levels, startDate, endDate, roomId, source_stream_id, sortField, sortOrder } = filters;
         const page = pagination.page || 1;
 
         const limit = pagination.limit || 20;
@@ -339,8 +339,26 @@ class CaptainManager {
             }
         }
         
-        // Sort by timestamp asc (Oldest first)
-        matchingRecords.sort((a, b) => a.timestamp - b.timestamp);
+        // Sorting
+        if (sortField && sortOrder && sortOrder !== 'default') {
+            const numericFields = new Set(['timestamp', 'uid', 'guard_level', 'num', 'source_stream_id']);
+            matchingRecords.sort((a, b) => {
+                let aVal = a[sortField];
+                let bVal = b[sortField];
+                if (numericFields.has(sortField)) {
+                    aVal = Number(aVal) || 0;
+                    bVal = Number(bVal) || 0;
+                    return sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                }
+                aVal = String(aVal || '').toLowerCase();
+                bVal = String(bVal || '').toLowerCase();
+                const cmp = aVal.localeCompare(bVal, 'zh-CN');
+                return sortOrder === 'asc' ? cmp : -cmp;
+            });
+        } else {
+            // Default: sort by timestamp ascending
+            matchingRecords.sort((a, b) => a.timestamp - b.timestamp);
+        }
 
         const total = matchingRecords.length;
         // Pagination logic

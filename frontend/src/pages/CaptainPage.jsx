@@ -35,14 +35,15 @@ const CaptainPage = () => {
     const [filters, setFilters] = useState({
         username: '',
         uid: '',
-        levels: [], 
+        levels: [],
         startDate: '',
         endDate: '',
-        sessionId: '', // Add sessionId filter
+        sessionId: '',
         page: 1,
         limit: 20,
     });
     const [totalItems, setTotalItems] = useState(0);
+    const [sort, setSort] = useState({ field: null, order: 'default' });
 
     const EXPORT_COLUMNS = [
         { key: 'index', label: '序号', width: 8 },
@@ -140,13 +141,15 @@ const CaptainPage = () => {
             const params = {
                 username: filters.username,
                 uid: filters.uid,
-                levels: filters.levels.join(','), // Send as CSV
+                levels: filters.levels.join(','),
                 startDate: toTimestamp(filters.startDate),
-                endDate: filters.endDate ? toTimestamp(filters.endDate) + 86400000 - 1 : null, 
+                endDate: filters.endDate ? toTimestamp(filters.endDate) + 86400000 - 1 : null,
                 source_stream_id: filters.sessionId,
                 page: filters.page,
                 limit: filters.limit,
-                room_id: roomId // Use from URL
+                room_id: roomId,
+                sortField: sort.field,
+                sortOrder: sort.order !== 'default' ? sort.order : null,
             };
             const res = await getCaptains(params);
             if (res.success) {
@@ -158,16 +161,16 @@ const CaptainPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [filters, roomId]); // Depend on roomId
+    }, [filters, roomId, sort]);
 
     useEffect(() => {
         fetchStats();
     }, []);
 
     useEffect(() => {
-        // Fetch when page/limit/levels/sessionId changes including mount
+        // Fetch when page/limit/levels/sessionId/sort changes including mount
         fetchData();
-    }, [filters.page, filters.limit, filters.levels, filters.sessionId, roomId]);
+    }, [filters.page, filters.limit, filters.levels, filters.sessionId, roomId, sort.field, sort.order]);
 
     const handleSearch = (e) => {
         e.preventDefault();
@@ -176,6 +179,7 @@ const CaptainPage = () => {
     };
 
     const handleReset = () => {
+        setSort({ field: null, order: 'default' });
         setFilters({
             username: '',
             uid: '',
@@ -186,7 +190,21 @@ const CaptainPage = () => {
             page: 1,
             limit: 20
         });
-        setTimeout(fetchData, 0); // Re-fetch
+        setTimeout(fetchData, 0);
+    };
+
+    const handleSortChange = (field) => {
+        setSort(prev => {
+            if (prev.field !== field) return { field, order: 'asc' };
+            if (prev.order === 'asc') return { field, order: 'desc' };
+            return { field: null, order: 'default' };
+        });
+        setFilters(prev => ({ ...prev, page: 1 }));
+    };
+
+    const getSortIcon = (field) => {
+        if (sort.field !== field) return <span className="sort-icon">⇅</span>;
+        return <span className="sort-icon active">{sort.order === 'asc' ? '↑' : '↓'}</span>;
     };
 
     const handleLevelToggle = (level) => {
@@ -606,12 +624,12 @@ const CaptainPage = () => {
                                     <thead>
                                         <tr>
                                             <th>#</th>
-                                            <th>直播场次</th>
-                                            <th>时间</th>
-                                            <th>UID</th>
-                                            <th>用户名</th>
-                                            <th>大航海等级</th>
-                                            <th>数量</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('source_stream_id')}>直播场次 {getSortIcon('source_stream_id')}</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('timestamp')}>时间 {getSortIcon('timestamp')}</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('uid')}>UID {getSortIcon('uid')}</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('username')}>用户名 {getSortIcon('username')}</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('guard_level')}>大航海等级 {getSortIcon('guard_level')}</th>
+                                            <th className="sortable-th" onClick={() => handleSortChange('num')}>数量 {getSortIcon('num')}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
