@@ -18,6 +18,7 @@ class RoomManager {
     this.connections = new Map(); // roomId -> BilibiliLiveWS 实例
     this.monitoredRooms = new Map(); // roomId -> { paused: boolean, addedAt: number }
     this.wss = null; // WebSocket 服务器实例
+    this._reconnecting = false; // 防止并发重连循环
     
     this.loadMonitoredRooms();
   }
@@ -143,7 +144,7 @@ class RoomManager {
 
     if (!liveWS) {
       console.log(`🔌 Starting connection for room ${id}`);
-      const cookies = loadCookies();
+      const cookies = await loadCookies();
       liveWS = new BilibiliLiveWS(id, cookies);
       this.connections.set(id, liveWS);
 
@@ -225,6 +226,13 @@ class RoomManager {
       }
     };
     
+    liveWS.onAuthError = async (err) => {
+      console.warn(`🔑 房间 ${roomId} Cookie失效，尝试自动重新获取Cookie并重连...`);
+      broadcast({ type: 'auth_error', message: 'Cookie失效，正在尝试自动重新连接...' });
+      // 延迟3秒后触发重连，避免即刻重试
+      setTimeout(() => this.reconnectAll(), 3000);
+    };
+
     liveWS.onError = (err) => broadcast({ type: 'error', message: err.message });
   }
 
@@ -266,6 +274,43 @@ class RoomManager {
         liveWS.disconnect();
         this.connections.delete(id);
       }
+    }
+  }
+
+  /**
+   * 重新获取Cookie并重连所有监控房间（登录后或Cookie失效时调用）
+   */
+  async reconnectAll() {
+    if (this._reconnecting) {
+      console.log('⏳ 重连已在进行中，跳过...');
+      return;
+    }
+    this._reconnecting = true;
+    console.log('🔄 正在重新获取Cookie并重连所有监控房间...');
+    try {
+      const freshCookies = await loadCookies();
+      if (!freshCookies) {
+        console.warn('⚠️ 无法获取Cookie，跳过重连');
+        return;
+      }
+      for (const [roomId, config] of this.monitoredRooms) {
+        if (!config.paused) {
+          const liveWS = this.connections.get(roomId);
+          if (liveWS) {
+            liveWS.updateCookies(freshCookies);
+            // connect() 内部会先断开旧连接再重新连接
+            liveWS.connect().catch(err => {
+              console.error(`重连房间 ${roomId} 失败:`, err.message);
+            });
+          } else {
+            await this.ensureConnection(roomId);
+          }
+        }
+      }
+      console.log('✅ 所有监控房间已发起重连');
+    } finally {
+      // 5分钟冷却，防止Cookie管理服务未配置时无限重试
+      setTimeout(() => { this._reconnecting = false; }, 5 * 60 * 1000);
     }
   }
 

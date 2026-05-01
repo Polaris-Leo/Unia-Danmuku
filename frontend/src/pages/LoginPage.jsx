@@ -171,6 +171,16 @@ function LoginPage() {
             <li>在手机上确认登录</li>
           </ol>
         </div>
+
+        <div className="actions">
+          <button
+            onClick={() => navigate('/dashboard')}
+            className="refresh-btn"
+            style={{ background: 'transparent', color: '#6b7280', marginTop: '8px' }}
+          >
+            ← 返回首页
+          </button>
+        </div>
       </div>
     </div>
   );

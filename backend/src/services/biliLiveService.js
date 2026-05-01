@@ -30,7 +30,7 @@ export class BiliLiveService {
   async connect(roomId) {
     try {
       // 加载 Cookie
-      const cookies = loadCookies();
+      const cookies = await loadCookies();
       if (!cookies) {
         throw new Error('未找到登录信息，请先登录');
       }

@@ -794,11 +794,11 @@ function DanmakuPage() {
     try {
       const result = await getAuthStatus();
       if (!result.success || !result.isLoggedIn) {
-        navigate('/');
+        navigate('/dashboard');
       }
     } catch (error) {
       console.error('检查登录状态失败:', error);
-      navigate('/');
+      navigate('/dashboard');
     }
   };
 

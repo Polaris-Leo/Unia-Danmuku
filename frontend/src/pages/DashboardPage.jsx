@@ -18,12 +18,9 @@ function DashboardPage() {
       const result = await getAuthStatus();
       if (result.success && result.isLoggedIn) {
         setAuthInfo(result);
-      } else {
-        navigate('/');
       }
     } catch (error) {
       console.error('检查登录状态失败:', error);
-      navigate('/');
     } finally {
       setLoading(false);
     }
@@ -32,14 +29,14 @@ function DashboardPage() {
   const handleLogout = async () => {
     try {
       await logout();
-      navigate('/');
+      setAuthInfo(null);
     } catch (error) {
       console.error('退出登录失败:', error);
     }
   };
 
   const handleEnterConsole = () => {
-    if (!roomId) {
+    if (!roomId.trim()) {
       alert('请输入直播间号');
       return;
     }
@@ -47,93 +44,122 @@ function DashboardPage() {
     navigate(`/danmaku?roomId=${roomId}`);
   };
 
+  const handleRoomAction = (path) => {
+    if (!roomId.trim()) {
+      alert('请先在上方输入直播间号');
+      return;
+    }
+    localStorage.setItem('lastRoomId', roomId);
+    navigate(`${path}?roomId=${roomId}`);
+  };
+
   if (loading) {
     return (
-      <div className="dashboard-container">
-        <div className="loading">加载中...</div>
+      <div className="db-page">
+        <div className="db-loading">加载中...</div>
       </div>
     );
   }
 
   return (
-    <div className="dashboard-container">
-      <div className="dashboard-card">
-        <div className="dashboard-header">
-          <h1>🎉 登录成功！</h1>
-          <p>欢迎使用 Unia 弹幕系统</p>
+    <div className="db-page">
+      {/* 顶部导航栏 */}
+      <header className="db-navbar">
+        <div className="db-navbar__brand">
+          <span className="db-navbar__logo">🎥</span>
+          <span className="db-navbar__title">Unia 弹幕系统</span>
         </div>
+        <div className="db-navbar__auth">
+          {authInfo ? (
+            <>
+              <span className="db-badge db-badge--green">• 已登录</span>
+              <button className="db-nav-btn db-nav-btn--ghost" onClick={handleLogout}>退出登录</button>
+            </>
+          ) : (
+            <>
+              <span className="db-badge db-badge--yellow">• 未登录</span>
+              <button className="db-nav-btn db-nav-btn--primary" onClick={() => navigate('/login')}>🔐 扫码登录</button>
+            </>
+          )}
+        </div>
+      </header>
 
-        <div className="dashboard-content">
-          {/* 快速启动区域 */}
-          <div className="quick-start-section">
-            <h3>🚀 快速启动</h3>
-            <div className="input-group">
-              <input
-                type="text"
-                className="room-input"
-                placeholder="输入直播间号"
-                value={roomId}
-                onChange={(e) => setRoomId(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && handleEnterConsole()}
-              />
-            </div>
-            <div className="button-group">
-              <button className="action-btn primary" onClick={handleEnterConsole}>
-                📺 进入控制台
-              </button>
-              <button className="action-btn outline" onClick={() => navigate('/monitor')}>
-                📡 后台监控配置
-              </button>
-              <button className="action-btn outline" onClick={() => {
-                if (roomId) {
-                  navigate(`/captains?roomId=${roomId}`);
-                } else {
-                  alert('请输入直播间号');
-                }
-              }}>
-                🛳️ 舰长信息
-              </button>
-            </div>
-          </div>
-
-          <div className="info-section">
-            <h3>✅ 登录状态</h3>
-            <div className="info-item">
-              <span className="label">状态：</span>
-              <span className="value success">已登录</span>
-            </div>
-            {authInfo?.cookies && (
-              <>
-                <div className="info-item">
-                  <span className="label">SESSDATA：</span>
-                  <span className="value">{authInfo.cookies.SESSDATA}</span>
-                </div>
-              </>
-            )}
-          </div>
-
-          <div className="features-section">
-            <h3>📋 其他功能</h3>
-            <ul className="feature-list">
-              <li onClick={() => navigate('/obs-settings')} style={{cursor: 'pointer'}}>
-                ⚙️ OBS样式设置 →
-              </li>
-              <li onClick={() => navigate('/clock-settings')} style={{cursor: 'pointer'}}>
-                ⏰ 时钟设置 →
-              </li>
-              <li onClick={() => navigate('/thankyou-settings')} style={{cursor: 'pointer'}}>
-                🎁 答谢姬设置 →
-              </li>
-            </ul>
-          </div>
-
-          <div className="actions">
-            <button onClick={handleLogout} className="logout-btn">
-              🚪 退出登录
+      <main className="db-main">
+        {/* Hero 区域 */}
+        <section className="db-hero">
+          <h2 className="db-hero__title">将直播间号输入即可开始</h2>
+          <p className="db-hero__sub">支持弹幕、礼物、舰长监控及多种 OBS 覆盖层</p>
+          <div className="db-hero__input-row">
+            <input
+              type="text"
+              className="db-room-input"
+              placeholder="输入 B 站直播间号..."
+              value={roomId}
+              onChange={(e) => setRoomId(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && handleEnterConsole()}
+            />
+            <button className="db-hero__enter-btn" onClick={handleEnterConsole}>
+              进入控制台 →
             </button>
           </div>
-        </div>
-      </div>
+        </section>
+
+        {/* 功能卡片网格 */}
+        <section className="db-grid">
+
+          <div className="db-card db-card--accent" onClick={() => navigate('/monitor')}>
+            <div className="db-card__icon">📡</div>
+            <div className="db-card__body">
+              <h4>后台监控</h4>
+              <p>添加常驻监控的直播间，后台持续接收弹幕数据</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+          <div className="db-card" onClick={() => handleRoomAction('/captains')}>
+            <div className="db-card__icon">🛥️</div>
+            <div className="db-card__body">
+              <h4>舰长信息</h4>
+              <p>查看当前直播间的舰长列表与记录</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+          <div className="db-card" onClick={() => navigate('/obs-settings')}>
+            <div className="db-card__icon">⚙️</div>
+            <div className="db-card__body">
+              <h4>OBS 样式设置</h4>
+              <p>自定义弹幕覆盖层字体、颜色、布局样式</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+          <div className="db-card" onClick={() => navigate('/clock-settings')}>
+            <div className="db-card__icon">⏰</div>
+            <div className="db-card__body">
+              <h4>时钟设置</h4>
+              <p>配置直播时钟外观与显示格式</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+          <div className="db-card" onClick={() => navigate('/thankyou-settings')}>
+            <div className="db-card__icon">🎁</div>
+            <div className="db-card__body">
+              <h4>答谢姬设置</h4>
+              <p>配置礼物/上舰自动答谢内容与样式</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+        </section>
+
+        {!authInfo && (
+          <div className="db-hint">
+            ⚠️ 未检测到登录信息。Cookie 可由外部管理工具提供，或点击右上角“扫码登录”手动登录。
+          </div>
+        )}
+      </main>
     </div>
   );
 }

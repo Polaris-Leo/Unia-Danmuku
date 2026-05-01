@@ -1,11 +1,56 @@
 import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import http from 'http';
+import https from 'https';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const COOKIE_FILE = path.join(__dirname, '../../data/cookies.json');
+
+/**
+ * Cookie 管理服务地址
+ * 通过环境变量 COOKIE_MANAGER_URL 配置，留空则禁用远程获取。
+ * 直接部署：在 backend/.env 中设置（如 http://localhost:3100）
+ * Docker 部署：在 docker-compose.yml 的 environment 中设置（如 http://bili-cookie-manager:3100）
+ */
+const COOKIE_MANAGER_URL = (process.env.COOKIE_MANAGER_URL || '').replace(/\/$/, '');
+
+/**
+ * 从 Cookie 管理服务获取有效 Cookie（内部函数）
+ * @returns {Promise<Object|null>}
+ */
+function fetchCookieFromManager() {
+  if (!COOKIE_MANAGER_URL) return Promise.resolve(null);
+
+  return new Promise(resolve => {
+    const url = `${COOKIE_MANAGER_URL}/api/accounts/cookie`;
+    const mod = url.startsWith('https') ? https : http;
+
+    const req = mod.get(url, { timeout: 3000 }, res => {
+      let body = '';
+      res.on('data', chunk => { body += chunk; });
+      res.on('end', () => {
+        try {
+          const data = JSON.parse(body);
+          if (data.success && data.data?.cookies) {
+            const uid = data.data.uid || '?';
+            console.log(`🍪 [Cookie管理服务] 已获取账号 UID:${uid} 的 Cookie`);
+            resolve(data.data.cookies);
+          } else {
+            resolve(null);
+          }
+        } catch {
+          resolve(null);
+        }
+      });
+    });
+
+    req.on('error', () => resolve(null));
+    req.on('timeout', () => { req.destroy(); resolve(null); });
+  });
+}
 
 /**
  * 确保数据目录存在
@@ -39,10 +84,10 @@ export function saveCookies(cookies) {
 }
 
 /**
- * 从文件加载Cookie
- * @returns {Object|null} - Cookie对象或null
+ * 从文件加载Cookie（本地回退逻辑）
+ * @returns {Object|null}
  */
-export function loadCookies() {
+function loadCookiesFromFile() {
   try {
     if (!fs.existsSync(COOKIE_FILE)) {
       console.log('⚠️  未找到保存的Cookies');
@@ -50,7 +95,7 @@ export function loadCookies() {
     }
 
     const data = JSON.parse(fs.readFileSync(COOKIE_FILE, 'utf-8'));
-    
+
     // 检查Cookie是否过期(30天)
     const daysPassed = (Date.now() - data.timestamp) / (1000 * 60 * 60 * 24);
     if (daysPassed > 30) {
@@ -64,6 +109,21 @@ export function loadCookies() {
     console.error('❌ 加载Cookies失败:', error);
     return null;
   }
+}
+
+/**
+ * 加载 Cookie：优先从 Cookie 管理服务获取，失败时回退到本地文件
+ * @returns {Promise<Object|null>}
+ */
+export async function loadCookies() {
+  // 1. 尝试 Cookie 管理服务（仅在配置了 COOKIE_MANAGER_URL 时）
+  if (COOKIE_MANAGER_URL) {
+    const remoteCookies = await fetchCookieFromManager();
+    if (remoteCookies) return remoteCookies;
+    console.warn('⚠️  Cookie管理服务不可用，回退到本地文件');
+  }
+  // 2. 回退：本地 cookies.json
+  return loadCookiesFromFile();
 }
 
 /**

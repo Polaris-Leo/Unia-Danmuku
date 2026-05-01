@@ -2458,5 +2458,23 @@
     "width": 20,
     "height": 20,
     "emoticon_unique": "upower_[鸽一品天才集_两眼一闭]"
+  },
+  "[bksw]": {
+    "url": "https://i0.hdslb.com/bfs/live/1c877d5220b389b0596ebacf6121d23a3ce3c12c.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_21514463_110738"
+  },
+  "[震撼美味]": {
+    "url": "https://i0.hdslb.com/bfs/live/cd8a5c58bea45dce52f07a38f1849b92ba64a761.png",
+    "width": 162,
+    "height": 162,
+    "emoticon_unique": "room_21514463_110737"
+  },
+  "[[RIDDLE JOKER表情包_躺了]]": {
+    "url": "https://i0.hdslb.com/bfs/garb/7585c4ce89a10765213791eeceb09194eae8497c.png",
+    "width": 20,
+    "height": 20,
+    "emoticon_unique": "upower_[RIDDLE JOKER表情包_躺了]"
   }
 }

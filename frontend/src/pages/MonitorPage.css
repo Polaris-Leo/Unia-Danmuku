@@ -1,218 +1,389 @@
-.monitor-container {
-  padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-}
-
-.monitor-header {
+/* ── 导航栏（与 Dashboard 共享样式） ── */
+.db-navbar {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  flex-shrink: 0;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.06);
 }
 
-.monitor-header h2 {
-  margin: 0;
-  color: #333;
-}
-
-.add-room-form {
+.db-navbar__brand {
   display: flex;
+  align-items: center;
   gap: 10px;
-  background: white;
-  padding: 20px;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  margin-bottom: 24px;
 }
 
-.add-room-form input {
+.db-navbar__logo {
+  font-size: 24px;
+  line-height: 1;
+}
+
+.db-navbar__title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1e293b;
+  letter-spacing: 0.01em;
+}
+
+.db-room-input {
   flex: 1;
-  padding: 10px;
-  border: 1px solid #ddd;
-  border-radius: 4px;
-  font-size: 16px;
+  padding: 14px 18px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  color: #0f172a;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
 }
 
-.add-room-form button {
-  padding: 10px 20px;
-  background-color: #1890ff;
+.db-room-input::placeholder {
+  color: #94a3b8;
+}
+
+.db-room-input:focus {
+  border-color: #23ade5;
+  box-shadow: 0 0 0 3px rgba(35,173,229,0.12);
+}
+
+/* ── 页面容器 ── */
+
+.mn-page {
+  min-height: 100vh;
+  background: #f1f5f9;
+  display: flex;
+  flex-direction: column;
+}
+
+/* 返回按钮 */
+.mn-back-btn {
+  background: none;
+  border: none;
+  font-size: 20px;
+  color: #64748b;
+  cursor: pointer;
+  padding: 4px 8px 4px 0;
+  line-height: 1;
+  transition: color 0.2s;
+}
+
+.mn-back-btn:hover {
+  color: #0f172a;
+}
+
+/* ── 主内容区 ── */
+.mn-main {
+  flex: 1;
+  max-width: 880px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 40px 24px 48px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.mn-section-title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 14px;
+}
+
+/* ── 添加区域 ── */
+.mn-add-section {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+}
+
+.mn-add-form {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+/* 复用 dashboard 输入框样式 */
+.mn-add-form .db-room-input {
+  flex: 1;
+}
+
+.mn-add-btn {
+  padding: 14px 22px;
+  background: #23ade5;
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 700;
   cursor: pointer;
-  font-size: 16px;
-  transition: background-color 0.3s;
+  white-space: nowrap;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(35, 173, 229, 0.25);
 }
 
-.add-room-form button:hover {
-  background-color: #40a9ff;
+.mn-add-btn:hover:not(:disabled) {
+  background: #1a9acb;
+  transform: translateY(-1px);
 }
 
-.add-room-form button:disabled {
-  background-color: #d9d9d9;
+.mn-add-btn:disabled {
+  background: #94a3b8;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
-.room-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 20px;
+.mn-add-hint {
+  font-size: 12px;
+  color: #94a3b8;
+  line-height: 1.6;
 }
 
-.room-card {
-  background: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  overflow: hidden;
-  transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.room-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-}
-
-.room-card-header {
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
+/* ── 列表头部 ── */
+.mn-list-header {
   display: flex;
-  justify-content: space-between;
   align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
 }
 
-.room-header-left {
+.mn-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #e0f2fe;
+  color: #0369a1;
+  font-size: 11px;
+  font-weight: 700;
+  min-width: 20px;
+  height: 20px;
+  border-radius: 10px;
+  padding: 0 6px;
+  margin-left: 8px;
+}
+
+.mn-refresh-btn {
+  font-size: 13px;
+  font-weight: 600;
+  color: #23ade5;
+  background: none;
+  border: 1px solid #bae6fd;
+  border-radius: 8px;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.mn-refresh-btn:hover {
+  background: #e0f2fe;
+}
+
+/* ── 空状态 ── */
+.mn-empty {
+  text-align: center;
+  padding: 48px 20px;
+  color: #94a3b8;
+  font-size: 14px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+}
+
+/* ── 房间卡片网格 ── */
+.mn-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+}
+
+.mn-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+  transition: box-shadow 0.2s, transform 0.2s;
+}
+
+.mn-card:hover {
+  box-shadow: 0 6px 20px rgba(35,173,229,0.1);
+  transform: translateY(-1px);
+}
+
+.mn-card--paused {
+  opacity: 0.7;
+  border-style: dashed;
+}
+
+/* 卡片头部 */
+.mn-card__header {
   display: flex;
   align-items: center;
   gap: 12px;
+  padding: 16px 16px 12px;
 }
 
-.room-face {
-  width: 48px;
-  height: 48px;
+.mn-card__avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.mn-card__avatar {
+  width: 44px;
+  height: 44px;
   border-radius: 50%;
   object-fit: cover;
-  border: 1px solid #eee;
+  border: 2px solid #e2e8f0;
 }
 
-.room-face-placeholder {
-  width: 48px;
-  height: 48px;
+.mn-card__avatar--placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f1f5f9;
+  font-size: 20px;
+  border: 2px solid #e2e8f0;
+}
+
+.mn-dot {
+  position: absolute;
+  bottom: 1px;
+  right: 1px;
+  width: 10px;
+  height: 10px;
   border-radius: 50%;
-  background-color: #f0f0f0;
+  border: 2px solid white;
 }
 
-.room-header-info {
+.mn-dot--live { background: #22c55e; }
+.mn-dot--off  { background: #cbd5e1; }
+
+.mn-card__info {
+  flex: 1;
+  min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: 3px;
 }
 
-.room-uname {
-  font-weight: bold;
-  font-size: 16px;
-  color: #333;
+.mn-card__uname {
+  font-size: 14px;
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.room-id {
-  font-size: 13px;
-  color: #888;
-}
-
-.room-status {
+.mn-card__roomid {
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 10px;
+  color: #94a3b8;
+}
+
+.mn-live-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 20px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.mn-live-badge--on {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.mn-live-badge--off {
+  background: #f8fafc;
+  color: #94a3b8;
+  border: 1px solid #e2e8f0;
+}
+
+/* 连接状态行 */
+.mn-card__status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 16px 12px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+.mn-status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.mn-status-dot.active      { background: #22c55e; }
+.mn-status-dot.connecting  { background: #f59e0b; }
+.mn-status-dot.paused      { background: #cbd5e1; }
+
+/* 操作按钮栏 */
+.mn-card__actions {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #f1f5f9;
+  background: #f8fafc;
+}
+
+.mn-btn {
+  flex: 1;
+  padding: 7px 0;
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 8px;
+  border: 1px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
   white-space: nowrap;
 }
 
-.room-status.online {
-  background-color: #f6ffed;
-  color: #52c41a;
-  border: 1px solid #b7eb8f;
+.mn-btn--pause {
+  background: #fffbeb;
+  color: #b45309;
+  border-color: #fde68a;
+}
+.mn-btn--pause:hover {
+  background: #fef3c7;
 }
 
-.room-status.offline {
-  background-color: #fff1f0;
-  color: #f5222d;
-  border: 1px solid #ffa39e;
+.mn-btn--resume {
+  background: #f0fdf4;
+  color: #16a34a;
+  border-color: #bbf7d0;
+}
+.mn-btn--resume:hover {
+  background: #dcfce7;
 }
 
-.room-card-body {
-  padding: 16px;
+.mn-btn--view {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border-color: #bfdbfe;
+}
+.mn-btn--view:hover {
+  background: #dbeafe;
 }
 
-.room-info-item {
-  margin-bottom: 8px;
-  color: #666;
-  font-size: 14px;
+.mn-btn--remove {
+  background: #fff1f2;
+  color: #e11d48;
+  border-color: #fecdd3;
+  flex: 0 0 auto;
+  padding: 7px 14px;
 }
-
-.room-card-actions {
-  padding: 12px 16px;
-  background-color: #fafafa;
-  border-top: 1px solid #f0f0f0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 10px;
-}
-
-.btn-delete {
-  color: #ff4d4f;
-  background: none;
-  border: 1px solid #ff4d4f;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  transition: all 0.3s;
-}
-
-.btn-delete:hover {
-  background-color: #ff4d4f;
-  color: white;
-}
-
-.btn-view {
-  color: #1890ff;
-  background: none;
-  border: 1px solid #1890ff;
-  padding: 4px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 14px;
-  text-decoration: none;
-  transition: all 0.3s;
-}
-
-.btn-view:hover {
-  background-color: #1890ff;
-  color: white;
-}
-
-.btn-pause {
-  color: #faad14;
-  border-color: #faad14;
-}
-
-.btn-pause:hover {
-  background-color: #faad14;
-  color: white;
-}
-
-.btn-resume {
-  color: #52c41a;
-  border-color: #52c41a;
-}
-
-.btn-resume:hover {
-  background-color: #52c41a;
-  color: white;
-}
-
-.loading-state, .empty-state {
-  text-align: center;
-  padding: 40px;
-  color: #999;
-  font-size: 16px;
+.mn-btn--remove:hover {
+  background: #ffe4e6;
 }

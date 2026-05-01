@@ -1,6 +1,7 @@
 import express from 'express';
 import { generateQRCode, pollQRCode, fetchBuvid } from '../services/bilibiliAuth.js';
 import { saveCookies, loadCookies, clearCookies } from '../utils/cookieStorage.js';
+import { roomManager } from '../services/roomManager.js';
 
 const router = express.Router();
 
@@ -69,6 +70,9 @@ router.get('/qrcode/poll', async (req, res) => {
 
       // 保存Cookie到本地文件
       saveCookies(cookieObj);
+
+      // 登录成功后，触发所有监控房间使用新Cookie重新连接
+      setTimeout(() => roomManager.reconnectAll(), 1000);
     }
 
     res.json({
@@ -89,7 +93,7 @@ router.get('/qrcode/poll', async (req, res) => {
  * 获取当前登录状态
  * GET /api/auth/status
  */
-router.get('/status', (req, res) => {
+router.get('/status', async (req, res) => {
   // 优先从请求Cookie获取，否则从本地文件加载
   let hasAuth = req.cookies.SESSDATA && req.cookies.bili_jct;
   let cookieData = null;
@@ -101,7 +105,7 @@ router.get('/status', (req, res) => {
     };
   } else {
     // 尝试从本地加载
-    const savedCookies = loadCookies();
+    const savedCookies = await loadCookies();
     if (savedCookies && savedCookies.SESSDATA && savedCookies.bili_jct) {
       hasAuth = true;
       cookieData = {
@@ -117,6 +121,20 @@ router.get('/status', (req, res) => {
     isLoggedIn: !!hasAuth,  // 保持兼容性
     cookies: cookieData
   });
+});
+
+/**
+ * 手动触发重新连接所有监控房间
+ * POST /api/auth/reconnect
+ */
+router.post('/reconnect', async (req, res) => {
+  try {
+    await roomManager.reconnectAll();
+    res.json({ success: true, message: '已触发重新连接' });
+  } catch (error) {
+    console.error('重新连接失败:', error);
+    res.status(500).json({ success: false, message: error.message });
+  }
 });
 
 /**

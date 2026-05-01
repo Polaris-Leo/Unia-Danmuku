@@ -58,10 +58,20 @@ export class BilibiliLiveWS {
     this.onError = null;         // 错误
     this.onConnect = null;       // 连接成功
     this.onClose = null;         // 连接关闭
+    this.onAuthError = null;     // Cookie失效/认证错误回调
     this.buvid = '';             // buvid3 cookie（新版认证包需要）
     this._wbiKey = '';           // WBI签名密钥缓存
     this._wbiKeyExpiry = 0;      // WBI密钥过期时间
     this.anchorId = null;        // 主播UID
+  }
+
+  /**
+   * 更新Cookie（登录后或Cookie管理器刷新后调用）
+   */
+  updateCookies(newCookies) {
+    this.cookies = newCookies;
+    this.buvid = newCookies?.buvid3 || this.buvid || '';
+    console.log('🍪 Cookie已更新');
   }
 
   /**
@@ -502,7 +512,11 @@ export class BilibiliLiveWS {
       
     } catch (error) {
       console.error('❌ 连接失败:', error);
-      if (this.onError) this.onError(error);
+      if (error.isAuthError && this.onAuthError) {
+        this.onAuthError(error);
+      } else if (this.onError) {
+        this.onError(error);
+      }
     }
   }
 
@@ -642,7 +656,13 @@ export class BilibiliLiveWS {
     const response = await axios.get(url, { params, headers, timeout: 8000 });
 
     if (response.data.code !== 0) {
-      throw new Error(`获取弹幕服务器信息失败: ${response.data.code} - ${response.data.message || response.data.msg || '未知错误'}`);
+      const code = response.data.code;
+      const err = new Error(`获取弹幕服务器信息失败: ${code} - ${response.data.message || response.data.msg || '未知错误'}`);
+      // -101: 账号未登录; -400: 请求错误(通常是cookie问题); -403: 无权限
+      if (code === -101 || code === -400 || code === -403) {
+        err.isAuthError = true;
+      }
+      throw err;
     }
 
     const data = response.data.data;
