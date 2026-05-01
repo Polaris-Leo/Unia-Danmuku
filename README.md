@@ -167,6 +167,79 @@ npm run dev
 
 ### 生产环境部署
 
+#### 🐳 Docker 部署
+
+##### 构建 Docker 镜像
+
+在项目根目录执行：
+
+```bash
+docker build -t nakiripolaris/unia-danmuku:v1.5.5 .
+```
+
+构建完成后可用以下命令确认镜像已生成：
+
+```bash
+docker images | grep unia-danmuku
+```
+
+##### 使用 Docker CLI 创建并启动容器
+
+先在宿主机准备数据和日志目录：
+
+```bash
+mkdir -p backend/data logs
+```
+
+然后使用 Docker CLI 启动：
+
+```bash
+docker run -d \
+  --name unia-danmuku \
+  --restart unless-stopped \
+  -p 3000:3000 \
+  -e NODE_ENV=production \
+  -e PORT=3000 \
+  -e FRONTEND_URL=http://localhost:3000 \
+  -v "$(pwd)/backend/data:/app/backend/data" \
+  -v "$(pwd)/logs:/app/logs" \
+  nakiripolaris/unia-danmuku:v1.5.5
+```
+
+容器启动后可通过以下命令查看状态和日志：
+
+```bash
+docker ps
+docker logs -f unia-danmuku
+```
+
+停止并删除容器：
+
+```bash
+docker stop unia-danmuku
+docker rm unia-danmuku
+```
+
+##### 使用 Docker Compose 启动
+
+如果你希望直接使用仓库内置的 `docker-compose.yml`：
+
+```bash
+docker compose up -d --build
+```
+
+查看日志：
+
+```bash
+docker compose logs -f unia-danmuku
+```
+
+停止并移除容器：
+
+```bash
+docker compose down
+```
+
 #### 🖥️ 一键启动（推荐）
 
 **Windows 系统**
