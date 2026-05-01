@@ -12,6 +12,7 @@ const ThankYouPage = () => {
   const [ws, setWs] = useState(null);
   const audioRef = useRef(null);
   const processingRef = useRef(false);
+  const configRef = useRef(null);
   const [config, setConfig] = useState({
     audioEnabled: true,
     backgroundImg: '',
@@ -78,6 +79,10 @@ const ThankYouPage = () => {
       audioRef.current = null;
     }
   }, [config.audioUrl]);
+
+  useEffect(() => {
+    configRef.current = config;
+  }, [config]);
 
   // Connect WebSocket
   useEffect(() => {
@@ -146,6 +151,8 @@ const ThankYouPage = () => {
   };
 
   const handleMessage = (msg) => {
+    const activeConfig = configRef.current || config;
+
     // Support both nested {type, data} and flat {type, ...data} formats
     const type = msg.type;
     const data = msg.data || msg;
@@ -175,7 +182,7 @@ const ThankYouPage = () => {
         if (data.blindGift) {
           giftType = 'blindbox';
           // Blindbox price calculation
-          if (config.blindboxCalcOriginal) {
+          if (activeConfig.blindboxCalcOriginal) {
              // Use original price of the blindbox item itself (cost)
              totalPrice = ((Number(data.price) || 0) * (Number(data.num) || 1)) / 1000;
           } else {
@@ -197,8 +204,8 @@ const ThankYouPage = () => {
       }
 
       // Filter
-      if (config.ignoreFree && totalPrice <= 0 && type !== 'guard') return;
-      if (totalPrice < Number(config.minPrice || 0) && type !== 'guard') return;
+      if (activeConfig.ignoreFree && totalPrice <= 0 && type !== 'guard') return;
+      if (totalPrice < Number(activeConfig.minPrice || 0) && type !== 'guard') return;
 
       const giftItem = {
         ...data,
