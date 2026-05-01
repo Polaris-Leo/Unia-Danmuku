@@ -198,7 +198,7 @@ const ThankYouPage = () => {
 
       // Filter
       if (config.ignoreFree && totalPrice <= 0 && type !== 'guard') return;
-      if (totalPrice < config.minPrice && type !== 'guard' && type !== 'superchat') return;
+      if (totalPrice < Number(config.minPrice || 0) && type !== 'guard') return;
 
       const giftItem = {
         ...data,
