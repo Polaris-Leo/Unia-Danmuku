@@ -42,6 +42,14 @@ export const logout = async () => {
 };
 
 /**
+ * 触发监控房间重新连接
+ */
+export const reconnectAuth = async () => {
+  const response = await api.post('/auth/reconnect');
+  return response.data;
+};
+
+/**
  * 获取监控房间列表
  */
 export const getMonitoredRooms = async () => {

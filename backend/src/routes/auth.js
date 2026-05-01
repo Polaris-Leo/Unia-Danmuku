@@ -1,6 +1,6 @@
 import express from 'express';
 import { generateQRCode, pollQRCode, fetchBuvid } from '../services/bilibiliAuth.js';
-import { saveCookies, loadCookies, clearCookies } from '../utils/cookieStorage.js';
+import { saveCookies, loadCookies, loadCookiesWithSource, clearCookies } from '../utils/cookieStorage.js';
 import { roomManager } from '../services/roomManager.js';
 
 const router = express.Router();
@@ -94,32 +94,58 @@ router.get('/qrcode/poll', async (req, res) => {
  * GET /api/auth/status
  */
 router.get('/status', async (req, res) => {
-  // 优先从请求Cookie获取，否则从本地文件加载
-  let hasAuth = req.cookies.SESSDATA && req.cookies.bili_jct;
+  let hasAuth = false;
   let cookieData = null;
-  
-  if (hasAuth) {
+  let cookieSource = null;
+
+  // 一次调用获取管理器 cookie（内部已按 remote → local 优先）
+  const { cookies: managedCookies, source: managedSource } = await loadCookiesWithSource();
+  const hasRemoteCookie = managedSource === 'remote' && !!managedCookies?.SESSDATA && !!managedCookies?.bili_jct;
+  const hasSessionCookie = !!req.cookies.SESSDATA && !!req.cookies.bili_jct;
+  const hasLocalCookie = managedSource === 'local' && !!managedCookies?.SESSDATA && !!managedCookies?.bili_jct;
+
+  // 1. 优先：Cookie 管理器（远程）
+  if (hasRemoteCookie) {
+    hasAuth = true;
+    cookieSource = 'remote';
+    cookieData = {
+      SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
+      bili_jct: managedCookies.bili_jct
+    };
+  }
+
+  // 2. 回退：session cookie（扫码登录）
+  if (!hasAuth && hasSessionCookie) {
+    hasAuth = true;
+    cookieSource = 'session';
     cookieData = {
       SESSDATA: req.cookies.SESSDATA?.substring(0, 10) + '...',
       bili_jct: req.cookies.bili_jct
     };
-  } else {
-    // 尝试从本地加载
-    const savedCookies = await loadCookies();
-    if (savedCookies && savedCookies.SESSDATA && savedCookies.bili_jct) {
-      hasAuth = true;
-      cookieData = {
-        SESSDATA: savedCookies.SESSDATA?.substring(0, 10) + '...',
-        bili_jct: savedCookies.bili_jct
-      };
-    }
   }
-  
+
+  // 3. 回退：本地文件
+  if (!hasAuth && hasLocalCookie) {
+    hasAuth = true;
+    cookieSource = 'local';
+    cookieData = {
+      SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
+      bili_jct: managedCookies.bili_jct
+    };
+  }
+
   res.json({
     success: true,
     authenticated: !!hasAuth,
-    isLoggedIn: !!hasAuth,  // 保持兼容性
-    cookies: cookieData
+    isLoggedIn: !!hasAuth,
+    cookies: cookieData,
+    cookieSource,
+    availableSources: {
+      remote: hasRemoteCookie,
+      session: hasSessionCookie,
+      local: hasLocalCookie,
+      active: cookieSource
+    }
   });
 });
 
@@ -150,6 +176,9 @@ router.post('/logout', (req, res) => {
   
   // 清除本地保存的Cookie
   clearCookies();
+
+  // 退出后用 Cookie 管理器中的 cookie 重新连接监控房间
+  setTimeout(() => roomManager.reconnectAll(), 1000);
   
   res.json({
     success: true,

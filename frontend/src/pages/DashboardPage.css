@@ -71,6 +71,18 @@
   border: 1px solid #fde68a;
 }
 
+.db-badge--blue {
+  background: #eff6ff;
+  color: #1d4ed8;
+  border: 1px solid #bfdbfe;
+}
+
+.db-badge--gray {
+  background: #f8fafc;
+  color: #64748b;
+  border: 1px solid #e2e8f0;
+}
+
 .db-nav-btn {
   font-size: 13px;
   font-weight: 600;

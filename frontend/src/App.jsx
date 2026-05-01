@@ -11,6 +11,7 @@ import ThankYouSettingsPage from './pages/ThankYouSettingsPage';
 import ClockPage from './pages/ClockPage';
 import ClockSettingsPage from './pages/ClockSettingsPage';
 import CaptainPage from './pages/CaptainPage';
+import AuthCenterPage from './pages/AuthCenterPage';
 
 function App() {
   return (
@@ -28,6 +29,7 @@ function App() {
         <Route path="/clock" element={<ClockPage />} />
         <Route path="/clock-settings" element={<ClockSettingsPage />} />
         <Route path="/captains" element={<CaptainPage />} />
+        <Route path="/auth-center" element={<AuthCenterPage />} />
       </Routes>
     </BrowserRouter>
   );

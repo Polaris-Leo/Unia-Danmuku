@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getAuthStatus, logout } from '../services/api';
+import { getAuthStatus } from '../services/api';
 import './DashboardPage.css';
 
 function DashboardPage() {
@@ -23,15 +23,6 @@ function DashboardPage() {
       console.error('检查登录状态失败:', error);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-      setAuthInfo(null);
-    } catch (error) {
-      console.error('退出登录失败:', error);
     }
   };
 
@@ -69,17 +60,9 @@ function DashboardPage() {
           <span className="db-navbar__title">Unia 弹幕系统</span>
         </div>
         <div className="db-navbar__auth">
-          {authInfo ? (
-            <>
-              <span className="db-badge db-badge--green">• 已登录</span>
-              <button className="db-nav-btn db-nav-btn--ghost" onClick={handleLogout}>退出登录</button>
-            </>
-          ) : (
-            <>
-              <span className="db-badge db-badge--yellow">• 未登录</span>
-              <button className="db-nav-btn db-nav-btn--primary" onClick={() => navigate('/login')}>🔐 扫码登录</button>
-            </>
-          )}
+          <span className={`db-badge ${authInfo ? 'db-badge--green' : 'db-badge--yellow'}`}>
+            {authInfo ? '登录状态正常' : '未检测到可用 Cookie'}
+          </span>
         </div>
       </header>
 
@@ -142,6 +125,18 @@ function DashboardPage() {
             <div className="db-card__body">
               <h4>答谢姬设置</h4>
               <p>配置礼物/上舰自动答谢内容与样式</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
+          <div className="db-card" onClick={() => navigate('/auth-center')}>
+            <div className="db-card__body">
+              <h4>登录信息</h4>
+              <p>
+                {authInfo
+                  ? `查看当前登录状态与 Cookie 来源${authInfo.cookieSource === 'remote' ? '，当前使用 BiliCookie 系统' : ''}`
+                  : '查看登录状态，或进入扫码登录页与 Cookie 来源信息'}
+              </p>
             </div>
             <span className="db-card__arrow">›</span>
           </div>

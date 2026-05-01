@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { generateQRCode, pollQRCode, getAuthStatus } from '../services/api';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { generateQRCode, pollQRCode } from '../services/api';
 import './LoginPage.css';
 
 const QR_STATUS = {
@@ -19,10 +19,12 @@ const STATUS_MESSAGES = {
 
 function LoginPage() {
   const navigate = useNavigate();
+  const location = useLocation();
   const [qrData, setQrData] = useState(null);
   const [status, setStatus] = useState('');
   const [loading, setLoading] = useState(false);
   const [countdown, setCountdown] = useState(180);
+  const returnTo = location.state?.from || '/dashboard';
 
   // 生成二维码
   const fetchQRCode = async () => {
@@ -58,7 +60,7 @@ function LoginPage() {
           if (code === QR_STATUS.SUCCESS) {
             clearInterval(pollInterval);
             setTimeout(() => {
-              navigate('/dashboard');
+              navigate(returnTo);
             }, 1000);
           } else if (code === QR_STATUS.KEY_ERROR) {
             clearInterval(pollInterval);
@@ -70,7 +72,7 @@ function LoginPage() {
     }, 2000); // 每2秒轮询一次
 
     return () => clearInterval(pollInterval);
-  }, [qrData, navigate]);
+  }, [qrData, navigate, returnTo]);
 
   // 倒计时
   useEffect(() => {
@@ -89,25 +91,10 @@ function LoginPage() {
     return () => clearInterval(timer);
   }, [qrData, countdown]);
 
-  // 检查登录状态
+  // 进入页面后始终允许扫码登录，不因现有 Cookie 自动跳转
   useEffect(() => {
-    const checkAuth = async () => {
-      try {
-        const result = await getAuthStatus();
-        if (result.success && result.authenticated) {
-          console.log('已登录，跳转到dashboard');
-          navigate('/dashboard');
-          return;
-        }
-      } catch (error) {
-        console.log('未登录，显示二维码');
-      }
-      // 未登录则生成二维码
-      fetchQRCode();
-    };
-    
-    checkAuth();
-  }, [navigate]);
+    fetchQRCode();
+  }, []);
 
   return (
     <div className="login-container">
