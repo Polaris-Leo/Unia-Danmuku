@@ -66,7 +66,6 @@ function DashboardPage() {
       {/* 顶部导航栏 */}
       <header className="db-navbar">
         <div className="db-navbar__brand">
-          <span className="db-navbar__logo">🎥</span>
           <span className="db-navbar__title">Unia 弹幕系统</span>
         </div>
         <div className="db-navbar__auth">
@@ -108,7 +107,6 @@ function DashboardPage() {
         <section className="db-grid">
 
           <div className="db-card db-card--accent" onClick={() => navigate('/monitor')}>
-            <div className="db-card__icon">📡</div>
             <div className="db-card__body">
               <h4>后台监控</h4>
               <p>添加常驻监控的直播间，后台持续接收弹幕数据</p>
@@ -117,7 +115,6 @@ function DashboardPage() {
           </div>
 
           <div className="db-card" onClick={() => handleRoomAction('/captains')}>
-            <div className="db-card__icon">🛥️</div>
             <div className="db-card__body">
               <h4>舰长信息</h4>
               <p>查看当前直播间的舰长列表与记录</p>
@@ -126,7 +123,6 @@ function DashboardPage() {
           </div>
 
           <div className="db-card" onClick={() => navigate('/obs-settings')}>
-            <div className="db-card__icon">⚙️</div>
             <div className="db-card__body">
               <h4>OBS 样式设置</h4>
               <p>自定义弹幕覆盖层字体、颜色、布局样式</p>
@@ -135,7 +131,6 @@ function DashboardPage() {
           </div>
 
           <div className="db-card" onClick={() => navigate('/clock-settings')}>
-            <div className="db-card__icon">⏰</div>
             <div className="db-card__body">
               <h4>时钟设置</h4>
               <p>配置直播时钟外观与显示格式</p>
@@ -144,7 +139,6 @@ function DashboardPage() {
           </div>
 
           <div className="db-card" onClick={() => navigate('/thankyou-settings')}>
-            <div className="db-card__icon">🎁</div>
             <div className="db-card__body">
               <h4>答谢姬设置</h4>
               <p>配置礼物/上舰自动答谢内容与样式</p>
