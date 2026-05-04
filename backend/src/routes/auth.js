@@ -103,35 +103,44 @@ router.get('/status', async (req, res) => {
   const hasRemoteCookie = managedSource === 'remote' && !!managedCookies?.SESSDATA && !!managedCookies?.bili_jct;
   const hasSessionCookie = !!req.cookies.SESSDATA && !!req.cookies.bili_jct;
   const hasLocalCookie = managedSource === 'local' && !!managedCookies?.SESSDATA && !!managedCookies?.bili_jct;
+  const remoteCookieData = hasRemoteCookie
+    ? {
+        SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
+        bili_jct: managedCookies.bili_jct
+      }
+    : null;
+  const sessionCookieData = hasSessionCookie
+    ? {
+        SESSDATA: req.cookies.SESSDATA?.substring(0, 10) + '...',
+        bili_jct: req.cookies.bili_jct
+      }
+    : null;
+  const localCookieData = hasLocalCookie
+    ? {
+        SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
+        bili_jct: managedCookies.bili_jct
+      }
+    : null;
 
   // 1. 优先：Cookie 管理器（远程）
   if (hasRemoteCookie) {
     hasAuth = true;
     cookieSource = 'remote';
-    cookieData = {
-      SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
-      bili_jct: managedCookies.bili_jct
-    };
+    cookieData = remoteCookieData;
   }
 
   // 2. 回退：session cookie（扫码登录）
   if (!hasAuth && hasSessionCookie) {
     hasAuth = true;
     cookieSource = 'session';
-    cookieData = {
-      SESSDATA: req.cookies.SESSDATA?.substring(0, 10) + '...',
-      bili_jct: req.cookies.bili_jct
-    };
+    cookieData = sessionCookieData;
   }
 
   // 3. 回退：本地文件
   if (!hasAuth && hasLocalCookie) {
     hasAuth = true;
     cookieSource = 'local';
-    cookieData = {
-      SESSDATA: managedCookies.SESSDATA?.substring(0, 10) + '...',
-      bili_jct: managedCookies.bili_jct
-    };
+    cookieData = localCookieData;
   }
 
   res.json({
@@ -145,6 +154,11 @@ router.get('/status', async (req, res) => {
       session: hasSessionCookie,
       local: hasLocalCookie,
       active: cookieSource
+    },
+    sourceDetails: {
+      remote: remoteCookieData,
+      session: sessionCookieData,
+      local: localCookieData
     }
   });
 });

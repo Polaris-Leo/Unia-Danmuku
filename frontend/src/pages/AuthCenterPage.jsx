@@ -69,6 +69,8 @@ function AuthCenterPage() {
   const hasSessionCookie = !!authInfo?.availableSources?.session;
   const isSessionActive = authInfo?.cookieSource === 'session';
   const hasRemoteCookie = !!authInfo?.availableSources?.remote;
+  const sessionCookiePreview = authInfo?.sourceDetails?.session?.SESSDATA || '未获取';
+  const remoteCookiePreview = authInfo?.sourceDetails?.remote?.SESSDATA || '未获取';
 
   return (
     <div className="auth-page">
@@ -98,7 +100,7 @@ function AuthCenterPage() {
             <section className="auth-grid">
               <article className="auth-panel">
                 <div className="auth-section-head">
-                  <h2 className="auth-section-title">扫码登录区</h2>
+                  <h2 className="auth-section-title">扫码登录</h2>
                   <span className={`auth-inline-pill ${hasSessionCookie ? 'auth-inline-pill--active' : ''}`}>
                     {isSessionActive ? '当前生效' : hasSessionCookie ? '已扫码' : '未扫码'}
                   </span>
@@ -125,6 +127,10 @@ function AuthCenterPage() {
                         : '需要立即手动登录或远程 Cookie 暂不可用时'}
                     </strong>
                   </div>
+                  <div className="auth-metric">
+                    <span className="auth-metric__label">扫码 SESSDATA</span>
+                    <strong className="auth-metric__value auth-metric__value--mono">{sessionCookiePreview}</strong>
+                  </div>
                 </div>
                 <div className="auth-actions auth-actions--section">
                   <button className="auth-btn auth-btn--primary" onClick={() => navigate('/login', { state: { from: '/auth-center' } })}>
@@ -138,9 +144,9 @@ function AuthCenterPage() {
 
               <article className="auth-panel">
                 <div className="auth-section-head">
-                  <h2 className="auth-section-title">BiliCookie 区</h2>
-                  <span className={`auth-inline-pill ${authInfo?.cookieSource === 'remote' ? 'auth-inline-pill--active' : ''}`}>
-                    {authInfo?.cookieSource === 'remote' ? '当前生效' : '优先来源'}
+                  <h2 className="auth-section-title">BiliCookie</h2>
+                  <span className={`auth-inline-pill ${hasRemoteCookie ? 'auth-inline-pill--active' : ''}`}>
+                    {authInfo?.cookieSource === 'remote' ? '当前生效' : hasRemoteCookie ? '已接入' : '未接入'}
                   </span>
                 </div>
                 <p className="auth-section-copy">
@@ -148,14 +154,18 @@ function AuthCenterPage() {
                 </p>
                 <div className="auth-metric-list">
                   <div className="auth-metric">
-                    <span className="auth-metric__label">Cookie 来源</span>
-                    <strong className="auth-metric__value">{sourceLabel}</strong>
+                    <span className="auth-metric__label">当前状态</span>
+                    <strong className="auth-metric__value">
+                      {authInfo?.cookieSource === 'remote'
+                        ? '正在使用 BiliCookie 提供的远程 Cookie'
+                        : hasRemoteCookie
+                          ? 'BiliCookie 已可用，但当前未作为生效来源'
+                          : '当前未检测到 BiliCookie 可用 Cookie'}
+                    </strong>
                   </div>
                   <div className="auth-metric">
-                    <span className="auth-metric__label">SESSDATA</span>
-                    <strong className="auth-metric__value auth-metric__value--mono">
-                      {authInfo?.cookies?.SESSDATA || '未获取'}
-                    </strong>
+                    <span className="auth-metric__label">BiliCookie SESSDATA</span>
+                    <strong className="auth-metric__value auth-metric__value--mono">{remoteCookiePreview}</strong>
                   </div>
                 </div>
                 <ul className="auth-source-list">
