@@ -153,11 +153,11 @@ class RoomManager {
 
       try {
         await liveWS.connect();
-        // 连接成功后立即获取直播状态，以初始化 currentSessionId (用于历史记录)
-        await liveWS.getLiveStatus();
-        
+        // 初始化当前场次，并在后台开始指标采样（不依赖浏览器客户端）
+        await liveWS.initializeMetricSampling();
+
         // 获取并缓存主播信息（头像、昵称）
-        const roomInfo = await liveWS.getRoomInfo();
+        const roomInfo = liveWS.latestRoomInfo || await liveWS.getRoomInfo();
         if (roomInfo) {
           this.updateRoomInfo(id, {
             uname: roomInfo.anchorName,
@@ -218,7 +218,10 @@ class RoomManager {
           // 再次检查是否仍在监控且未暂停
           const currentConfig = this.monitoredRooms.get(roomId);
           if (currentConfig && !currentConfig.paused && this.connections.has(roomId)) {
-             this.connections.get(roomId).connect();
+             const connection = this.connections.get(roomId);
+             connection.connect()
+               .then(() => connection.initializeMetricSampling())
+               .catch(err => console.error(`重连房间 ${roomId} 失败:`, err.message));
           }
         }, 5000);
       } else {
@@ -299,9 +302,11 @@ class RoomManager {
           if (liveWS) {
             liveWS.updateCookies(freshCookies);
             // connect() 内部会先断开旧连接再重新连接
-            liveWS.connect().catch(err => {
-              console.error(`重连房间 ${roomId} 失败:`, err.message);
-            });
+            liveWS.connect()
+              .then(() => liveWS.initializeMetricSampling())
+              .catch(err => {
+                console.error(`重连房间 ${roomId} 失败:`, err.message);
+              });
           } else {
             await this.ensureConnection(roomId);
           }

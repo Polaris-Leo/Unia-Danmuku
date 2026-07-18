@@ -70,6 +70,98 @@ export function saveMessage(roomId, sessionId, type, data) {
 }
 
 /**
+ * 保存直播场次指标快照
+ */
+export function saveMetricSnapshot(roomId, sessionId, snapshot) {
+  saveMessage(roomId, sessionId, 'metrics', snapshot);
+}
+
+/**
+ * 加载直播场次指标快照
+ */
+export async function loadMetricSnapshots(roomId, sessionId) {
+  if (!roomId || !sessionId) return [];
+
+  const filePath = path.join(getSessionDir(roomId, sessionId), 'metrics.jsonl');
+  if (!fs.existsSync(filePath)) return [];
+
+  const snapshots = [];
+  const seen = new Set();
+
+  try {
+    const fileStream = fs.createReadStream(filePath);
+    const rl = readline.createInterface({ input: fileStream, crlfDelay: Infinity });
+
+    for await (const line of rl) {
+      if (!line.trim()) continue;
+
+      try {
+        const item = JSON.parse(line);
+        const fingerprint = [
+          item.ts,
+          item.liveStatus,
+          item.guardCount,
+          item.fansClubCount,
+          item.followerCount,
+          item.rankCount,
+          item.watchedCount,
+          item.durationSec
+        ].join('-');
+
+        if (!seen.has(fingerprint)) {
+          seen.add(fingerprint);
+          snapshots.push(item);
+        }
+      } catch (error) {
+        // Ignore malformed JSONL lines
+      }
+    }
+  } catch (error) {
+    console.error(`[History] Failed to load metric snapshots:`, error);
+  }
+
+  return snapshots.sort((a, b) => Number(a.ts || 0) - Number(b.ts || 0));
+}
+
+/**
+ * 汇总直播场次指标
+ */
+export function summarizeMetricSnapshots(snapshots) {
+  const buildMetricSummary = (key) => {
+    const values = snapshots
+      .map((item) => Number(item[key]))
+      .filter((value) => Number.isFinite(value));
+
+    if (values.length === 0) {
+      return { start: null, end: null, min: null, max: null, delta: null };
+    }
+
+    return {
+      start: values[0],
+      end: values[values.length - 1],
+      min: Math.min(...values),
+      max: Math.max(...values),
+      delta: values[values.length - 1] - values[0]
+    };
+  };
+
+  const firstPoint = snapshots[0] || null;
+  const lastPoint = snapshots[snapshots.length - 1] || null;
+
+  return {
+    startedAt: firstPoint?.ts || null,
+    endedAt: lastPoint?.ts || null,
+    durationSecMax: buildMetricSummary('durationSec').max,
+    guardCount: buildMetricSummary('guardCount'),
+    fansClubCount: buildMetricSummary('fansClubCount'),
+    followerCount: buildMetricSummary('followerCount'),
+    rankCount: buildMetricSummary('rankCount'),
+    watchedCount: buildMetricSummary('watchedCount'),
+    durationSec: buildMetricSummary('durationSec')
+  };
+}
+
+/**
  * 加载会话历史记录
  * @param {string|number} roomId 直播间ID
  * @param {string|number} sessionId 会话ID
@@ -167,7 +259,7 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
   if (!fs.existsSync(oldDir)) return;
   ensureDir(newDir);
 
-  const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl'];
+  const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl', 'metrics.jsonl'];
   let movedCount = 0;
 
   for (const file of files) {
@@ -188,7 +280,7 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
         try {
           const item = JSON.parse(line);
           // 兼容不同类型的 timestamp 字段
-          const ts = Number(item.timestamp || item.time || 0);
+          const ts = Number(item.ts || item.timestamp || item.time || 0);
           // 归一化为秒 (如果是毫秒则转换)
           const normalizedTs = ts > 10000000000 ? Math.floor(ts / 1000) : ts;
           const threshold = Number(newSessionId);
@@ -221,8 +313,8 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
 
         // 3. 合并并排序
         const allItems = [...existingItems, ...moveItems].sort((a, b) => {
-           const tsA = Number(a.timestamp || a.time || 0);
-           const tsB = Number(b.timestamp || b.time || 0);
+           const tsA = Number(a.ts || a.timestamp || a.time || 0);
+           const tsB = Number(b.ts || b.timestamp || b.time || 0);
            return tsA - tsB;
         });
 
@@ -250,7 +342,7 @@ export async function sortSessionFiles(roomId, sessionId) {
     const sessionDir = getSessionDir(roomId, sessionId);
     if (!fs.existsSync(sessionDir)) return;
 
-    const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl'];
+    const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl', 'metrics.jsonl'];
     
     for (const file of files) {
         const filePath = path.join(sessionDir, file);
@@ -267,8 +359,8 @@ export async function sortSessionFiles(roomId, sessionId) {
 
             // 排序
             items.sort((a, b) => {
-                const tsA = Number(a.timestamp || a.time || 0);
-                const tsB = Number(b.timestamp || b.time || 0);
+                const tsA = Number(a.ts || a.timestamp || a.time || 0);
+                const tsB = Number(b.ts || b.timestamp || b.time || 0);
                 return tsA - tsB;
             });
 

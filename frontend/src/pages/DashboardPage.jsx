@@ -105,6 +105,14 @@ function DashboardPage() {
             <span className="db-card__arrow">›</span>
           </div>
 
+          <div className="db-card" onClick={() => handleRoomAction('/analytics')}>
+            <div className="db-card__body">
+              <h4>直播分析</h4>
+              <p>回看每场直播的大航海、粉丝团、高能榜与看过人数走势</p>
+            </div>
+            <span className="db-card__arrow">›</span>
+          </div>
+
           <div className="db-card" onClick={() => navigate('/obs-settings')}>
             <div className="db-card__body">
               <h4>OBS 样式设置</h4>

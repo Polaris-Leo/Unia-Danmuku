@@ -6,7 +6,13 @@ import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
 import { getCookieString } from '../utils/cookieStorage.js';
-import { saveMessage, getLastSessionId, moveStrayData } from '../utils/historyStorage.js';
+import { saveMessage, saveMetricSnapshot, getLastSessionId, moveStrayData } from '../utils/historyStorage.js';
+
+const toNullableNumber = (value) => {
+  if (value === null || value === undefined || value === '') return null;
+  const number = Number(value);
+  return Number.isFinite(number) ? number : null;
+};
 
 /**
  * B站直播间弹幕WebSocket客户端
@@ -41,6 +47,15 @@ export class BilibiliLiveWS {
     this.lastSessionEndTime = 0;  // 上一次直播结束(或最后活跃)时间
     this.sessionTimeout = 15 * 60 * 1000; // 会话延续阈值：15分钟
     this.isLive = false;          // 当前是否在直播
+
+    // 直播场次指标采样状态
+    this.latestRoomInfo = null;
+    this.latestRankCount = null;
+    this.latestWatchedCount = null;
+    this.metricsSnapshotTimer = null;
+    this.lastMetricSnapshot = null;
+    this.lastMetricSnapshotAt = 0;
+    this.metricsSamplingInterval = 60 * 1000;
 
     // 事件回调
     this.onDanmaku = null;      // 弹幕消息
@@ -128,6 +143,8 @@ export class BilibiliLiveWS {
 
             this.currentSessionId = newSessionId;
             this.lastSessionId = newSessionId;
+            this.lastMetricSnapshot = null;
+            this.lastMetricSnapshotAt = 0;
           }
           
           // 更新最后活跃时间
@@ -174,10 +191,12 @@ export class BilibiliLiveWS {
       });
 
       if (response.data.code === 0 && response.data.data) {
-        return {
+        const rankCount = {
           type: 'rank_count',
           count: response.data.data.onlineNum
         };
+        this.latestRankCount = Number(rankCount.count);
+        return rankCount;
       }
     } catch (error) {
       console.error('获取高能榜人数失败:', error.message);
@@ -224,7 +243,7 @@ export class BilibiliLiveWS {
         const fansClubCount = medalInfo.fansclub || 0;
         const followerCount = data.anchor_info?.relation_info?.attention || 0;
 
-        return {
+        const roomInfo = {
           anchorName: anchorInfo.uname || '未知主播',
           anchorFace: faceUrl,
           guardCount: guardInfo.count || 0,
@@ -232,11 +251,112 @@ export class BilibiliLiveWS {
           followerCount: followerCount,
           watchedCount: data.room_info?.online || 0
         };
+        this.latestRoomInfo = roomInfo;
+        if (Number.isFinite(Number(roomInfo.watchedCount))) {
+          this.latestWatchedCount = Number(roomInfo.watchedCount);
+        }
+
+        return roomInfo;
       }
     } catch (error) {
       console.error('获取直播间信息失败:', error.message);
     }
     return null;
+  }
+
+  /**
+   * 刷新指标来源，供定时采样与生命周期快照复用
+   */
+  async refreshMetricInputs() {
+    const [roomInfo, rankData] = await Promise.all([
+      this.getRoomInfo(),
+      this.getRankCount()
+    ]);
+
+    if (roomInfo) this.latestRoomInfo = roomInfo;
+    if (rankData) this.latestRankCount = Number(rankData.count);
+  }
+
+  /**
+   * 持久化当前直播场次的指标快照
+   */
+  async persistMetricSnapshot(source, force = false) {
+    if (!this.currentSessionId) return;
+
+    const now = Date.now();
+    const ts = Math.floor(now / 1000);
+    const roomInfo = this.latestRoomInfo || {};
+    const snapshot = {
+      type: 'metric_snapshot',
+      ts,
+      roomId: String(this.roomId),
+      sessionId: String(this.currentSessionId),
+      source,
+      liveStatus: this.isLive ? 1 : 0,
+      guardCount: toNullableNumber(roomInfo.guardCount),
+      fansClubCount: toNullableNumber(roomInfo.fansClubCount),
+      followerCount: toNullableNumber(roomInfo.followerCount),
+      rankCount: toNullableNumber(this.latestRankCount),
+      watchedCount: toNullableNumber(this.latestWatchedCount),
+      durationSec: Math.max(0, ts - Number(this.currentSessionId))
+    };
+
+    const valuesFingerprint = [
+      snapshot.liveStatus,
+      snapshot.guardCount,
+      snapshot.fansClubCount,
+      snapshot.followerCount,
+      snapshot.rankCount,
+      snapshot.watchedCount
+    ].join('-');
+    const minInterval = source === 'timer' ? this.metricsSamplingInterval : 15 * 1000;
+
+    if (!force && this.lastMetricSnapshot?.valuesFingerprint === valuesFingerprint && now - this.lastMetricSnapshotAt < minInterval) {
+      return;
+    }
+
+    saveMetricSnapshot(this.roomId, this.currentSessionId, snapshot);
+    this.lastMetricSnapshot = { valuesFingerprint, snapshot };
+    this.lastMetricSnapshotAt = now;
+  }
+
+  /**
+   * 在连接建立或重连后恢复直播指标采样
+   */
+  async initializeMetricSampling() {
+    const status = await this.getLiveStatus();
+    if (!status || status.liveStatus !== 1 || !this.currentSessionId) {
+      this.stopMetricsSnapshotLoop();
+      return status;
+    }
+
+    await this.refreshMetricInputs();
+    await this.persistMetricSnapshot('bootstrap');
+    this.startMetricsSnapshotLoop();
+    return status;
+  }
+
+  /**
+   * 启动直播期间的 60 秒指标采样
+   */
+  startMetricsSnapshotLoop() {
+    if (this.metricsSnapshotTimer || !this.isLive || !this.currentSessionId) return;
+
+    this.metricsSnapshotTimer = setInterval(async () => {
+      if (!this.isLive || !this.currentSessionId) return;
+      await this.refreshMetricInputs();
+      await this.persistMetricSnapshot('timer');
+    }, this.metricsSamplingInterval);
+  }
+
+  /**
+   * 停止指标采样
+   */
+  stopMetricsSnapshotLoop() {
+    if (this.metricsSnapshotTimer) {
+      clearInterval(this.metricsSnapshotTimer);
+      this.metricsSnapshotTimer = null;
+    }
   }
 
   /**
@@ -896,7 +1016,9 @@ export class BilibiliLiveWS {
         console.log('💤 直播准备中 (PREPARING)');
         this.isLive = false;
         this.lastSessionEndTime = Date.now(); // 记录下播时间
-        
+        await this.persistMetricSnapshot('live_end', true);
+        this.stopMetricsSnapshotLoop();
+
         // 记录直播结束分界线
         if (this.currentSessionId) {
           const divider = {
@@ -933,6 +1055,12 @@ export class BilibiliLiveWS {
              if (this.onDanmaku) this.onDanmaku(divider);
           }
           
+          if (status && status.liveStatus === 1) {
+            await this.refreshMetricInputs();
+            await this.persistMetricSnapshot('live_start', true);
+            this.startMetricsSnapshotLoop();
+          }
+
           if (status && this.onLiveStatus) {
             this.onLiveStatus(status);
           }
@@ -1252,7 +1380,9 @@ export class BilibiliLiveWS {
           textSmall: data.data.text_small,
           textLarge: data.data.text_large
         };
+        this.latestWatchedCount = Number(data.data.num);
         if (this.onWatched) this.onWatched(watched);
+        await this.persistMetricSnapshot('watched_change');
         break;
         
       case 'ONLINE_RANK_COUNT': // 高能榜人数
@@ -1260,7 +1390,9 @@ export class BilibiliLiveWS {
           type: 'rank_count',
           count: data.data.count
         };
+        this.latestRankCount = Number(data.data.count);
         if (this.onRankCount) this.onRankCount(rankCount);
+        await this.persistMetricSnapshot('rank_change');
         break;
         
       case 'ENTRY_EFFECT': // 进场特效
@@ -1305,6 +1437,8 @@ export class BilibiliLiveWS {
       this.heartbeatTimer = null;
     }
 
+    this.stopMetricsSnapshotLoop();
+
     // 仅在非主动断开时触发 onClose（防止 connect() 内部 disconnect() 误触重连）
     if (!this._intentionalDisconnect) {
       if (this.onClose) this.onClose();
@@ -1326,6 +1460,7 @@ export class BilibiliLiveWS {
       this.heartbeatTimer = null;
     }
 
+    this.stopMetricsSnapshotLoop();
     this.isConnected = false;
   }
 }

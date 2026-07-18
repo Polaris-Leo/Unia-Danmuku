@@ -23,6 +23,7 @@ Unia-Danmuku 是一个面向 B 站直播场景的 OBS 弹幕与直播辅助系�
 - 原生 WebSocket
 - file-saver / xlsx-js-style：用于文件导出和表格处理相关能力
 - @number-flow/react：用于数字展示动画相关能力
+- Recharts：用于直播场次指标趋势图
 
 ### 后端
 
@@ -85,7 +86,7 @@ Bilibili API / Bilibili 直播 WebSocket
 - `auth.js`：B 站扫码登录、轮询登录结果、认证状态、重连和退出登录。
 - `danmaku.js`：前台直播间连接/断开、测试消息、WebSocket 广播、房间列表。
 - `monitor.js`：后台监控房间的查询、添加、暂停、恢复和删除。
-- `history.js`：按房间和场次读取历史记录。
+- `history.js`：按房间和场次读取历史记录及指标分析数据。
 - `thankyou.js`：答谢页资源上传和房间配置读写。
 - `fonts.js`：字体文件列表和上传。
 - `obs.js`：OBS 弹幕样式配置读写。
@@ -95,7 +96,7 @@ Bilibili API / Bilibili 直播 WebSocket
 ### 服务层 `backend/src/services/`
 
 - `bilibiliAuth.js`：封装 B 站登录、二维码、Cookie、用户状态等认证逻辑。
-- `bilibiliLiveWS.js`：封装 B 站直播 WebSocket 连接和消息解析。
+- `bilibiliLiveWS.js`：封装 B 站直播 WebSocket 连接、消息解析和场次指标快照采集。
 - `biliLiveService.js`：直播服务封装或备用实现。
 - `roomManager.js`：管理后台监控房间、直播连接生命周期、消息广播和持久化配置。
 - `captainManager.js`：管理舰长数据、导入和统计。
@@ -103,7 +104,7 @@ Bilibili API / Bilibili 直播 WebSocket
 ### 工具层 `backend/src/utils/`
 
 - `cookieStorage.js`：Cookie 读写、状态和来源信息管理。
-- `historyStorage.js`：历史场次、JSONL 数据写入、读取、排序和修复。
+- `historyStorage.js`：历史场次、JSONL 数据和场次指标快照的写入、读取、排序和修复。
 - `thankYouStorage.js`：答谢页配置存储。
 - `repairSessions.js`：历史数据修复辅助逻辑。
 
@@ -125,6 +126,7 @@ Bilibili API / Bilibili 直播 WebSocket
 - `/clock`：OBS 时钟展示页。
 - `/clock-settings`：OBS 时钟设置页。
 - `/captains`：舰长数据页。
+- `/analytics`：按直播场次查看指标摘要和趋势图；当前直播场次按 60 秒采集频率自动刷新。
 
 ### 页面层 `frontend/src/pages/`
 
@@ -146,7 +148,7 @@ Bilibili API / Bilibili 直播 WebSocket
 
 - `cookies.json`：本地 B 站登录 Cookie。
 - `monitored_rooms.json`：后台监控房间配置。
-- `history/`：直播历史记录，按房间和场次组织，通常使用 JSONL 保存消息。
+- `history/`：直播历史记录，按房间和场次组织；消息和场次指标均使用 JSONL 保存。
 - `captains/`：舰长数据，通常按房间和月份分片保存。
 - `fonts/`：上传或内置字体文件。
 - `daxie/`：答谢页上传素材。
@@ -181,9 +183,9 @@ Bilibili API / Bilibili 直播 WebSocket
 
 1. 用户在监控页添加房间。
 2. `roomManager` 持久化房间配置并保持后台连接。
-3. 收到消息后写入历史场次文件。
+3. 收到消息后写入历史场次文件；直播期间每 60 秒及关键状态变化时写入指标快照。
 4. 启动时执行历史数据修复和排序。
-5. 前端通过历史接口按房间和场次读取记录。
+5. 前端通过历史接口按房间和场次读取消息与指标；`/analytics` 对当前直播场次按 60 秒轮询刷新趋势图。
 
 详细说明见 [后台监控与历史记录](features/monitor-history.md)。
 

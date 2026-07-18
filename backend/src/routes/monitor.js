@@ -18,7 +18,8 @@ router.get('/rooms', async (req, res) => {
       addedAt: config ? config.addedAt : 0,
       uname: config?.uname || '加载中...',
       face: config?.face || '',
-      liveStatus: 0 // 0: 未开播, 1: 直播中, 2: 轮播
+      liveStatus: 0, // 0: 未开播, 1: 直播中, 2: 轮播
+      currentSessionId: conn?.currentSessionId ? String(conn.currentSessionId) : null
     };
 
     if (conn) {

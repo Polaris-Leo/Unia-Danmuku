@@ -111,6 +111,22 @@ export const getHistoryData = async (roomId, sessionId) => {
   const response = await api.get(`/history/${roomId}/${sessionId}`);
   return response.data;
 };
+
+/**
+ * 获取指定直播场次的指标时间序列
+ */
+export const getSessionMetrics = async (roomId, sessionId) => {
+  const response = await api.get(`/history/${roomId}/${sessionId}/metrics`);
+  return response.data;
+};
+
+/**
+ * 获取指定直播场次的指标汇总
+ */
+export const getSessionAnalyticsSummary = async (roomId, sessionId) => {
+  const response = await api.get(`/history/${roomId}/${sessionId}/analytics-summary`);
+  return response.data;
+};
 /**
  * 获取舰长列表
  * @param {object} params
