@@ -21,6 +21,11 @@ const lengthDelimited = (n, body) => Buffer.concat([
   Buffer.from(encodeVarint(body.length)),
   body
 ]);
+const fixed32 = (n, value) => {
+  const body = Buffer.alloc(4);
+  body.writeUInt32LE(value >>> 0);
+  return Buffer.concat([Buffer.from(encodeVarint((n << 3) | 5)), body]);
+};
 const item = Buffer.concat([
   field(1, 35961),
   text(2, '亲密之旅plus'),
@@ -29,7 +34,8 @@ const item = Buffer.concat([
   field(7, 200),
   text(8, 'silver'),
   field(10, 1710000000),
-  text(18, '赠送')
+  text(18, '赠送'),
+  fixed32(20, 0x3f800000)
 ]);
 const broadcast = Buffer.concat([
   field(1, 123),

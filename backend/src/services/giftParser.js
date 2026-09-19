@@ -33,6 +33,14 @@ const readMessage = (buffer) => {
       }
       value = buffer.subarray(state.offset, state.offset + length);
       state.offset += length;
+    } else if (wireType === 1 || wireType === 5) {
+      const length = wireType === 1 ? 8 : 4;
+      if (state.offset + length > buffer.length) {
+        throw new Error('Truncated protobuf fixed-width field');
+      }
+      // 保留未知 fixed64/fixed32 字段的原始字节，避免新版协议新增字段导致整条礼物丢失。
+      value = buffer.subarray(state.offset, state.offset + length);
+      state.offset += length;
     } else {
       throw new Error(`Unsupported protobuf wire type: ${wireType}`);
     }
