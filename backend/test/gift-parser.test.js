@@ -76,4 +76,14 @@ assert.equal(old.giftName, '辣条');
 assert.equal(old.giftId, 1);
 assert.equal(old.num, 3);
 
+const blindbox = normalizeGiftData({
+  giftName: '盲盒',
+  blind_gift: {
+    original_gift_name: '盲盒内礼物',
+    original_gift_price: 1000
+  }
+});
+assert.equal(blindbox.blindGift.gift_name, '盲盒内礼物');
+assert.equal(blindbox.blindGift.original_gift_name, '盲盒内礼物');
+
 console.log('gift parser tests passed');

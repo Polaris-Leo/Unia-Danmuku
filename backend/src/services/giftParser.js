@@ -126,6 +126,13 @@ export const normalizeGiftData = (data) => {
   const num = Number(data.num ?? data.giftNum ?? 0) || 0;
   const totalCoin = Number(data.total_coin ?? data.totalCoin ?? 0) || 0;
   const rawPrice = Number(data.price ?? 0) || 0;
+  const rawBlindGift = data.blind_gift ?? data.blindGift;
+  const blindGift = rawBlindGift ? {
+    ...rawBlindGift,
+    gift_name: rawBlindGift.gift_name ?? rawBlindGift.original_gift_name ?? '',
+    original_gift_name: rawBlindGift.original_gift_name ?? rawBlindGift.gift_name ?? '',
+    original_gift_price: Number(rawBlindGift.original_gift_price ?? rawBlindGift.gift_price ?? 0) || 0
+  } : null;
   return {
     uid: data.uid,
     uname: data.uname ?? data.username ?? '',
@@ -140,7 +147,7 @@ export const normalizeGiftData = (data) => {
     action: data.action || '赠送',
     timestamp: Number(data.timestamp) || Math.floor(Date.now() / 1000),
     giftInfo: data.gift_info ?? null,
-    blindGift: data.blind_gift ?? data.blindGift ?? null,
+    blindGift,
     medalInfo: data.medal_info ?? data.medalInfo ?? null,
     giftIcon: data.giftIcon ?? data.gift_info?.img_basic ?? data.img_basic ?? ''
   };
