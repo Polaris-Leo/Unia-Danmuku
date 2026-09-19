@@ -67,10 +67,15 @@ try {
     try {
       await makeSession(migrationRoot, 'room-3', 100, 200);
       await makeSession(migrationRoot, 'room-3', 200, 250);
-      const overlap = await organizeHistory({ historyDir: migrationRoot, recentLimit: 2, force: true });
+      await organizeHistory({ historyDir: migrationRoot, recentLimit: 2, startTime: 200, endTime: 200, force: true });
+      const sourceBeforeMigration = (await fs.stat(path.join(migrationRoot, 'room-3', '100', 'danmaku.jsonl'))).mtimeMs;
+      await fs.appendFile(path.join(migrationRoot, 'room-3', '200', 'danmaku.jsonl'), `${JSON.stringify({ timestamp: 260 })}\n`);
+      const overlap = await organizeHistory({ historyDir: migrationRoot, recentLimit: 2, force: false });
       assert.equal(overlap.sessionsProcessed, 2);
+      assert.equal(overlap.sessionsMigrated, 1);
+      assert.equal((await fs.stat(path.join(migrationRoot, 'room-3', '100', 'danmaku.jsonl'))).mtimeMs > sourceBeforeMigration, true);
       assert.equal((await fs.readFile(path.join(migrationRoot, 'room-3', '100', 'danmaku.jsonl'), 'utf8')).trim(), '');
-      assert.equal((await fs.readFile(path.join(migrationRoot, 'room-3', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).length, 2);
+      assert.equal((await fs.readFile(path.join(migrationRoot, 'room-3', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).length, 3);
     } finally {
       await fs.rm(migrationRoot, { recursive: true, force: true });
     }
