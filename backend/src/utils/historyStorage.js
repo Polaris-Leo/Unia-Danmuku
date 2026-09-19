@@ -5,6 +5,29 @@ import readline from 'readline';
 const DATA_DIR = path.join(process.cwd(), 'data', 'history');
 
 /**
+ * 选择最近的 N 场会话，按会话时间戳降序排列。
+ */
+export function selectRecentSessions(sessionIds, limit) {
+  return [...sessionIds]
+    .sort((a, b) => Number(b) - Number(a))
+    .slice(0, limit);
+}
+
+/**
+ * 判断历史数据文件是否晚于整理标记。
+ */
+export function shouldOrganizeSession({ fileMtimeMs, markerMtimeMs }) {
+  return Number(fileMtimeMs) > Number(markerMtimeMs);
+}
+
+/**
+ * 按闭区间筛选时间戳场次。
+ */
+export function selectSessionsInRange(sessionIds, start, end) {
+  return sessionIds.filter((sessionId) => sessionId >= start && sessionId <= end);
+}
+
+/**
  * 确保目录存在
  */
 function ensureDir(dirPath) {
