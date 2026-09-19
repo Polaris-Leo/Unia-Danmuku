@@ -98,7 +98,13 @@ for (const body of [
   { roomId: -1, startTime: 100, endTime: 200 },
   { roomId: 123, startTime: 1.5, endTime: 200 },
   { roomId: 123, startTime: Number.NaN, endTime: 200 },
-  { roomId: 123, startTime: 100, endTime: Number.POSITIVE_INFINITY }
+  { roomId: 123, startTime: 100, endTime: Number.POSITIVE_INFINITY },
+  { roomId: true, startTime: 100, endTime: 200 },
+  { roomId: [], startTime: 100, endTime: 200 },
+  { roomId: ' ', startTime: 100, endTime: 200 },
+  { roomId: 123, startTime: ' 100', endTime: 200 },
+  { roomId: 123, startTime: '1e2', endTime: 200 },
+  null
 ]) {
   assert.equal(validateHistoryOrganizeRequest(body).valid, false);
 }
@@ -131,5 +137,27 @@ assert.equal(apiResult.payload.success, true);
 const missingRangeResult = await invokeOrganizeRoute({ roomId: 123 });
 assert.equal(missingRangeResult.statusCode, 400);
 assert.equal(missingRangeResult.payload.success, false);
+
+const nullBodyResult = await invokeOrganizeRoute(null);
+assert.equal(nullBodyResult.statusCode, 400);
+assert.equal(nullBodyResult.payload.success, false);
+
+const rangeRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-organize-range-'));
+try {
+  await makeSession(rangeRoot, 'room-9', 100);
+  await makeSession(rangeRoot, 'room-9', 200);
+  const rangeStats = await organizeHistory({
+    historyDir: rangeRoot,
+    roomId: 'room-9',
+    startTime: 100,
+    endTime: 200,
+    recentLimit: null,
+    force: true
+  });
+  assert.equal(rangeStats.sessionsConsidered, 2);
+  assert.equal(rangeStats.sessionsProcessed, 2);
+} finally {
+  await fs.rm(rangeRoot, { recursive: true, force: true });
+}
 
 console.log('history organize tests passed');

@@ -4,17 +4,17 @@ import { getSessions, loadHistory, loadMetricSnapshots, organizeHistory, summari
 const router = express.Router();
 
 router.post('/organize', async (req, res) => {
-  const validation = validateHistoryOrganizeRequest(req.body);
-  if (!validation.valid) {
-    return res.status(400).json({ success: false, message: validation.message });
-  }
-
   try {
+    const validation = validateHistoryOrganizeRequest(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
     const stats = await organizeHistory({
       roomId: validation.roomId,
       startTime: validation.startTime,
       endTime: validation.endTime,
-      recentLimit: Number.POSITIVE_INFINITY,
+      recentLimit: null,
       force: true
     });
     return res.json({
