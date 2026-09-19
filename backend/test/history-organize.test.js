@@ -51,13 +51,29 @@ try {
 
   const overlapRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-overlap-'));
   try {
-    await makeSession(overlapRoot, 'room-2', 100, 200);
+    await makeSession(overlapRoot, 'room-2', 100, 100);
     await makeSession(overlapRoot, 'room-2', 200, 250);
     const unchangedPath = path.join(overlapRoot, 'room-2', '100', 'danmaku.jsonl');
-    const overlap = await organizeHistory({ historyDir: overlapRoot, recentLimit: 2, force: true });
-    assert.equal(overlap.sessionsProcessed, 2);
-    assert.equal((await fs.readFile(unchangedPath, 'utf8')).trim(), '');
-    assert.equal((await fs.readFile(path.join(overlapRoot, 'room-2', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).length, 2);
+    await organizeHistory({ historyDir: overlapRoot, recentLimit: 2, force: true });
+    const unchangedMtime = (await fs.stat(unchangedPath)).mtimeMs;
+    const unchangedContent = await fs.readFile(unchangedPath, 'utf8');
+    await fs.appendFile(path.join(overlapRoot, 'room-2', '200', 'danmaku.jsonl'), `${JSON.stringify({ timestamp: 260 })}\n`);
+    const targetChanged = await organizeHistory({ historyDir: overlapRoot, recentLimit: 2, force: false });
+    assert.equal(targetChanged.sessionsProcessed, 1);
+    assert.equal((await fs.stat(unchangedPath)).mtimeMs, unchangedMtime);
+    assert.equal(await fs.readFile(unchangedPath, 'utf8'), unchangedContent);
+
+    const migrationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-migration-'));
+    try {
+      await makeSession(migrationRoot, 'room-3', 100, 200);
+      await makeSession(migrationRoot, 'room-3', 200, 250);
+      const overlap = await organizeHistory({ historyDir: migrationRoot, recentLimit: 2, force: true });
+      assert.equal(overlap.sessionsProcessed, 2);
+      assert.equal((await fs.readFile(path.join(migrationRoot, 'room-3', '100', 'danmaku.jsonl'), 'utf8')).trim(), '');
+      assert.equal((await fs.readFile(path.join(migrationRoot, 'room-3', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).length, 2);
+    } finally {
+      await fs.rm(migrationRoot, { recursive: true, force: true });
+    }
   } finally {
     await fs.rm(overlapRoot, { recursive: true, force: true });
   }
