@@ -80,6 +80,7 @@ const decodeGiftItem = (buffer) => {
     gift_name: stringValue(fields, 2),
     num: numberValue(fields, 3),
     gift_type: numberValue(fields, 4),
+    giftType: numberValue(fields, 4),
     price: numberValue(fields, 5),
     total_coin: numberValue(fields, 7),
     coin_type: stringValue(fields, 8),
@@ -146,9 +147,14 @@ export const normalizeGiftData = (data) => {
     totalCoin,
     action: data.action || '赠送',
     timestamp: Number(data.timestamp) || Math.floor(Date.now() / 1000),
-    giftInfo: data.gift_info ?? null,
+    giftInfo: data.giftInfo ?? data.gift_info ?? null,
+    gift_info: data.giftInfo ?? data.gift_info ?? null,
+    tid: data.tid ?? '',
+    rnd: data.rnd ?? '',
     blindGift,
-    medalInfo: data.medal_info ?? data.medalInfo ?? null,
-    giftIcon: data.giftIcon ?? data.gift_info?.img_basic ?? data.img_basic ?? ''
+    blind_gift: blindGift,
+    medalInfo: data.medalInfo ?? data.medal_info ?? null,
+    medal: data.medal ?? data.medalInfo ?? data.medal_info ?? null,
+    giftIcon: data.giftIcon ?? data.gift_info?.img_basic ?? data.giftInfo?.img_basic ?? data.img_basic ?? ''
   };
 };

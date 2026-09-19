@@ -26,21 +26,38 @@ const fixed32 = (n, value) => {
   body.writeUInt32LE(value >>> 0);
   return Buffer.concat([Buffer.from(encodeVarint((n << 3) | 5)), body]);
 };
+const itemGiftInfo = lengthDelimited(35, text(1, 'https://example.com/gift.png'));
 const item = Buffer.concat([
   field(1, 35961),
   text(2, '亲密之旅plus'),
   field(3, 2),
+  field(4, 1),
   field(5, 100),
   field(7, 200),
   text(8, 'silver'),
+  text(9, 'gift-tid'),
   field(10, 1710000000),
+  text(12, 'gift-rnd'),
   text(18, '赠送'),
+  itemGiftInfo,
   fixed32(20, 0x3f800000)
+]);
+const medal = Buffer.concat([
+  field(1, 456),
+  field(4, 789),
+  field(5, 12),
+  text(6, '粉丝牌')
+]);
+const blindGift = Buffer.concat([
+  text(3, '盲盒内礼物'),
+  field(6, 1000)
 ]);
 const broadcast = Buffer.concat([
   field(1, 123),
   text(2, '测试用户'),
   text(3, 'http://example.com/face.jpg'),
+  lengthDelimited(8, medal),
+  lengthDelimited(9, blindGift),
   lengthDelimited(10, item)
 ]);
 
@@ -48,11 +65,19 @@ const decoded = decodeSendGiftV2(broadcast.toString('base64'));
 assert.equal(decoded.uid, 123);
 assert.equal(decoded.gift_list[0].gift_id, 35961);
 assert.equal(decoded.gift_list[0].gift_name, '亲密之旅plus');
+assert.equal(decoded.gift_list[0].gift_type, 1);
+assert.equal(decoded.gift_list[0].tid, 'gift-tid');
+assert.equal(decoded.gift_list[0].rnd, 'gift-rnd');
+assert.deepEqual(decoded.gift_list[0].gift_info, { img_basic: 'https://example.com/gift.png' });
+assert.equal(decoded.medal_info.medal_name, '粉丝牌');
+assert.equal(decoded.blind_gift.original_gift_name, '盲盒内礼物');
 
 const normalized = normalizeGiftData({
   uid: decoded.uid,
   uname: decoded.uname,
   face: decoded.face,
+  medal_info: decoded.medal_info,
+  blind_gift: decoded.blind_gift,
   ...decoded.gift_list[0]
 });
 assert.equal(normalized.giftName, '亲密之旅plus');
@@ -61,6 +86,13 @@ assert.equal(normalized.num, 2);
 assert.equal(normalized.price, 100);
 assert.equal(normalized.totalCoin, 200);
 assert.equal(normalized.coinType, 'silver');
+assert.equal(normalized.giftType, 1);
+assert.equal(normalized.tid, 'gift-tid');
+assert.equal(normalized.rnd, 'gift-rnd');
+assert.deepEqual(normalized.giftInfo, { img_basic: 'https://example.com/gift.png' });
+assert.equal(normalized.medalInfo.medal_name, '粉丝牌');
+assert.deepEqual(normalized.medal, normalized.medalInfo);
+assert.equal(normalized.blindGift.original_gift_name, '盲盒内礼物');
 
 const old = normalizeGiftData({
   uid: 456,
