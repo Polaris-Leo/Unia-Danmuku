@@ -3,7 +3,8 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { organizeHistory } from '../src/utils/historyStorage.js';
+import { organizeHistory, validateHistoryOrganizeRequest } from '../src/utils/historyStorage.js';
+import historyRouter from '../src/routes/history.js';
 
 const makeSession = async (root, roomId, sessionId, timestamp = sessionId) => {
   const dir = path.join(root, String(roomId), String(sessionId));
@@ -85,5 +86,50 @@ try {
 } finally {
   await fs.rm(root, { recursive: true, force: true });
 }
+
+const validRange = validateHistoryOrganizeRequest({ roomId: 123, startTime: 100, endTime: 200 });
+assert.deepEqual(validRange, { valid: true, roomId: 123, startTime: 100, endTime: 200 });
+
+for (const body of [
+  { roomId: 123, startTime: 200, endTime: 100 },
+  { roomId: 123, startTime: 100 },
+  { roomId: 123, endTime: 200 },
+  { startTime: 100, endTime: 200 },
+  { roomId: -1, startTime: 100, endTime: 200 },
+  { roomId: 123, startTime: 1.5, endTime: 200 },
+  { roomId: 123, startTime: Number.NaN, endTime: 200 },
+  { roomId: 123, startTime: 100, endTime: Number.POSITIVE_INFINITY }
+]) {
+  assert.equal(validateHistoryOrganizeRequest(body).valid, false);
+}
+
+const routeStack = historyRouter.stack.find((layer) => layer.route?.path === '/organize' && layer.route.methods.post);
+assert.ok(routeStack, 'POST /organize route should exist');
+
+const invokeOrganizeRoute = async (body) => {
+  let statusCode = 200;
+  let payload;
+  const response = {
+    status(code) {
+      statusCode = code;
+      return response;
+    },
+    json(value) {
+      payload = value;
+      return response;
+    }
+  };
+  await routeStack.route.stack[0].handle({ body }, response);
+  return { statusCode, payload };
+};
+
+const apiResult = await invokeOrganizeRoute({ roomId: 123, startTime: 100, endTime: 200 });
+assert.equal(apiResult.statusCode, 200);
+assert.deepEqual(apiResult.payload.range, { roomId: 123, startTime: 100, endTime: 200 });
+assert.equal(apiResult.payload.success, true);
+
+const missingRangeResult = await invokeOrganizeRoute({ roomId: 123 });
+assert.equal(missingRangeResult.statusCode, 400);
+assert.equal(missingRangeResult.payload.success, false);
 
 console.log('history organize tests passed');

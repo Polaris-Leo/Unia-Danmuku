@@ -431,10 +431,28 @@ export async function repairOverlappingSessions() {
     }
 }
 
+export function validateHistoryOrganizeRequest(body = {}) {
+  const required = ['roomId', 'startTime', 'endTime'];
+  if (required.some((field) => body[field] === undefined || body[field] === null || body[field] === '')) {
+    return { valid: false, message: 'roomId, startTime and endTime are required' };
+  }
+
+  const values = Object.fromEntries(required.map((field) => [field, Number(body[field])]));
+  if (Object.values(values).some((value) => !Number.isSafeInteger(value) || value < 0)) {
+    return { valid: false, message: 'roomId, startTime and endTime must be non-negative integers' };
+  }
+  if (values.startTime > values.endTime) {
+    return { valid: false, message: 'startTime must not be greater than endTime' };
+  }
+
+  return { valid: true, ...values };
+}
+
 export async function organizeHistory(options = {}) {
   const historyDir = options.historyDir || DATA_DIR;
   const recentLimit = Number(options.recentLimit ?? options.roomLimit ?? 5);
   const force = options.force === true;
+  const roomFilter = options.roomId == null ? null : String(options.roomId);
   const startTime = options.startTime == null ? null : Number(options.startTime);
   const endTime = options.endTime == null ? null : Number(options.endTime);
   const stats = { roomsProcessed: 0, sessionsConsidered: 0, sessionsProcessed: 0, sessionsMigrated: 0, sessionsSkippedUnchanged: 0 };
@@ -442,7 +460,7 @@ export async function organizeHistory(options = {}) {
 
   const roomEntries = await fs.promises.readdir(historyDir, { withFileTypes: true });
   for (const roomEntry of roomEntries) {
-    if (!roomEntry.isDirectory()) continue;
+    if (!roomEntry.isDirectory() || (roomFilter != null && roomEntry.name !== roomFilter)) continue;
     const roomId = roomEntry.name;
     const roomDir = path.join(historyDir, roomId);
     let sessions = (await fs.promises.readdir(roomDir, { withFileTypes: true }))
