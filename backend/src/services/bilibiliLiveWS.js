@@ -1215,7 +1215,6 @@ export class BilibiliLiveWS {
               rnd: normalized.rnd,
               giftInfo: normalized.giftInfo,
               medalInfo: normalized.medalInfo,
-              medal: normalized.medalInfo,
               giftIcon,
               giftIconStatic: giftIcon,
               giftIconDynamic: giftIcon,
@@ -1225,7 +1224,7 @@ export class BilibiliLiveWS {
               coinType: normalized.coinType,
               totalCoin: normalized.totalCoin,
               action: normalized.action,
-              medal: normalized.medalInfo,
+              medal: normalized.medal,
               timestamp: normalized.timestamp
             };
 
