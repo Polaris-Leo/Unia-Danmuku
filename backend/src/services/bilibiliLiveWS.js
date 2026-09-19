@@ -7,6 +7,7 @@ import fs from 'fs';
 import path from 'path';
 import { getCookieString } from '../utils/cookieStorage.js';
 import { saveMessage, saveMetricSnapshot, getLastSessionId, moveStrayData } from '../utils/historyStorage.js';
+import { decodeSendGiftV2, normalizeGiftData } from './giftParser.js';
 
 const toNullableNumber = (value) => {
   if (value === null || value === undefined || value === '') return null;
@@ -1182,6 +1183,65 @@ export class BilibiliLiveWS {
         if (this.onDanmaku) this.onDanmaku(danmaku);
         break;
         
+      case 'SEND_GIFT_V2': { // 新版 protobuf 礼物；保留下方 SEND_GIFT 旧版 JSON 解析
+        try {
+          const giftPayload = typeof data.data === 'string' ? JSON.parse(data.data) : data.data;
+          const pbBase64 = giftPayload?.pb;
+          if (!pbBase64) {
+            console.warn('⚠️ SEND_GIFT_V2 缺少 data.pb');
+            break;
+          }
+
+          const decodedGift = decodeSendGiftV2(pbBase64);
+          for (const item of decodedGift.gift_list) {
+            const normalized = normalizeGiftData({
+              ...decodedGift,
+              ...item
+            });
+            let giftIcon = normalized.giftIcon;
+            if (giftIcon?.startsWith('http://')) giftIcon = giftIcon.replace('http://', 'https://');
+
+            const gift = {
+              type: 'gift',
+              user: {
+                uid: normalized.uid,
+                username: normalized.uname,
+                face: normalized.face?.replace(/^http:\/\//, 'https://')
+              },
+              giftName: normalized.giftName,
+              giftId: normalized.giftId,
+              giftIcon,
+              giftIconStatic: giftIcon,
+              giftIconDynamic: giftIcon,
+              blindGift: normalized.blindGift,
+              num: normalized.num,
+              price: normalized.price,
+              coinType: normalized.coinType,
+              totalCoin: normalized.totalCoin,
+              action: normalized.action,
+              medal: normalized.medalInfo,
+              timestamp: normalized.timestamp
+            };
+
+            console.log(`🎁 收到新版礼物: ${gift.giftName} (ID: ${gift.giftId}, 价格: ${gift.price})`);
+            if (giftIcon && !this.giftCache.has(String(gift.giftId))) {
+              this.giftCache.set(String(gift.giftId), {
+                name: gift.giftName,
+                icon: giftIcon,
+                staticIcon: giftIcon,
+                dynamicIcon: giftIcon
+              });
+              this.saveGiftCache();
+            }
+            if (this.currentSessionId) saveMessage(this.roomId, this.currentSessionId, 'gift', gift);
+            if (this.onGift) this.onGift(gift);
+          }
+        } catch (error) {
+          console.error('❌ 处理 SEND_GIFT_V2 礼物失败:', error.message);
+        }
+        break;
+      }
+
       case 'SEND_GIFT': // 礼物
         const giftData = data.data;
         
