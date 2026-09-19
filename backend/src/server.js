@@ -16,7 +16,7 @@ import obsRoutes from './routes/obs.js';
 import clockRoutes from './routes/clock.js';
 import captainRoutes from './routes/captain.js';
 import { roomManager } from './services/roomManager.js';
-import { sortAllHistory, repairOverlappingSessions } from './utils/historyStorage.js';
+import { organizeHistory } from './utils/historyStorage.js';
 
 dotenv.config();
 
@@ -102,11 +102,8 @@ app.use((err, req, res, next) => {
 const runBackgroundRepair = async () => {
   try {
     console.log('🔍 [后台] 开始数据检查与修复...');
-    // 1. 先修复重叠数据 (将误入旧场次的新数据移动到新场次)
-    await repairOverlappingSessions();
-    // 2. 再整理数据顺序 (确保文件内按时间戳排序)
-    await sortAllHistory();
-    console.log('✅ [后台] 数据检查与修复完成');
+    const result = await organizeHistory({ recentLimit: 5, force: false });
+    console.log('✅ [后台] 数据检查与修复完成', result);
   } catch (err) {
     console.error('❌ [后台] 数据检查与修复出错:', err);
   }
