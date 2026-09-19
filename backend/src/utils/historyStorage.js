@@ -480,12 +480,10 @@ export async function organizeHistory(options = {}) {
       await sortSessionFilesIn(historyDir, roomId, sessionId);
     }
 
-    let maxDataMtimeMs = marker;
-    const roomSessionEntries = await fs.promises.readdir(roomDir, { withFileTypes: true });
-    for (const sessionEntry of roomSessionEntries) {
-      if (!sessionEntry.isDirectory() || !/^\d+$/.test(sessionEntry.name)) continue;
-      const sessionDir = path.join(roomDir, sessionEntry.name);
-      for (const entry of await fs.promises.readdir(sessionDir, { withFileTypes: true })) {
+    let maxDataMtimeMs = 0;
+    for (const sessionId of sessions) {
+      const sessionDir = path.join(roomDir, String(sessionId));
+      for (const entry of (fs.existsSync(sessionDir) ? await fs.promises.readdir(sessionDir, { withFileTypes: true }) : [])) {
         if (entry.isFile() && entry.name.endsWith('.jsonl')) maxDataMtimeMs = Math.max(maxDataMtimeMs, (await fs.promises.stat(path.join(sessionDir, entry.name))).mtimeMs);
       }
     }

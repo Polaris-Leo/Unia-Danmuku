@@ -36,9 +36,31 @@ try {
   assert.equal(changed.sessionsProcessed, 1);
   assert.equal(changed.sessionsSkippedUnchanged, 4);
 
-  const ranged = await organizeHistory({ historyDir: root, recentLimit: 5, startTime: 200, endTime: 400, force: true });
-  assert.equal(ranged.sessionsConsidered, 3);
-  assert.equal(ranged.sessionsProcessed, 3);
+  const outsideMtime = new Date(Date.now() + 40000);
+  await fs.utimes(path.join(root, 'room-1', '100', 'danmaku.jsonl'), outsideMtime, outsideMtime);
+  const targetMtime = new Date(Date.now() + 30000);
+  await fs.utimes(changedFile, targetMtime, targetMtime);
+  const scoped = await organizeHistory({ historyDir: root, recentLimit: 5, force: false });
+  assert.equal(scoped.sessionsProcessed, 1);
+
+  const outsideBeforeForce = (await fs.stat(path.join(root, 'room-1', '100', 'danmaku.jsonl'))).mtimeMs;
+  const forcedRange = await organizeHistory({ historyDir: root, recentLimit: 5, startTime: 200, endTime: 400, force: true });
+  assert.equal(forcedRange.sessionsConsidered, 3);
+  assert.equal(forcedRange.sessionsProcessed, 3);
+  assert.equal((await fs.stat(path.join(root, 'room-1', '100', 'danmaku.jsonl'))).mtimeMs, outsideBeforeForce);
+
+  const overlapRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-overlap-'));
+  try {
+    await makeSession(overlapRoot, 'room-2', 100, 200);
+    await makeSession(overlapRoot, 'room-2', 200, 250);
+    const unchangedPath = path.join(overlapRoot, 'room-2', '100', 'danmaku.jsonl');
+    const overlap = await organizeHistory({ historyDir: overlapRoot, recentLimit: 2, force: true });
+    assert.equal(overlap.sessionsProcessed, 2);
+    assert.equal((await fs.readFile(unchangedPath, 'utf8')).trim(), '');
+    assert.equal((await fs.readFile(path.join(overlapRoot, 'room-2', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).length, 2);
+  } finally {
+    await fs.rm(overlapRoot, { recursive: true, force: true });
+  }
 } finally {
   await fs.rm(root, { recursive: true, force: true });
 }
