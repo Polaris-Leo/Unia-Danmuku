@@ -1,7 +1,36 @@
 import express from 'express';
-import { getSessions, loadHistory, loadMetricSnapshots, summarizeMetricSnapshots } from '../utils/historyStorage.js';
+import { getSessions, loadHistory, loadMetricSnapshots, organizeHistory, summarizeMetricSnapshots, validateHistoryOrganizeRequest } from '../utils/historyStorage.js';
 
 const router = express.Router();
+
+router.post('/organize', async (req, res) => {
+  try {
+    const validation = validateHistoryOrganizeRequest(req.body);
+    if (!validation.valid) {
+      return res.status(400).json({ success: false, message: validation.message });
+    }
+
+    const stats = await router.organizeHistory({
+      roomId: validation.roomId,
+      startTime: validation.startTime,
+      endTime: validation.endTime,
+      recentLimit: null,
+      force: true
+    });
+    return res.json({
+      success: true,
+      range: {
+        roomId: validation.roomId,
+        startTime: validation.startTime,
+        endTime: validation.endTime
+      },
+      stats
+    });
+  } catch (error) {
+    console.error('[History] Failed to organize requested range:', error);
+    return res.status(500).json({ success: false, message: 'Failed to organize history' });
+  }
+});
 
 // 获取房间的历史会话列表
 router.get('/:roomId/sessions', async (req, res) => {
@@ -55,5 +84,7 @@ router.get('/:roomId/:sessionId', async (req, res) => {
     res.status(404).json({ success: false, message: 'History not found' });
   }
 });
+
+router.organizeHistory = organizeHistory;
 
 export default router;

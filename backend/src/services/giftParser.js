@@ -72,6 +72,18 @@ const numberValue = (fields, fieldNumber) => {
   return Number.isFinite(numericValue) ? numericValue : 0;
 };
 
+const decodeGiftInfo = (buffer) => {
+  const fields = readMessage(buffer);
+  const giftInfo = {};
+  for (const [fieldNumber, rawValue] of fields) {
+    const key = fieldNumber === 1 ? 'img_basic' : fieldNumber === 2 ? 'webp' : `field_${fieldNumber}`;
+    const values = Array.isArray(rawValue) ? rawValue : [rawValue];
+    const decodedValues = values.map(value => Buffer.isBuffer(value) && (key === 'img_basic' || key === 'webp') ? value.toString('utf8') : value);
+    giftInfo[key] = decodedValues.length === 1 ? decodedValues[0] : decodedValues;
+  }
+  return giftInfo;
+};
+
 const decodeGiftItem = (buffer) => {
   const fields = readMessage(buffer);
   const material = first(fields, 35);
@@ -80,6 +92,7 @@ const decodeGiftItem = (buffer) => {
     gift_name: stringValue(fields, 2),
     num: numberValue(fields, 3),
     gift_type: numberValue(fields, 4),
+    giftType: numberValue(fields, 4),
     price: numberValue(fields, 5),
     total_coin: numberValue(fields, 7),
     coin_type: stringValue(fields, 8),
@@ -87,9 +100,7 @@ const decodeGiftItem = (buffer) => {
     timestamp: numberValue(fields, 10),
     rnd: stringValue(fields, 12),
     action: stringValue(fields, 18),
-    gift_info: Buffer.isBuffer(material) ? {
-      img_basic: stringValue(readMessage(material), 1)
-    } : null
+    gift_info: Buffer.isBuffer(material) ? decodeGiftInfo(material) : null
   };
 };
 
@@ -138,17 +149,28 @@ export const normalizeGiftData = (data) => {
     uname: data.uname ?? data.username ?? '',
     face: data.face ?? '',
     giftName: data.giftName ?? data.gift_name ?? '',
+    gift_name: data.giftName ?? data.gift_name ?? '',
     giftId: data.giftId ?? data.gift_id ?? 0,
+    gift_id: data.giftId ?? data.gift_id ?? 0,
     giftType: data.giftType ?? data.gift_type ?? 0,
+    gift_type: data.giftType ?? data.gift_type ?? 0,
     num,
     price: rawPrice || (num > 0 ? Math.floor(totalCoin / num) : 0),
     coinType: data.coinType ?? data.coin_type ?? '',
+    coin_type: data.coinType ?? data.coin_type ?? '',
     totalCoin,
+    total_coin: totalCoin,
     action: data.action || '赠送',
     timestamp: Number(data.timestamp) || Math.floor(Date.now() / 1000),
-    giftInfo: data.gift_info ?? null,
+    giftInfo: data.giftInfo ?? data.gift_info ?? null,
+    gift_info: data.giftInfo ?? data.gift_info ?? null,
+    tid: data.tid ?? '',
+    rnd: data.rnd ?? '',
     blindGift,
-    medalInfo: data.medal_info ?? data.medalInfo ?? null,
-    giftIcon: data.giftIcon ?? data.gift_info?.img_basic ?? data.img_basic ?? ''
+    blind_gift: blindGift,
+    medalInfo: data.medalInfo ?? data.medal_info ?? null,
+    medal_info: data.medalInfo ?? data.medal_info ?? null,
+    medal: data.medal ?? data.medalInfo ?? data.medal_info ?? null,
+    giftIcon: data.giftIcon ?? data.gift_info?.img_basic ?? data.giftInfo?.img_basic ?? data.img_basic ?? ''
   };
 };

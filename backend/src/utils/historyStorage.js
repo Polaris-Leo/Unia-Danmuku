@@ -3,6 +3,66 @@ import path from 'path';
 import readline from 'readline';
 
 const DATA_DIR = path.join(process.cwd(), 'data', 'history');
+const fileLocks = new Map();
+
+function withFileLock(filePath, operation) {
+  const previous = fileLocks.get(filePath) || Promise.resolve();
+  const current = previous.catch(() => {}).then(operation);
+  const pending = current.then(
+    () => {
+      if (fileLocks.get(filePath) === pending) fileLocks.delete(filePath);
+    },
+    () => {
+      if (fileLocks.get(filePath) === pending) fileLocks.delete(filePath);
+    }
+  );
+  fileLocks.set(filePath, pending);
+  return current;
+}
+
+async function withFileLocks(filePaths, operation) {
+  const paths = [...new Set(filePaths)].sort();
+  const acquire = async (index) => {
+    if (index === paths.length) return operation();
+    return withFileLock(paths[index], () => acquire(index + 1));
+  };
+  return acquire(0);
+}
+
+async function atomicWriteFile(filePath, content) {
+  const tempPath = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
+  try {
+    await fs.promises.writeFile(tempPath, content, 'utf8');
+    await fs.promises.rename(tempPath, filePath);
+  } catch (error) {
+    await fs.promises.rm(tempPath, { force: true }).catch(() => {});
+    throw error;
+  }
+}
+
+
+/**
+ * 选择最近的 N 场会话，按会话时间戳降序排列。
+ */
+export function selectRecentSessions(sessionIds, limit) {
+  return [...sessionIds]
+    .sort((a, b) => Number(b) - Number(a))
+    .slice(0, limit);
+}
+
+/**
+ * 判断历史数据文件是否晚于整理标记。
+ */
+export function shouldOrganizeSession({ fileMtimeMs, markerMtimeMs }) {
+  return Number(fileMtimeMs) > Number(markerMtimeMs);
+}
+
+/**
+ * 按闭区间筛选时间戳场次。
+ */
+export function selectSessionsInRange(sessionIds, start, end) {
+  return sessionIds.filter((sessionId) => sessionId >= start && sessionId <= end);
+}
 
 /**
  * 确保目录存在
@@ -53,19 +113,17 @@ export async function getSessions(roomId) {
  * @param {string} type 消息类型 (danmaku, superchat, gift, guard)
  * @param {object} data 消息数据
  */
-export function saveMessage(roomId, sessionId, type, data) {
-  if (!roomId || !sessionId) return;
+export function saveMessage(roomId, sessionId, type, data, historyDir = DATA_DIR) {
+  if (!roomId || !sessionId) return Promise.resolve();
 
-  const sessionDir = getSessionDir(roomId, sessionId);
+  const sessionDir = path.join(historyDir, String(roomId), String(sessionId));
   ensureDir(sessionDir);
 
   const filePath = path.join(sessionDir, `${type}.jsonl`);
   const line = JSON.stringify(data) + '\n';
 
-  fs.appendFile(filePath, line, (err) => {
-    if (err) {
-      console.error(`[History] Failed to save ${type} message:`, err);
-    }
+  return withFileLock(filePath, () => fs.promises.appendFile(filePath, line)).catch((err) => {
+    console.error(`[History] Failed to save ${type} message:`, err);
   });
 }
 
@@ -250,18 +308,17 @@ export async function getLastSessionId(roomId) {
  * @param {string|number} oldSessionId 上一场会话ID
  * @param {string|number} newSessionId 当前会话ID (作为时间戳阈值)
  */
-export async function moveStrayData(roomId, oldSessionId, newSessionId) {
+export async function moveStrayData(roomId, oldSessionId, newSessionId, historyDir = DATA_DIR, requestedFiles = null) {
   if (!oldSessionId || !newSessionId || oldSessionId === newSessionId) return;
-  
-  const oldDir = getSessionDir(roomId, oldSessionId);
-  const newDir = getSessionDir(roomId, newSessionId);
+
+  const oldDir = path.join(historyDir, String(roomId), String(oldSessionId));
+  const newDir = path.join(historyDir, String(roomId), String(newSessionId));
   
   if (!fs.existsSync(oldDir)) return;
   ensureDir(newDir);
 
-  const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl', 'metrics.jsonl'];
+  const files = requestedFiles || ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl', 'metrics.jsonl'];
   let movedCount = 0;
-
   for (const file of files) {
     const oldFilePath = path.join(oldDir, file);
     const newFilePath = path.join(newDir, file);
@@ -269,7 +326,8 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
     if (!fs.existsSync(oldFilePath)) continue;
 
     try {
-      const content = await fs.promises.readFile(oldFilePath, 'utf-8');
+      await withFileLocks([oldFilePath, newFilePath], async () => {
+        const content = await fs.promises.readFile(oldFilePath, 'utf-8');
       const lines = content.split('\n').filter(l => l.trim());
       
       const keepLines = [];
@@ -299,7 +357,7 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
 
       if (moveLines.length > 0) {
         // 1. 重写旧文件
-        await fs.promises.writeFile(oldFilePath, keepLines.join('\n') + (keepLines.length > 0 ? '\n' : ''));
+        await atomicWriteFile(oldFilePath, keepLines.join('\n') + (keepLines.length > 0 ? '\n' : ''));
         
         // 2. 读取新文件现有内容 (如果存在)
         let existingItems = [];
@@ -320,11 +378,12 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
 
         // 4. 写入新文件
         const newContent = allItems.map(item => JSON.stringify(item)).join('\n') + '\n';
-        await fs.promises.writeFile(newFilePath, newContent);
+        await atomicWriteFile(newFilePath, newContent);
         
         movedCount += moveLines.length;
         console.log(`[History] Moved ${moveLines.length} items from ${oldSessionId} to ${newSessionId} in ${file}`);
       }
+      });
     } catch (error) {
       console.error(`[History] Failed to move data for ${file}:`, error);
     }
@@ -339,37 +398,7 @@ export async function moveStrayData(roomId, oldSessionId, newSessionId) {
  * 对指定会话的所有数据文件进行按时间戳排序
  */
 export async function sortSessionFiles(roomId, sessionId) {
-    const sessionDir = getSessionDir(roomId, sessionId);
-    if (!fs.existsSync(sessionDir)) return;
-
-    const files = ['danmaku.jsonl', 'gift.jsonl', 'guard.jsonl', 'superchat.jsonl', 'metrics.jsonl'];
-    
-    for (const file of files) {
-        const filePath = path.join(sessionDir, file);
-        if (!fs.existsSync(filePath)) continue;
-
-        try {
-            const content = await fs.promises.readFile(filePath, 'utf-8');
-            const lines = content.split('\n').filter(l => l.trim());
-            if (lines.length === 0) continue;
-
-            const items = lines.map(line => {
-                try { return JSON.parse(line); } catch (e) { return null; }
-            }).filter(Boolean);
-
-            // 排序
-            items.sort((a, b) => {
-                const tsA = Number(a.ts || a.timestamp || a.time || 0);
-                const tsB = Number(b.ts || b.timestamp || b.time || 0);
-                return tsA - tsB;
-            });
-
-            const newContent = items.map(item => JSON.stringify(item)).join('\n') + '\n';
-            await fs.promises.writeFile(filePath, newContent);
-        } catch (e) {
-            console.error(`Failed to sort ${filePath}:`, e);
-        }
-    }
+  await sortSessionFilesIn(DATA_DIR, roomId, sessionId);
 }
 
 /**
@@ -406,6 +435,171 @@ export async function repairOverlappingSessions() {
     } catch (error) {
         console.error('修复重叠场次失败:', error);
     }
+}
+
+export function validateHistoryOrganizeRequest(body = {}) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return { valid: false, message: 'request body must be an object' };
+  }
+
+  const required = ['roomId', 'startTime', 'endTime'];
+  if (required.some((field) => body[field] === undefined || body[field] === null || body[field] === '')) {
+    return { valid: false, message: 'roomId, startTime and endTime are required' };
+  }
+
+  const parseInteger = (value) => {
+    if (typeof value === 'number') return Number.isSafeInteger(value) && value >= 0 ? value : null;
+    if (typeof value === 'string' && /^(0|[1-9]\d*)$/.test(value)) {
+      const parsed = Number(value);
+      return Number.isSafeInteger(parsed) ? parsed : null;
+    }
+    return null;
+  };
+  const values = Object.fromEntries(required.map((field) => [field, parseInteger(body[field])]));
+  if (Object.values(values).some((value) => value === null)) {
+    return { valid: false, message: 'roomId, startTime and endTime must be non-negative integers' };
+  }
+  if (values.startTime > values.endTime) {
+    return { valid: false, message: 'startTime must not be greater than endTime' };
+  }
+
+  return { valid: true, ...values };
+}
+
+export async function organizeHistory(options = {}) {
+  const historyDir = options.historyDir || DATA_DIR;
+  const roomFilter = options.roomId == null ? null : String(options.roomId);
+  const hasExplicitRange = options.startTime != null || options.endTime != null;
+  const recentLimit = options.recentLimit === null
+    ? null
+    : Number(options.recentLimit ?? options.roomLimit ?? (hasExplicitRange ? null : 5));
+  const force = options.force === true;
+  const startTime = options.startTime == null ? null : Number(options.startTime);
+  const endTime = options.endTime == null ? null : Number(options.endTime);
+  const stats = { roomsProcessed: 0, sessionsConsidered: 0, sessionsProcessed: 0, sessionsMigrated: 0, sessionsSkippedUnchanged: 0 };
+  if ((recentLimit !== null && (!Number.isFinite(recentLimit) || recentLimit <= 0)) || !fs.existsSync(historyDir)) return stats;
+
+  const roomEntries = await fs.promises.readdir(historyDir, { withFileTypes: true });
+  for (const roomEntry of roomEntries) {
+    if (!roomEntry.isDirectory() || (roomFilter != null && roomEntry.name !== roomFilter)) continue;
+    const roomId = roomEntry.name;
+    const roomDir = path.join(historyDir, roomId);
+    let sessions = (await fs.promises.readdir(roomDir, { withFileTypes: true }))
+      .filter(entry => entry.isDirectory() && /^\d+$/.test(entry.name))
+      .map(entry => Number(entry.name)).sort((a, b) => b - a)
+      .filter(sessionId => (startTime == null || sessionId >= startTime) && (endTime == null || sessionId <= endTime));
+    if (recentLimit !== null) sessions = sessions.slice(0, recentLimit);
+    if (sessions.length === 0) continue;
+
+    stats.roomsProcessed += 1;
+    stats.sessionsConsidered += sessions.length;
+    const markerPath = path.join(roomDir, '.organize-state.json');
+    let marker = 0;
+    try { marker = Number(JSON.parse(await fs.promises.readFile(markerPath, 'utf8')).maxDataMtimeMs) || 0; } catch { /* reprocess without state */ }
+
+    const changedFiles = new Map();
+    for (const sessionId of sessions) {
+      const sessionDir = path.join(roomDir, String(sessionId));
+      const files = [];
+      for (const entry of (fs.existsSync(sessionDir) ? await fs.promises.readdir(sessionDir, { withFileTypes: true }) : [])) {
+        if (!entry.isFile() || !entry.name.endsWith('.jsonl')) continue;
+        const mtime = (await fs.promises.stat(path.join(sessionDir, entry.name))).mtimeMs;
+        if (force || mtime > marker) files.push(entry.name);
+      }
+      changedFiles.set(sessionId, files);
+    }
+    const changed = sessions.filter(sessionId => changedFiles.get(sessionId).length > 0);
+    stats.sessionsSkippedUnchanged += sessions.length - changed.length;
+    if (changed.length === 0) continue;
+
+    const ordered = [...sessions].sort((a, b) => a - b);
+    const migrationFiles = new Map();
+    for (const sessionId of changed) {
+      const index = ordered.indexOf(sessionId);
+      if (index > 0) {
+        const files = await hasStrayData(historyDir, roomId, ordered[index - 1], sessionId);
+        if (files.size) migrationFiles.set(ordered[index - 1], files);
+      }
+    }
+    for (const sessionId of changed) {
+      const index = ordered.indexOf(sessionId);
+      if (index > 0) {
+        const files = migrationFiles.get(ordered[index - 1]);
+        if (files) await moveStrayData(roomId, ordered[index - 1], sessionId, historyDir, [...files]);
+      }
+      if (index < ordered.length - 1) {
+        const files = new Set(changedFiles.get(sessionId));
+
+        for (const file of migrationFiles.get(ordered[index - 1]) || []) files.add(file);
+
+        if (files.size) await moveStrayData(roomId, sessionId, ordered[index + 1], historyDir, [...files]);
+
+      }
+      const filesToSort = new Set(changedFiles.get(sessionId));
+      for (const file of migrationFiles.get(sessionId) || []) filesToSort.add(file);
+      await sortSessionFilesIn(historyDir, roomId, sessionId, [...filesToSort]);
+    }
+    stats.sessionsMigrated += migrationFiles.size;
+    const processedSessions = new Set([...changed, ...migrationFiles.keys()]);
+    stats.sessionsProcessed += processedSessions.size;
+
+    let maxDataMtimeMs = 0;
+    for (const sessionId of processedSessions) {
+      const sessionDir = path.join(roomDir, String(sessionId));
+      for (const entry of (fs.existsSync(sessionDir) ? await fs.promises.readdir(sessionDir, { withFileTypes: true }) : [])) {
+    if (!hasExplicitRange) await atomicWriteFile(markerPath, JSON.stringify({ maxDataMtimeMs }) + '\n');
+      }
+    }
+    await fs.promises.writeFile(markerPath, JSON.stringify({ maxDataMtimeMs }) + '\n');
+  }
+  return stats;
+}
+
+async function hasStrayData(historyDir, roomId, sourceSessionId, targetSessionId) {
+  const sessionDir = path.join(historyDir, String(roomId), String(sourceSessionId));
+  const files = new Set();
+  if (!fs.existsSync(sessionDir)) return files;
+  const threshold = Number(targetSessionId);
+  for (const entry of await fs.promises.readdir(sessionDir, { withFileTypes: true })) {
+    if (!entry.isFile() || !entry.name.endsWith('.jsonl')) continue;
+    const filePath = path.join(sessionDir, entry.name);
+    const content = await withFileLock(filePath, () => fs.promises.readFile(filePath, 'utf8'));
+    const lines = content.split('\n');
+    for (const line of lines) {
+      if (!line.trim()) continue;
+      try {
+        const item = JSON.parse(line);
+        const ts = Number(item.ts || item.timestamp || item.time || 0);
+        const normalizedTs = ts > 10000000000 ? Math.floor(ts / 1000) : ts;
+        const normalizedThreshold = threshold > 10000000000 ? Math.floor(threshold / 1000) : threshold;
+        if (normalizedTs >= normalizedThreshold) {
+          files.add(entry.name);
+          break;
+        }
+      } catch {
+        // Ignore malformed lines; moveStrayData preserves them in place.
+      }
+    }
+  }
+  return files;
+}
+
+async function sortSessionFilesIn(historyDir, roomId, sessionId, requestedFiles = null) {
+  const sessionDir = path.join(historyDir, String(roomId), String(sessionId));
+  if (!fs.existsSync(sessionDir)) return;
+  const entries = await fs.promises.readdir(sessionDir, { withFileTypes: true });
+  const files = requestedFiles || entries.filter(entry => entry.isFile() && entry.name.endsWith('.jsonl')).map(entry => entry.name);
+  for (const file of files) {
+    const filePath = path.join(sessionDir, file);
+    if (!fs.existsSync(filePath)) continue;
+    await withFileLock(filePath, async () => {
+      const items = (await fs.promises.readFile(filePath, 'utf8')).split('\n').filter(line => line.trim()).map(line => {
+        try { return JSON.parse(line); } catch { return null; }
+      }).filter(Boolean);
+      items.sort((a, b) => Number(a.ts || a.timestamp || a.time || 0) - Number(b.ts || b.timestamp || b.time || 0));
+      await atomicWriteFile(filePath, items.length ? `${items.map(item => JSON.stringify(item)).join('\n')}\n` : '');
+    });
+  }
 }
 
 /**
