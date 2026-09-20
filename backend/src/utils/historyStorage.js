@@ -8,9 +8,14 @@ const fileLocks = new Map();
 function withFileLock(filePath, operation) {
   const previous = fileLocks.get(filePath) || Promise.resolve();
   const current = previous.catch(() => {}).then(operation);
-  const pending = current.finally(() => {
-    if (fileLocks.get(filePath) === pending) fileLocks.delete(filePath);
-  });
+  const pending = current.then(
+    () => {
+      if (fileLocks.get(filePath) === pending) fileLocks.delete(filePath);
+    },
+    () => {
+      if (fileLocks.get(filePath) === pending) fileLocks.delete(filePath);
+    }
+  );
   fileLocks.set(filePath, pending);
   return current;
 }

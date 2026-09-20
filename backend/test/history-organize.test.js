@@ -135,10 +135,33 @@ const invokeOrganizeRoute = async (body, organizer = organizeHistory) => {
   return { statusCode, payload };
 };
 
-const apiResult = await invokeOrganizeRoute({ roomId: 123, startTime: 100, endTime: 200 });
+const apiCalls = [];
+const apiResult = await invokeOrganizeRoute(
+  { roomId: 123, startTime: 100, endTime: 200 },
+  async (options) => {
+    apiCalls.push(options);
+    return { sessionsProcessed: 3 };
+  }
+);
 assert.equal(apiResult.statusCode, 200);
 assert.deepEqual(apiResult.payload.range, { roomId: 123, startTime: 100, endTime: 200 });
 assert.equal(apiResult.payload.success, true);
+assert.deepEqual(apiCalls, [{
+  roomId: 123,
+  startTime: 100,
+  endTime: 200,
+  recentLimit: null,
+  force: true
+}]);
+
+const apiErrorResult = await invokeOrganizeRoute(
+  { roomId: 123, startTime: 100, endTime: 200 },
+  async () => {
+    throw new Error('organizer failed');
+  }
+);
+assert.equal(apiErrorResult.statusCode, 500);
+assert.deepEqual(apiErrorResult.payload, { success: false, message: 'Failed to organize history' });
 
 const missingRangeResult = await invokeOrganizeRoute({ roomId: 123 });
 assert.equal(missingRangeResult.statusCode, 400);
@@ -216,6 +239,24 @@ try {
   assert.equal(await fs.readFile(outsidePath, 'utf8'), outsideContent);
 } finally {
   await fs.rm(isolationRoot, { recursive: true, force: true });
+}
+
+const lockFailureRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-lock-failure-'));
+try {
+  const failedFile = path.join(lockFailureRoot, 'room-lock', '100', 'danmaku.jsonl');
+  await fs.mkdir(failedFile, { recursive: true });
+  const unhandled = [];
+  const onUnhandledRejection = (reason) => unhandled.push(reason);
+  process.on('unhandledRejection', onUnhandledRejection);
+  try {
+    await saveMessage('room-lock', 100, 'danmaku', { timestamp: 100 }, lockFailureRoot);
+    await new Promise((resolve) => setImmediate(resolve));
+  } finally {
+    process.off('unhandledRejection', onUnhandledRejection);
+  }
+  assert.deepEqual(unhandled, [], 'failed writes must not leave rejected lock cleanup promises');
+} finally {
+  await fs.rm(lockFailureRoot, { recursive: true, force: true });
 }
 
 console.log('history organize tests passed');
