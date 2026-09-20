@@ -78,7 +78,7 @@ const decodeGiftInfo = (buffer) => {
   for (const [fieldNumber, rawValue] of fields) {
     const key = fieldNumber === 1 ? 'img_basic' : fieldNumber === 2 ? 'webp' : `field_${fieldNumber}`;
     const values = Array.isArray(rawValue) ? rawValue : [rawValue];
-    const decodedValues = values.map(value => Buffer.isBuffer(value) ? value.toString('utf8') : value);
+    const decodedValues = values.map(value => Buffer.isBuffer(value) && (key === 'img_basic' || key === 'webp') ? value.toString('utf8') : value);
     giftInfo[key] = decodedValues.length === 1 ? decodedValues[0] : decodedValues;
   }
   return giftInfo;
