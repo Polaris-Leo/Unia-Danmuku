@@ -528,9 +528,12 @@ export async function organizeHistory(options = {}) {
         if (files) await moveStrayData(roomId, ordered[index - 1], sessionId, historyDir, [...files]);
       }
       if (index < ordered.length - 1) {
-        const files = new Set(changedFiles.get(sessionId));
-        for (const file of migrationFiles.get(ordered[index - 1]) || []) files.add(file);
-        if (files.size) await moveStrayData(roomId, sessionId, ordered[index + 1], historyDir, [...files]);
+        const files = new Set(changedFiles.get(sessionId));
+
+        for (const file of migrationFiles.get(ordered[index - 1]) || []) files.add(file);
+
+        if (files.size) await moveStrayData(roomId, sessionId, ordered[index + 1], historyDir, [...files]);
+
       }
       const filesToSort = new Set(changedFiles.get(sessionId));
       for (const file of migrationFiles.get(sessionId) || []) filesToSort.add(file);
@@ -544,7 +547,7 @@ export async function organizeHistory(options = {}) {
     for (const sessionId of processedSessions) {
       const sessionDir = path.join(roomDir, String(sessionId));
       for (const entry of (fs.existsSync(sessionDir) ? await fs.promises.readdir(sessionDir, { withFileTypes: true }) : [])) {
-        if (entry.isFile() && entry.name.endsWith('.jsonl')) maxDataMtimeMs = Math.max(maxDataMtimeMs, (await fs.promises.stat(path.join(sessionDir, entry.name))).mtimeMs);
+    if (!hasExplicitRange) await atomicWriteFile(markerPath, JSON.stringify({ maxDataMtimeMs }) + '\n');
       }
     }
     await fs.promises.writeFile(markerPath, JSON.stringify({ maxDataMtimeMs }) + '\n');
