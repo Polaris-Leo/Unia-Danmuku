@@ -31,8 +31,8 @@ async function withFileLocks(filePaths, operation) {
 
 async function atomicWriteFile(filePath, content) {
   const tempPath = `${filePath}.${process.pid}.${Date.now()}.${Math.random().toString(16).slice(2)}.tmp`;
-  await fs.promises.writeFile(tempPath, content, 'utf8');
   try {
+    await fs.promises.writeFile(tempPath, content, 'utf8');
     await fs.promises.rename(tempPath, filePath);
   } catch (error) {
     await fs.promises.rm(tempPath, { force: true }).catch(() => {});
