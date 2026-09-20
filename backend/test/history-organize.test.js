@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
 
-import { organizeHistory, validateHistoryOrganizeRequest } from '../src/utils/historyStorage.js';
+import { organizeHistory, saveMessage, validateHistoryOrganizeRequest } from '../src/utils/historyStorage.js';
 import historyRouter from '../src/routes/history.js';
 
 const makeSession = async (root, roomId, sessionId, timestamp = sessionId) => {
@@ -112,7 +112,9 @@ for (const body of [
 const routeStack = historyRouter.stack.find((layer) => layer.route?.path === '/organize' && layer.route.methods.post);
 assert.ok(routeStack, 'POST /organize route should exist');
 
-const invokeOrganizeRoute = async (body) => {
+const invokeOrganizeRoute = async (body, organizer = organizeHistory) => {
+  const previousOrganizer = historyRouter.organizeHistory;
+  historyRouter.organizeHistory = organizer;
   let statusCode = 200;
   let payload;
   const response = {
@@ -125,7 +127,11 @@ const invokeOrganizeRoute = async (body) => {
       return response;
     }
   };
-  await routeStack.route.stack[0].handle({ body }, response);
+  try {
+    await routeStack.route.stack[0].handle({ body }, response);
+  } finally {
+    historyRouter.organizeHistory = previousOrganizer;
+  }
   return { statusCode, payload };
 };
 
@@ -158,6 +164,58 @@ try {
   assert.equal(rangeStats.sessionsProcessed, 2);
 } finally {
   await fs.rm(rangeRoot, { recursive: true, force: true });
+}
+
+const concurrencyRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-organize-concurrency-'));
+try {
+  await makeSession(concurrencyRoot, 'room-concurrent', 100, 100);
+  await makeSession(concurrencyRoot, 'room-concurrent', 200, 200);
+  await organizeHistory({ historyDir: concurrencyRoot, recentLimit: 2, force: true });
+  const appendPromise = saveMessage('room-concurrent', 200, 'danmaku', { timestamp: 250, content: 'arrived during organize' }, concurrencyRoot);
+  const organizePromise = organizeHistory({ historyDir: concurrencyRoot, recentLimit: 2, force: true });
+  await Promise.all([appendPromise, organizePromise]);
+  const concurrentLines = (await fs.readFile(path.join(concurrencyRoot, 'room-concurrent', '200', 'danmaku.jsonl'), 'utf8')).split('\n').filter(Boolean).map(JSON.parse);
+  assert.equal(concurrentLines.some((item) => item.content === 'arrived during organize'), true);
+} finally {
+  await fs.rm(concurrencyRoot, { recursive: true, force: true });
+}
+
+const fileGranularityRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-organize-files-'));
+try {
+  await makeSession(fileGranularityRoot, 'room-files', 100, 100);
+  const sessionDir = path.join(fileGranularityRoot, 'room-files', '100');
+  for (const type of ['gift', 'guard', 'metrics']) {
+    await fs.writeFile(path.join(sessionDir, `${type}.jsonl`), `${JSON.stringify({ ts: 100 })}\n`);
+  }
+  await organizeHistory({ historyDir: fileGranularityRoot, recentLimit: 1, force: true });
+  const untouchedStats = await Promise.all(['danmaku', 'guard', 'metrics'].map(async (type) => [type, (await fs.stat(path.join(sessionDir, `${type}.jsonl`))).mtimeMs]));
+  await fs.appendFile(path.join(sessionDir, 'gift.jsonl'), `${JSON.stringify({ ts: 90 })}\n`);
+  const before = new Map(untouchedStats);
+  await organizeHistory({ historyDir: fileGranularityRoot, recentLimit: 1, force: false });
+  for (const [type, mtime] of before) assert.equal((await fs.stat(path.join(sessionDir, `${type}.jsonl`))).mtimeMs, mtime);
+} finally {
+  await fs.rm(fileGranularityRoot, { recursive: true, force: true });
+}
+
+const isolationRoot = await fs.mkdtemp(path.join(os.tmpdir(), 'history-organize-isolation-'));
+try {
+  await makeSession(isolationRoot, '9', 100);
+  await makeSession(isolationRoot, '8', 100);
+  await makeSession(isolationRoot, '9', 300);
+  await makeSession(isolationRoot, '9', 400);
+  const outsidePath = path.join(isolationRoot, '8', '100', 'danmaku.jsonl');
+  const outsideContent = await fs.readFile(outsidePath, 'utf8');
+  await organizeHistory({ historyDir: isolationRoot, roomId: '9', startTime: 300, endTime: 300, recentLimit: null, force: true });
+  assert.equal(await fs.readFile(outsidePath, 'utf8'), outsideContent);
+  const routeResult = await invokeOrganizeRoute(
+    { roomId: '9', startTime: 300, endTime: 300 },
+    (options) => organizeHistory({ ...options, historyDir: isolationRoot })
+  );
+  assert.equal(routeResult.statusCode, 200);
+  assert.deepEqual(routeResult.payload.range, { roomId: 9, startTime: 300, endTime: 300 });
+  assert.equal(await fs.readFile(outsidePath, 'utf8'), outsideContent);
+} finally {
+  await fs.rm(isolationRoot, { recursive: true, force: true });
 }
 
 console.log('history organize tests passed');

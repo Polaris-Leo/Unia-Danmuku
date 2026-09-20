@@ -10,7 +10,7 @@ router.post('/organize', async (req, res) => {
       return res.status(400).json({ success: false, message: validation.message });
     }
 
-    const stats = await organizeHistory({
+    const stats = await router.organizeHistory({
       roomId: validation.roomId,
       startTime: validation.startTime,
       endTime: validation.endTime,
@@ -84,5 +84,7 @@ router.get('/:roomId/:sessionId', async (req, res) => {
     res.status(404).json({ success: false, message: 'History not found' });
   }
 });
+
+router.organizeHistory = organizeHistory;
 
 export default router;
