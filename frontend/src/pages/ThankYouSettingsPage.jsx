@@ -396,7 +396,7 @@ const ThankYouSettingsPage = () => {
     
     const link = `${window.location.origin}/thankyou?room=${roomId}`;
     navigator.clipboard.writeText(link).then(() => {
-      alert('答谢姬链接已复制到剪贴板！\n请在OBS中添加浏览器源，粘贴此链接。\n如页面提示启用声音，请右键浏览器源 → 交互，点击“启用并试听声音”。');
+      alert('答谢姬链接已复制到剪贴板！\n请在OBS中添加浏览器源，粘贴此链接。');
     });
   };
 
