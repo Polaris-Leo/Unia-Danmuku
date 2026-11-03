@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import axios from 'axios';
+import { createThankYouAudioPlayer } from '../services/thankYouAudio';
 import './ThankYouPage.css';
 
 const ThankYouPage = () => {
@@ -11,6 +12,7 @@ const ThankYouPage = () => {
   const [isExiting, setIsExiting] = useState(false);
   const [ws, setWs] = useState(null);
   const audioRef = useRef(null);
+  const [audioStatus, setAudioStatus] = useState('idle');
   const processingRef = useRef(false);
   const configRef = useRef(null);
   const [config, setConfig] = useState({
@@ -71,14 +73,21 @@ const ThankYouPage = () => {
 
   // Initialize Audio
   useEffect(() => {
-    if (config.audioUrl) {
-      audioRef.current = new Audio(config.audioUrl);
-      // Preload audio to ensure it's ready
-      audioRef.current.load();
-    } else {
+    setAudioStatus('idle');
+    if (!config.audioEnabled || !config.audioUrl) return;
+    const audio = new Audio(config.audioUrl);
+    audio.preload = 'auto';
+    const player = createThankYouAudioPlayer(audio, (status, error) => {
+      setAudioStatus(status);
+      if (status === 'error') console.error('Thank-you audio playback failed:', error);
+    });
+    audioRef.current = player;
+    audio.load();
+    return () => {
       audioRef.current = null;
-    }
-  }, [config.audioUrl]);
+      player.dispose();
+    };
+  }, [config.audioEnabled, config.audioUrl]);
 
   useEffect(() => {
     configRef.current = config;
@@ -100,21 +109,6 @@ const ThankYouPage = () => {
       processQueue();
     }
   }, [queue]);
-
-  // Add a click handler to unlock audio context if needed (for browser testing)
-  useEffect(() => {
-    const unlockAudio = () => {
-      if (audioRef.current) {
-        audioRef.current.play().then(() => {
-          audioRef.current.pause();
-          audioRef.current.currentTime = 0;
-        }).catch(() => {});
-      }
-      document.removeEventListener('click', unlockAudio);
-    };
-    document.addEventListener('click', unlockAudio);
-    return () => document.removeEventListener('click', unlockAudio);
-  }, []);
 
   const connectWebSocket = () => {
     if (!roomId) return;
@@ -230,17 +224,7 @@ const ThankYouPage = () => {
     
     // Play audio
     if (config.audioEnabled && audioRef.current) {
-      try {
-        audioRef.current.currentTime = 0;
-        const playPromise = audioRef.current.play();
-        if (playPromise !== undefined) {
-          playPromise.catch(e => {
-            console.error('Audio play failed (likely autoplay policy):', e);
-          });
-        }
-      } catch (e) {
-        console.error('Audio play failed', e);
-      }
+      void audioRef.current.play();
     }
 
     const stayDuration = (config.stayDuration || 5) * 1000;
@@ -357,13 +341,28 @@ const ThankYouPage = () => {
     });
   };
 
-  if (!currentGift) return <div className="thank-you-container empty"></div>;
+  const audioPrompt = config.audioEnabled && config.audioUrl && audioStatus !== 'ready' ? (
+    <div className="thank-you-audio-prompt" role="status">
+      <p>{audioStatus === 'error'
+        ? '音频播放失败，请检查音频链接或文件格式后重试。'
+        : audioStatus === 'blocked'
+          ? '浏览器已拦截有声自动播放，请点击下方按钮启用声音。'
+          : '首次使用请点击下方按钮，启用并试听答谢声音。'}</p>
+      <button type="button" onClick={() => { void audioRef.current?.play(true); }}>
+        {audioStatus === 'error' ? '重试播放' : '启用并试听声音'}
+      </button>
+      <p>OBS 用户：右键浏览器源 → 交互，在打开的窗口中点击此按钮。</p>
+    </div>
+  ) : null;
+
+  if (!currentGift) return <div className="thank-you-container empty">{audioPrompt}</div>;
 
   // Use configured background image as main image if available, otherwise fallback to user avatar
   const mainImage = config.backgroundImg || currentGift.user.face;
 
   return (
     <div className="thank-you-container">
+      {audioPrompt}
       <div 
         className={`thank-you-card ${isExiting ? 'animate-out' : 'animate-in'}`} 
         style={{

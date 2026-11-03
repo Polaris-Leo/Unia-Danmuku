@@ -135,3 +135,36 @@
     transform: translateY(-10px);
   }
 }
+.thank-you-audio-prompt {
+  position: fixed;
+  top: 16px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  width: min(440px, calc(100vw - 32px));
+  box-sizing: border-box;
+  padding: 16px;
+  border-radius: 12px;
+  background: rgba(24, 24, 32, 0.94);
+  color: #fff;
+  font: 14px/1.6 'Microsoft YaHei', sans-serif;
+  text-align: center;
+}
+
+.thank-you-audio-prompt p {
+  margin: 0 0 12px;
+}
+
+.thank-you-audio-prompt p:last-child {
+  margin: 12px 0 0;
+}
+
+.thank-you-audio-prompt button {
+  padding: 8px 16px;
+  border: 0;
+  border-radius: 6px;
+  background: #ff6699;
+  color: #111;
+  font: inherit;
+  cursor: pointer;
+}
