@@ -68,12 +68,13 @@ const ObsSettingsPage = () => {
 
   // 模板选项
   const templateOptions = [
-    { value: 'default', label: '默认模板 (全屏)' },
-    { value: '1', label: '模板1 (右上角缩小版)' },
+    { value: 'default', label: '主样式' },
+    { value: '1', label: '缩小版（独立设置）' },
   ];
 
   const [settings, setSettings] = useState(defaultSettings);
   const [currentTemplate, setCurrentTemplate] = useState('default');
+  const [settingsLoading, setSettingsLoading] = useState(true);
   const [roomId, setRoomId] = useState('21514463');
   const [blcInput, setBlcInput] = useState('');
   const [availableFonts, setAvailableFonts] = useState([
@@ -145,10 +146,14 @@ const ObsSettingsPage = () => {
 
   // 加载保存的设置
   useEffect(() => {
+    let cancelled = false;
+    setSettingsLoading(true);
+    setSettings(defaultSettings);
     // 优先从后端加载设置
     fetch(`/api/obs/settings?template=${currentTemplate}`)
       .then(res => res.json())
       .then(data => {
+        if (cancelled) return;
         if (data.success && data.settings && Object.keys(data.settings).length > 0) {
           console.log('✅ 从后端加载设置:', data.settings, `模板: ${data.template}`);
           setSettings({ ...defaultSettings, ...data.settings });
@@ -160,12 +165,17 @@ const ObsSettingsPage = () => {
         }
       })
       .catch(err => {
+        if (cancelled) return;
         console.error('Failed to fetch settings from backend:', err);
         loadFromLocalStorage();
+      })
+      .finally(() => {
+        if (!cancelled) setSettingsLoading(false);
       });
 
     const loadFromLocalStorage = () => {
-      const saved = localStorage.getItem(`obsSettings_${currentTemplate}`);
+      const saved = localStorage.getItem(`obsSettings_${currentTemplate}`)
+        || (currentTemplate === 'default' ? localStorage.getItem('obsSettings') : null);
       if (saved) {
         try {
           const parsed = JSON.parse(saved);
@@ -208,6 +218,7 @@ const ObsSettingsPage = () => {
     if (savedRoom) {
       setRoomId(savedRoom);
     }
+    return () => { cancelled = true; };
   }, [currentTemplate]);
 
   // 保存设置
@@ -238,9 +249,10 @@ const ObsSettingsPage = () => {
 
   // 重置设置
   const resetSettings = () => {
-    if (confirm('确定要重置所有设置吗？')) {
+    if (confirm('确定要重置当前模板的设置吗？保存后同步到 OBS。')) {
       setSettings(defaultSettings);
-      localStorage.removeItem('obsSettings');
+      localStorage.removeItem(`obsSettings_${currentTemplate}`);
+      if (currentTemplate === 'default') localStorage.removeItem('obsSettings');
     }
   };
 
@@ -572,7 +584,7 @@ const ObsSettingsPage = () => {
                   <option key={opt.value} value={opt.value}>{opt.label}</option>
                 ))}
               </select>
-              <span className="hint">切换模板以设置不同的OBS弹幕样式（如右上角缩小版）</span>
+              <span className="hint">两套样式的字号、行间距等设置分别保存。缩小版的位置和缩放请在 OBS 中调整到右上角。</span>
             </div>
           </div>
 
@@ -1550,10 +1562,10 @@ const ObsSettingsPage = () => {
 
           {/* 操作按钮 */}
           <div className="action-buttons">
-            <button onClick={saveSettings} className="btn-primary">保存设置</button>
-            <button onClick={preview} className="btn-success">预览效果</button>
+            <button onClick={saveSettings} disabled={settingsLoading} className="btn-primary">保存设置</button>
+            <button onClick={preview} disabled={settingsLoading} className="btn-success">预览效果</button>
             <button onClick={handleCopyOBSLink} className="btn-info">复制OBS链接</button>
-            <button onClick={resetSettings} className="btn-warning">重置设置</button>
+            <button onClick={resetSettings} disabled={settingsLoading} className="btn-warning">重置设置</button>
             <button onClick={goBack} className="btn-secondary">返回主页</button>
           </div>
 

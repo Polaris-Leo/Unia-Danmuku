@@ -66,13 +66,17 @@ const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) =>
 };
 
 const ObsDanmakuPage = () => {
+  // 模板只决定读取哪套设置；浏览器源的位置和缩放由 OBS 控制。
+  const params = new URLSearchParams(window.location.search);
+  const templateId = params.get('template') || 'default';
   const [messages, setMessages] = useState([]);
   const [connected, setConnected] = useState(false);
   const [error, setError] = useState(null);
   
   // 立即同步加载样式设置，避免第一条消息显示异常
   const [customStyles, setCustomStyles] = useState(() => {
-    const saved = localStorage.getItem('obsSettings');
+    const saved = localStorage.getItem(`obsSettings_${templateId}`)
+      || (templateId === 'default' ? localStorage.getItem('obsSettings') : null);
     console.log('🔍 OBS页面加载设置:', saved);
     if (saved) {
       try {
@@ -92,11 +96,6 @@ const ObsDanmakuPage = () => {
   const wsRef = useRef(null);
   const isClosingRef = useRef(false);
 
-  // 检测是否开启测试模式（URL包含 ?test=true）和模板选择（URL包含 ?template=1）
-  const params = new URLSearchParams(window.location.search);
-  const testMode = params.get('test') === 'true';
-  const templateId = params.get('template') || 'default';
-  
   // 从后端加载配置 (用于OBS浏览器源，无法访问localStorage的情况)
   useEffect(() => {
     const loadConfig = async () => {
@@ -602,7 +601,7 @@ const ObsDanmakuPage = () => {
 
   return (
     // 简洁样式
-    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''} ${templateId !== 'default' ? `template-${templateId}` : ''}`}>
+    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''}`}>
       {/* SC倒计时栏 */}
       {activeSCs.length > 0 && (
         <div className="sc-timer-bar">

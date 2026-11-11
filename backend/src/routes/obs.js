@@ -15,15 +15,12 @@ if (!fs.existsSync(DATA_DIR)) {
 // Helper to load config with template support
 const loadConfig = (templateId = 'default') => {
   try {
-    // Load template-specific config if exists
-    const templateFile = path.join(DATA_DIR, `obs-settings-${templateId}.json`);
+    // Each template reads the same independent file that saveConfig writes.
+    const templateFile = templateId === 'default'
+      ? CONFIG_FILE
+      : path.join(DATA_DIR, `obs-settings-${templateId}.json`);
     if (fs.existsSync(templateFile)) {
       return JSON.parse(fs.readFileSync(templateFile, 'utf-8'));
-    }
-
-    // Fallback to main config
-    if (fs.existsSync(CONFIG_FILE)) {
-      return JSON.parse(fs.readFileSync(CONFIG_FILE, 'utf-8'));
     }
   } catch (error) {
     console.error('Failed to load OBS config:', error);
