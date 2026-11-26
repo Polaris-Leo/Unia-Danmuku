@@ -35,7 +35,7 @@ export default defineConfig({
     rolldownOptions: {
       output: {
         codeSplitting: {
-          groups: [{ name: 'vendor', test: /node_modules/ }]
+          groups: [{ name: 'vendor', test: /node_modules/, tags: ['$initial'] }]
         }
       }
     }
