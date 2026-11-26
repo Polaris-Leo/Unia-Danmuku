@@ -1,0 +1,25 @@
+/* Shared by the source and preview; the legacy shadow mode remains the default. */
+:is(.obs-danmaku-simple, .obs-preview-scale-container).stroke-native :is(.username, .sc-username) {
+  -webkit-text-stroke: var(--username-native-stroke-width) var(--username-stroke-color);
+  paint-order: stroke fill;
+}
+
+:is(.obs-danmaku-simple, .obs-preview-scale-container).stroke-native :is(.danmaku-text, .sc-content, .sc-timer-price) {
+  -webkit-text-stroke: var(--danmaku-native-stroke-width) var(--danmaku-stroke-color);
+  paint-order: stroke fill;
+}
+
+/* Gradients keep their fill on the top layer and outline on the bottom layer. */
+:is(.obs-danmaku-simple, .obs-preview-scale-container).stroke-native .danmaku-wrapper.anchor :is(.username, .danmaku-text) {
+  -webkit-text-stroke: 0;
+}
+
+:is(.obs-danmaku-simple, .obs-preview-scale-container).stroke-native .danmaku-wrapper.anchor .username span::before {
+  -webkit-text-stroke: var(--username-native-stroke-width) var(--username-stroke-color);
+  -webkit-text-fill-color: transparent;
+}
+
+:is(.obs-danmaku-simple, .obs-preview-scale-container).stroke-native .danmaku-wrapper.anchor .text-layer-stroke {
+  -webkit-text-stroke: var(--danmaku-native-stroke-width) var(--danmaku-stroke-color);
+  -webkit-text-fill-color: transparent;
+}

@@ -1,61 +1,25 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import ObsPreview from './ObsPreview';
+import ObsPreviewPanel from './ObsPreviewPanel';
+import ObsNumberSetting from '../components/ObsNumberSetting';
+import ObsStrokeSettings from '../components/ObsStrokeSettings';
+import ObsIcon from '../components/ObsIcon';
+import { defaultObsSettings, normalizeObsSettings } from '../utils/obsSettings';
+import { getPreviewGeometry } from '../utils/obsRendering';
 import './ObsSettingsPage.css';
+
+const editorTabs = [
+  { id: 'basic', label: '基础配置', icon: 'settings', note: '房间与显示样式' },
+  { id: 'text', label: '文字排版', icon: 'text', note: '字体、颜色与行高' },
+  { id: 'effects', label: '描边与质感', icon: 'effects', note: '轮廓、柔光与投影' },
+  { id: 'layout', label: '布局与气泡', icon: 'layout', note: '间距、头像与背景' },
+  { id: 'tools', label: '导入与测试', icon: 'tools', note: '字体导入与调试' },
+];
 
 const ObsSettingsPage = () => {
   const navigate = useNavigate();
   
-  // 默认设置
-  const defaultSettings = {
-    style: 'default',
-    usernameFontFamily: 'Microsoft YaHei',
-    usernameFontSize: 2.2, // vh
-    usernameFontWeight: 'bold',
-    usernameColor: '#333333',
-    usernameColorGuard1: '#ff1a75', // 总督
-    usernameColorGuard2: '#9b39f4', // 提督
-    usernameColorGuard3: '#1fa3f1', // 舰长
-    usernameColorAnchorStart: '#ff0000', // 主播渐变起始
-    usernameColorAnchorEnd: '#ff0000', // 主播渐变结束
-    usernameStrokeWidth: 0.2, // vh
-    usernameStrokeColor: '#ffffff',
-    usernameEnhancedStroke: true, // 启用增强描边
-    usernameGlowIntensity: 0.7, // vh
-    usernameShadowIntensity: 0.5, // vh
-    usernameFontFamilyFallback: '', // 用户名备用字体
-    usernameFontFamilyFallback2: '', // 用户名备用字体2
-    usernameFontWeightFallback: 'normal', // 用户名备用字体粗细
-    usernameLang: 'zh-CN', // 用户名语言变体
-    danmakuFontFamily: 'Microsoft YaHei',
-    danmakuFontSize: 2.6, // vh
-    danmakuFontWeight: 'normal',
-    danmakuColor: '#333333',
-    danmakuColorAnchorStart: '#ff0000', // 主播弹幕渐变起始
-    danmakuColorAnchorEnd: '#ff0000', // 主播弹幕渐变结束
-    danmakuStrokeWidth: 0.2, // vh
-    danmakuStrokeColor: '#ffffff',
-    danmakuEnhancedStroke: true, // 启用增强描边
-    danmakuGlowIntensity: 0.7, // vh
-    danmakuShadowIntensity: 0.5, // vh
-    danmakuFontFamilyFallback: '', // 弹幕备用字体
-    danmakuFontFamilyFallback2: '', // 弹幕备用字体2
-    danmakuFontWeightFallback: 'normal', // 弹幕备用字体粗细
-    danmakuLang: 'zh-CN', // 弹幕语言变体
-    danmakuLineHeight: 1.5, // 弹幕行间距
-    usernameContentSpacing: 0.37, // 用户名和弹幕内容间距 vh
-    avatarSize: 6.0, // vh
-    itemSpacing: 1.1, // vh
-    emotSize: 3.3, // vh
-    bubblePaddingX: 3.7, // vh, 气泡左右内边距
-    // 气泡渐变色设置
-    danmakuBubbleBgStart: '#ffa8d7',
-    danmakuBubbleBgEnd: '#ffa8d7',
-    danmakuBubbleBgStartTransparent: true,
-    scBubbleBgStart: '#c3a4f5',
-    scBubbleBgEnd: '#c3a4f5',
-    scBubbleBgStartTransparent: true,
-  };
+  const defaultSettings = defaultObsSettings;
 
   const languageOptions = [
     { value: 'zh-CN', label: '简体中文 (zh-CN)' },
@@ -74,6 +38,19 @@ const ObsSettingsPage = () => {
 
   const [settings, setSettings] = useState(defaultSettings);
   const [currentTemplate, setCurrentTemplate] = useState('default');
+  const [activeTab, setActiveTab] = useState('effects');
+  const [savedSignature, setSavedSignature] = useState(JSON.stringify(defaultSettings));
+  const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState('');
+  const [feedbackKind, setFeedbackKind] = useState('success');
+  const activeEditor = editorTabs.find(tab => tab.id === activeTab);
+  const dirty = JSON.stringify(settings) !== savedSignature;
+  useEffect(() => {
+    if (!feedback) return;
+    const timer = setTimeout(() => setFeedback(''), 4500);
+    return () => clearTimeout(timer);
+  }, [feedback]);
+  const previewGeometry = getPreviewGeometry(settings, currentTemplate);
   const [settingsLoading, setSettingsLoading] = useState(true);
   const [roomId, setRoomId] = useState('21514463');
   const [blcInput, setBlcInput] = useState('');
@@ -89,12 +66,12 @@ const ObsSettingsPage = () => {
 
   // 折叠状态管理
   const [expandedSections, setExpandedSections] = useState({
-    username: false,
-    danmaku: false,
-    bubbles: false,
-    import: false,
-    test: false,
-    layout: false
+    username: true,
+    danmaku: true,
+    bubbles: true,
+    import: true,
+    test: true,
+    layout: true
   });
 
   const toggleSection = (section) => {
@@ -149,6 +126,7 @@ const ObsSettingsPage = () => {
     let cancelled = false;
     setSettingsLoading(true);
     setSettings(defaultSettings);
+    setSavedSignature(JSON.stringify(defaultSettings));
     // 优先从后端加载设置
     fetch(`/api/obs/settings?template=${currentTemplate}`)
       .then(res => res.json())
@@ -156,7 +134,9 @@ const ObsSettingsPage = () => {
         if (cancelled) return;
         if (data.success && data.settings && Object.keys(data.settings).length > 0) {
           console.log('✅ 从后端加载设置:', data.settings, `模板: ${data.template}`);
-          setSettings({ ...defaultSettings, ...data.settings });
+          const loaded = normalizeObsSettings(data.settings);
+          setSettings(loaded);
+          setSavedSignature(JSON.stringify(loaded));
           // 同时更新localStorage作为备份（带模板ID）
           localStorage.setItem(`obsSettings_${currentTemplate}`, JSON.stringify(data.settings));
         } else {
@@ -178,36 +158,9 @@ const ObsSettingsPage = () => {
         || (currentTemplate === 'default' ? localStorage.getItem('obsSettings') : null);
       if (saved) {
         try {
-          const parsed = JSON.parse(saved);
-
-          // 自动迁移：检测是否为旧的像素值（如果字号大于10，通常意味着是像素值）
-          // 将其转换为 vh (基于 1080p: 1vh = 10.8px)
-          if (parsed.usernameFontSize && parsed.usernameFontSize > 10) {
-            console.log('🔄 检测到旧版像素设置，正在迁移到相对单位(vh)...');
-            const toVhVal = (val) => {
-              const num = parseFloat(val);
-              return isNaN(num) ? 0 : parseFloat((num / 10.8).toFixed(2));
-            };
-
-            parsed.usernameFontSize = toVhVal(parsed.usernameFontSize);
-            parsed.usernameStrokeWidth = toVhVal(parsed.usernameStrokeWidth);
-            parsed.usernameGlowIntensity = toVhVal(parsed.usernameGlowIntensity);
-            parsed.usernameShadowIntensity = toVhVal(parsed.usernameShadowIntensity);
-
-            parsed.danmakuFontSize = toVhVal(parsed.danmakuFontSize);
-            parsed.danmakuStrokeWidth = toVhVal(parsed.danmakuStrokeWidth);
-            parsed.danmakuGlowIntensity = toVhVal(parsed.danmakuGlowIntensity);
-            parsed.danmakuShadowIntensity = toVhVal(parsed.danmakuShadowIntensity);
-
-            parsed.avatarSize = toVhVal(parsed.avatarSize);
-            parsed.itemSpacing = toVhVal(parsed.itemSpacing);
-            parsed.emotSize = toVhVal(parsed.emotSize);
-
-            console.log('✅ 迁移完成:', parsed);
-          }
-
-          // 合并默认设置，确保新添加的设置项（如emotSize）有默认值
-          setSettings({ ...defaultSettings, ...parsed });
+          const loaded = normalizeObsSettings(JSON.parse(saved));
+          setSettings(loaded);
+          setSavedSignature(JSON.stringify(loaded));
         } catch (e) {
           console.error('Failed to parse settings', e);
         }
@@ -223,6 +176,8 @@ const ObsSettingsPage = () => {
 
   // 保存设置
   const saveSettings = async () => {
+    if (saving || settingsLoading) return;
+    setSaving(true);
     // 保存到 localStorage（带模板ID）
     localStorage.setItem(`obsSettings_${currentTemplate}`, JSON.stringify(settings));
     localStorage.setItem('obsRoomId', roomId);
@@ -237,13 +192,19 @@ const ObsSettingsPage = () => {
       const data = await res.json();
       if (data.success) {
         const templateName = currentTemplate === 'default' ? '默认模板' : `模板${currentTemplate}`;
-        alert(`${templateName}设置已保存！(已同步到OBS)`);
+        setSavedSignature(JSON.stringify(settings));
+        setFeedbackKind('success');
+        setFeedback(`${templateName}已保存，OBS 将自动读取新样式`);
       } else {
-        alert('保存到后端失败: ' + data.message);
+        setFeedbackKind('error');
+        setFeedback('保存失败：' + data.message);
       }
     } catch (err) {
       console.error('Failed to save settings to backend:', err);
-      alert('保存到后端失败，但本地已保存');
+      setFeedbackKind('error');
+      setFeedback('后端暂不可用，配置已保存在此浏览器');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -413,7 +374,8 @@ const ObsSettingsPage = () => {
     const obsLink = `${window.location.origin}/obs?room=${roomId}${templateParam}`;
     const templateName = currentTemplate === 'default' ? '默认模板' : `模板${currentTemplate}`;
     navigator.clipboard.writeText(obsLink).then(() => {
-      alert(`${templateName}OBS链接已复制！\n请在OBS中添加浏览器源，并粘贴此链接。`);
+      setFeedbackKind('success');
+      setFeedback(`${templateName}链接已复制，可粘贴到 OBS 浏览器源`);
     }).catch(() => {
       alert('复制失败，请手动复制：\n' + obsLink);
     });
@@ -545,13 +507,23 @@ const ObsSettingsPage = () => {
 
   return (
     <div className="obs-settings-page">
+      <aside className="studio-sidebar">
+        <button className="studio-brand" onClick={goBack} aria-label="Unia 返回主页"><span className="brand-mark"><ObsIcon name="effects" size={23} /></span><span>Unia<span className="brand-subtitle">LIVE STUDIO</span></span></button>
+        <div className="sidebar-label">创作空间</div>
+        <nav className="studio-nav" aria-label="样式设置分类">{editorTabs.map(tab => <button key={tab.id} type="button" className={activeTab === tab.id ? 'active' : ''} aria-label={tab.label} title={tab.label} aria-current={activeTab === tab.id ? 'page' : undefined} onClick={() => setActiveTab(tab.id)}><ObsIcon name={tab.icon} /><span>{tab.label}</span>{activeTab === tab.id && <span className="nav-active-dot" />}</button>)}</nav>
+        <div className="sidebar-bottom"><div className="sidebar-tip"><ObsIcon name="screen" size={23} /><strong>为你的直播，添一点个性。</strong><p>每一处细节，都在这里慢慢调好。</p></div><button className="back-home" onClick={goBack}><ObsIcon name="arrow" size={16} />返回主页</button></div>
+      </aside>
+      <main className="studio-main">
+      <header className="studio-header"><div><div className="studio-breadcrumb">直播工具<span>/</span>弹幕样式</div><h1>弹幕样式工作台<span className="studio-version">OBS</span></h1><p>一点灵感，让直播间的每句话都有自己的样子。</p></div><div className="studio-header-actions"><span className={`save-status ${dirty ? 'is-dirty' : ''}`}><span className="status-dot" />{settingsLoading ? '正在读取' : dirty ? '有未保存的修改' : '配置已加载'}</span><button className="studio-button secondary" onClick={handleCopyOBSLink}><ObsIcon name="link" size={16} />复制 OBS 链接</button><button className="studio-button primary" onClick={saveSettings} disabled={settingsLoading || saving}><ObsIcon name="check" size={17} />{saving ? '保存中…' : '保存设置'}</button></div></header>
+      <div className="studio-template-bar"><div className="template-tabs" role="group" aria-label="编辑模板">{templateOptions.map(option => <button key={option.value} type="button" aria-pressed={currentTemplate === option.value} onClick={() => setCurrentTemplate(option.value)} disabled={saving}><ObsIcon name="screen" size={16} />{option.value === 'default' ? '主样式' : '缩小版'}{option.value === '1' && <span>独立</span>}</button>)}</div><p><span className="template-indicator" />正在编辑 · {currentTemplate === 'default' ? '主样式' : '缩小版'}<span className="template-separator">/</span>独立保存与同步</p></div>
       <div className="obs-settings-layout">
-        {/* 左侧：设置面板 */}
         <div className="settings-container">
-          <h1>OBS 弹幕样式设置</h1>
+          <div className="editor-panel-header"><span className="editor-panel-icon"><ObsIcon name={activeEditor.icon} /></span><div><h2>{activeEditor.label}</h2><p>{activeEditor.note}</p></div><span className="editor-step">{String(editorTabs.findIndex(tab => tab.id === activeTab) + 1).padStart(2, '0')}</span></div>
+          <fieldset className="editor-fieldset" disabled={settingsLoading || saving}>
+          <div hidden={activeTab !== 'effects'}><ObsStrokeSettings key={currentTemplate} settings={settings} onChange={patch => setSettings(previous => ({ ...previous, ...patch }))} displayHeight={previewGeometry.displayHeight} templateId={currentTemplate} /></div>
 
           {/* 房间号设置 */}
-          <div className="setting-section">
+          <div className="setting-section" hidden={activeTab !== 'basic'}>
             <h2>基本设置</h2>
             <div className="setting-item">
               <label>房间号：</label>
@@ -574,26 +546,12 @@ const ObsSettingsPage = () => {
               </select>
             </div>
 
-            <div className="setting-item">
-              <label>选择模板：</label>
-              <select
-                value={currentTemplate}
-                onChange={(e) => setCurrentTemplate(e.target.value)}
-              >
-                {templateOptions.map((opt) => (
-                  <option key={opt.value} value={opt.value}>{opt.label}</option>
-                ))}
-              </select>
-              <span className="hint">两套样式的字号、行间距等设置分别保存。缩小版的位置和缩放请在 OBS 中调整到右上角。</span>
-            </div>
+            <div className="connection-note"><span className="status-dot" />两套模板分别保存，位置与缩放在 OBS 中调整。</div>
           </div>
 
           {/* 用户名样式 */}
-          <div className="setting-section">
-            <h2 onClick={() => toggleSection('username')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              用户名样式
-              <span style={{ fontSize: '0.8em', transform: expandedSections.username ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-            </h2>
+          <div className="setting-section" hidden={activeTab !== 'text'}>
+            <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.username} onClick={() => toggleSection('username')}>用户名样式<ObsIcon name="chevron" size={16} /></button></h2>
             
             <div className={`section-content ${expandedSections.username ? 'expanded' : ''}`}>
             <div className="setting-item">
@@ -691,33 +649,14 @@ const ObsSettingsPage = () => {
                 ))}
               </select>
               <span className="hint" style={{ display: 'block', width: '100%', marginTop: '5px' }}>
-                （仅对支持多语言的字体有效，如 Resource Han Rounded）
+                仅对支持多语言字形的字体生效
               </span>
             </div>
 
-            <div className="setting-item">
-              <label>字号 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.usernameFontSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, usernameFontSize: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="128"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.usernameFontSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, usernameFontSize: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="128"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="字号" value={settings.usernameFontSize}
+                onChange={value => setSettings({ ...settings, usernameFontSize: value })}
+                min={0} max={12.8} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
             <div className="setting-item">
               <label>粗细：</label>
@@ -829,115 +768,12 @@ const ObsSettingsPage = () => {
               />
             </div>
 
-            <div className="setting-item">
-              <label>描边宽度 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.usernameStrokeWidth * 25)}
-                  onChange={(e) => setSettings({ ...settings, usernameStrokeWidth: parseFloat(e.target.value) / 25 })}
-                  min="0"
-                  max="15"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.usernameStrokeWidth * 25)}
-                  onChange={(e) => setSettings({ ...settings, usernameStrokeWidth: parseFloat(e.target.value) / 25 })}
-                  min="0"
-                  max="15"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
-
-            <div className="setting-item">
-              <label>描边颜色：</label>
-              <input
-                type="color"
-                value={settings.usernameStrokeColor}
-                onChange={(e) => setSettings({ ...settings, usernameStrokeColor: e.target.value })}
-              />
-              <input
-                type="text"
-                value={settings.usernameStrokeColor}
-                onChange={(e) => setSettings({ ...settings, usernameStrokeColor: e.target.value })}
-                placeholder="#ffffff"
-              />
-            </div>
-
-            <div className="setting-item">
-              <label>增强描边效果：</label>
-              <input
-                type="checkbox"
-                checked={settings.usernameEnhancedStroke}
-                onChange={(e) => setSettings({ ...settings, usernameEnhancedStroke: e.target.checked })}
-              />
-              <span className="hint">（启用8方向描边+外发光+阴影）</span>
-            </div>
-
-            {settings.usernameEnhancedStroke && (
-              <>
-                <div className="setting-item">
-                  <label>外发光强度 (vh)：</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                    <input
-                      type="range"
-                      value={Math.round(settings.usernameGlowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, usernameGlowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ flex: 1 }}
-                    />
-                    <input
-                      type="number"
-                      value={Math.round(settings.usernameGlowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, usernameGlowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ width: '100px', flex: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="setting-item">
-                  <label>阴影强度 (vh)：</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                    <input
-                      type="range"
-                      value={Math.round(settings.usernameShadowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, usernameShadowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ flex: 1 }}
-                    />
-                    <input
-                      type="number"
-                      value={Math.round(settings.usernameShadowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, usernameShadowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ width: '100px', flex: 'none' }}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
             </div>
           </div>
 
           {/* 弹幕内容样式 */}
-          <div className="setting-section">
-            <h2 onClick={() => toggleSection('danmaku')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              弹幕内容样式
-              <span style={{ fontSize: '0.8em', transform: expandedSections.danmaku ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-            </h2>
+          <div className="setting-section" hidden={activeTab !== 'text'}>
+            <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.danmaku} onClick={() => toggleSection('danmaku')}>弹幕内容样式<ObsIcon name="chevron" size={16} /></button></h2>
             
             <div className={`section-content ${expandedSections.danmaku ? 'expanded' : ''}`}>
             <div className="setting-item">
@@ -1023,33 +859,14 @@ const ObsSettingsPage = () => {
                 ))}
               </select>
               <span className="hint" style={{ display: 'block', width: '100%', marginTop: '5px' }}>
-                （仅对支持多语言的字体有效，如 Resource Han Rounded）
+                仅对支持多语言字形的字体生效
               </span>
             </div>
 
-            <div className="setting-item">
-              <label>字号 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.danmakuFontSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, danmakuFontSize: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="128"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.danmakuFontSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, danmakuFontSize: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="128"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="字号" value={settings.danmakuFontSize}
+                onChange={value => setSettings({ ...settings, danmakuFontSize: value })}
+                min={0} max={12.8} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
             <div className="setting-item">
               <label>粗细：</label>
@@ -1116,165 +933,23 @@ const ObsSettingsPage = () => {
               />
             </div>
 
-            <div className="setting-item">
-              <label>描边宽度 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.danmakuStrokeWidth * 25)}
-                  onChange={(e) => setSettings({ ...settings, danmakuStrokeWidth: parseFloat(e.target.value) / 25 })}
-                  min="0"
-                  max="15"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.danmakuStrokeWidth * 25)}
-                  onChange={(e) => setSettings({ ...settings, danmakuStrokeWidth: parseFloat(e.target.value) / 25 })}
-                  min="0"
-                  max="15"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
-
-            <div className="setting-item">
-              <label>描边颜色：</label>
-              <input
-                type="color"
-                value={settings.danmakuStrokeColor}
-                onChange={(e) => setSettings({ ...settings, danmakuStrokeColor: e.target.value })}
-              />
-              <input
-                type="text"
-                value={settings.danmakuStrokeColor}
-                onChange={(e) => setSettings({ ...settings, danmakuStrokeColor: e.target.value })}
-                placeholder="#ffffff"
-              />
-            </div>
-
-            <div className="setting-item">
-              <label>增强描边效果：</label>
-              <input
-                type="checkbox"
-                checked={settings.danmakuEnhancedStroke}
-                onChange={(e) => setSettings({ ...settings, danmakuEnhancedStroke: e.target.checked })}
-              />
-              <span className="hint">（启用8方向描边+外发光+阴影）</span>
-            </div>
-
-            {settings.danmakuEnhancedStroke && (
-              <>
-                <div className="setting-item">
-                  <label>外发光强度 (vh)：</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                    <input
-                      type="range"
-                      value={Math.round(settings.danmakuGlowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, danmakuGlowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ flex: 1 }}
-                    />
-                    <input
-                      type="number"
-                      value={Math.round(settings.danmakuGlowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, danmakuGlowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ width: '100px', flex: 'none' }}
-                    />
-                  </div>
-                </div>
-
-                <div className="setting-item">
-                  <label>阴影强度 (vh)：</label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                    <input
-                      type="range"
-                      value={Math.round(settings.danmakuShadowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, danmakuShadowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ flex: 1 }}
-                    />
-                    <input
-                      type="number"
-                      value={Math.round(settings.danmakuShadowIntensity * 10)}
-                      onChange={(e) => setSettings({ ...settings, danmakuShadowIntensity: parseFloat(e.target.value) / 10 })}
-                      min="0"
-                      max="15"
-                      step="1"
-                      style={{ width: '100px', flex: 'none' }}
-                    />
-                  </div>
-                </div>
-              </>
-            )}
-
-            <div className="setting-item">
-              <label>行间距：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round((settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5) * 10)}
-                  onChange={(e) => setSettings({ ...settings, danmakuLineHeight: parseFloat(e.target.value) / 10 })}
-                  min="5"
-                  max="40"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round((settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5) * 10)}
-                  onChange={(e) => setSettings({ ...settings, danmakuLineHeight: parseFloat(e.target.value) / 10 })}
-                  min="5"
-                  max="40"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="行间距" value={settings.danmakuLineHeight ?? 1.5}
+                onChange={value => setSettings({ ...settings, danmakuLineHeight: value })}
+                min={0.5} max={4} step={0.05} unit=""
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
             </div>
           </div>
 
           {/* 气泡样式 */}
           {settings.style === 'bubbles' && (
-            <div className="setting-section">
-              <h2 onClick={() => toggleSection('bubbles')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                气泡样式
-                <span style={{ fontSize: '0.8em', transform: expandedSections.bubbles ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-              </h2>
+            <div className="setting-section" hidden={activeTab !== 'layout'}>
+              <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.bubbles} onClick={() => toggleSection('bubbles')}>气泡样式<ObsIcon name="chevron" size={16} /></button></h2>
               
               <div className={`section-content ${expandedSections.bubbles ? 'expanded' : ''}`}>
-              <div className="setting-item">
-                <label>气泡左右内边距 (vh)：</label>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                  <input
-                    type="range"
-                    value={Math.round((settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7) * 10)}
-                    onChange={(e) => setSettings({ ...settings, bubblePaddingX: parseFloat(e.target.value) / 10 })}
-                    min="0"
-                    max="100"
-                    step="1"
-                    style={{ flex: 1 }}
-                  />
-                  <input
-                    type="number"
-                    value={Math.round((settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7) * 10)}
-                    onChange={(e) => setSettings({ ...settings, bubblePaddingX: parseFloat(e.target.value) / 10 })}
-                    min="0"
-                    max="100"
-                    step="1"
-                    style={{ width: '100px', flex: 'none' }}
-                  />
-                </div>
-              </div>
+              <ObsNumberSetting label="气泡左右内边距" value={settings.bubblePaddingX ?? 3.7}
+                onChange={value => setSettings({ ...settings, bubblePaddingX: value })}
+                min={0} max={10} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
               <div className="setting-item">
                 <label>普通弹幕气泡渐变：</label>
@@ -1370,11 +1045,8 @@ const ObsSettingsPage = () => {
           )}
 
           {/* BLC 样式导入 */}
-          <div className="setting-section">
-            <h2 onClick={() => toggleSection('import')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              BLC 样式导入 (实验性)
-              <span style={{ fontSize: '0.8em', transform: expandedSections.import ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-            </h2>
+          <div className="setting-section" hidden={activeTab !== 'tools'}>
+            <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.import} onClick={() => toggleSection('import')}>BLC 样式导入<ObsIcon name="chevron" size={16} /></button></h2>
             
             <div className={`section-content ${expandedSections.import ? 'expanded' : ''}`}>
               <div className="setting-item" style={{ display: 'block' }}>
@@ -1419,11 +1091,8 @@ const ObsSettingsPage = () => {
           </div>
 
           {/* 测试工具 */}
-          <div className="setting-section">
-            <h2 onClick={() => toggleSection('test')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              测试工具
-              <span style={{ fontSize: '0.8em', transform: expandedSections.test ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-            </h2>
+          <div className="setting-section" hidden={activeTab !== 'tools'}>
+            <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.test} onClick={() => toggleSection('test')}>测试工具<ObsIcon name="chevron" size={16} /></button></h2>
             <div className={`section-content ${expandedSections.test ? 'expanded' : ''}`}>
             <div className="setting-item">
               <label>功能测试：</label>
@@ -1432,19 +1101,19 @@ const ObsSettingsPage = () => {
                   onClick={handleTestFlow} 
                   className="btn-test-flow"
                 >
-                  <span className="icon">📺</span> 启动综合测试流
+                  <ObsIcon name="screen" /> 启动综合测试流
                 </button>
                 <button 
                   onClick={handleTestSC} 
                   className="btn-test-sc"
                 >
-                  <span className="icon">💰</span> 发送测试SC
+                  <ObsIcon name="effects" /> 发送测试SC
                 </button>
                 <button 
                   onClick={handleTestAnchor} 
                   className="btn-test-anchor"
                 >
-                  <span className="icon">🎤</span> 发送主播消息
+                  <ObsIcon name="text" /> 发送主播消息
                 </button>
               </div>
             </div>
@@ -1452,144 +1121,62 @@ const ObsSettingsPage = () => {
           </div>
 
           {/* 布局设置 */}
-          <div className="setting-section">
-            <h2 onClick={() => toggleSection('layout')} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              布局设置
-              <span style={{ fontSize: '0.8em', transform: expandedSections.layout ? 'rotate(0deg)' : 'rotate(-90deg)', transition: 'transform 0.3s' }}>▼</span>
-            </h2>
+          <div className="setting-section" hidden={activeTab !== 'layout'}>
+            <h2><button type="button" className="section-toggle" aria-expanded={expandedSections.layout} onClick={() => toggleSection('layout')}>布局设置<ObsIcon name="chevron" size={16} /></button></h2>
             
             <div className={`section-content ${expandedSections.layout ? 'expanded' : ''}`}>
             
-            <div className="setting-item">
-              <label>头像大小 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.avatarSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, avatarSize: parseFloat(e.target.value) / 10 })}
-                  min="10"
-                  max="300"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.avatarSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, avatarSize: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="500"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="头像大小" value={settings.avatarSize}
+                onChange={value => setSettings({ ...settings, avatarSize: value })}
+                min={0} max={50} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
-            <div className="setting-item">
-              <label>弹幕间距 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.itemSpacing * 10)}
-                  onChange={(e) => setSettings({ ...settings, itemSpacing: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="50"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.itemSpacing * 10)}
-                  onChange={(e) => setSettings({ ...settings, itemSpacing: parseFloat(e.target.value) / 10 })}
-                  min="0"
-                  max="50"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="弹幕间距" value={settings.itemSpacing}
+                onChange={value => setSettings({ ...settings, itemSpacing: value })}
+                min={0} max={5} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
-            <div className="setting-item">
-              <label>用户名/内容间距 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round((settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37) * 10)}
-                  onChange={(e) => setSettings({ ...settings, usernameContentSpacing: parseFloat(e.target.value) / 10 })}
-                  min="-20"
-                  max="50"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round((settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37) * 10)}
-                  onChange={(e) => setSettings({ ...settings, usernameContentSpacing: parseFloat(e.target.value) / 10 })}
-                  min="-20"
-                  max="50"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="用户名/内容间距" value={settings.usernameContentSpacing ?? 0.37}
+                onChange={value => setSettings({ ...settings, usernameContentSpacing: value })}
+                min={-2} max={5} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
 
 
 
-            <div className="setting-item">
-              <label>表情大小 (vh)：</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1 }}>
-                <input
-                  type="range"
-                  value={Math.round(settings.emotSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, emotSize: parseFloat(e.target.value) / 10 })}
-                  min="10"
-                  max="400"
-                  step="1"
-                  style={{ flex: 1 }}
-                />
-                <input
-                  type="number"
-                  value={Math.round(settings.emotSize * 10)}
-                  onChange={(e) => setSettings({ ...settings, emotSize: parseFloat(e.target.value) / 10 })}
-                  min="10"
-                  max="400"
-                  step="1"
-                  style={{ width: '100px', flex: 'none' }}
-                />
-              </div>
-            </div>
+            <ObsNumberSetting label="表情大小" value={settings.emotSize}
+                onChange={value => setSettings({ ...settings, emotSize: value })}
+                min={0} max={40} step={0.01}
+                displayHeight={previewGeometry.displayHeight} resetKey={currentTemplate} />
             </div>
           </div>
 
-          {/* 操作按钮 */}
-          <div className="action-buttons">
-            <button onClick={saveSettings} disabled={settingsLoading} className="btn-primary">保存设置</button>
-            <button onClick={preview} disabled={settingsLoading} className="btn-success">预览效果</button>
-            <button onClick={handleCopyOBSLink} className="btn-info">复制OBS链接</button>
-            <button onClick={resetSettings} disabled={settingsLoading} className="btn-warning">重置设置</button>
-            <button onClick={goBack} className="btn-secondary">返回主页</button>
-          </div>
+          </fieldset>
+          <footer className="editor-footer"><button className="quiet-button" onClick={resetSettings} disabled={settingsLoading || saving}><ObsIcon name="reset" size={15} />重置当前模板</button><button className="quiet-button" onClick={preview} disabled={settingsLoading || saving}>独立窗口预览<ObsIcon name="play" size={14} /></button></footer>
 
           {/* 使用说明 */}
-          <div className="info-box">
-            <h3>使用说明</h3>
+          <details className="info-box" hidden={activeTab !== 'basic'}><summary>如何接入 OBS<ObsIcon name="chevron" size={15} /></summary>
             <ol>
               <li>设置完成后点击"保存设置"</li>
               <li>点击"复制OBS链接"按钮</li>
               <li>在OBS中添加"浏览器"源</li>
               <li>URL处粘贴刚才复制的链接</li>
-              <li>建议分辨率：1920x1080</li>
+              <li>浏览器源尺寸请与右侧“源宽度 / 源高度”一致；显示尺寸由 OBS 等比缩放</li>
               <li>样式会自动加载，无需手动输入CSS</li>
             </ol>
-          </div>
+          </details>
         </div>
 
         {/* 右侧：预览面板 */}
         <div className="preview-wrapper">
-          <div className="preview-container">
-            <ObsPreview settings={settings} />
-          </div>
+          <fieldset className="preview-fieldset" disabled={settingsLoading || saving}>
+          <ObsPreviewPanel key={currentTemplate} settings={settings} templateId={currentTemplate}
+            onChange={patch => setSettings(previous => ({ ...previous, ...patch }))} />
+          </fieldset>
         </div>
       </div>
+      <div className="studio-bottom-note"><span>UNIA LIVE STUDIO</span><p>样式实时预览 · 保存后同步至 OBS</p><span>MAKE IT YOURS.</span></div>
+      </main>
+      {feedback && <div className={`studio-toast ${feedbackKind}`} role="status"><ObsIcon name={feedbackKind === 'error' ? 'alert' : 'check'} size={18} />{feedback}<button aria-label="关闭提示" onClick={() => setFeedback('')}>×</button></div>}
     </div>
   );
 };

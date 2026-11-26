@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useRef } from 'react';
 import './ObsPreview.css';
 import './ObsPreviewBubbles.css';
+import { createTextEffectVariables } from '../utils/obsRendering';
+import './ObsTextEffects.css';
 
 // Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
 const renderTextWithFallback = (text, type = 'danmaku') => {
@@ -57,28 +59,25 @@ const renderTextWithFallback = (text, type = 'danmaku') => {
   return parts;
 };
 
-const ObsPreview = ({ settings }) => {
-  const containerRef = useRef(null);
-  const [scale, setScale] = useState(1);
+const ObsPreview = ({ settings, geometry, pixelExact = false, background = 'checker' }) => {
+  const wrapperRef = useRef(null);
+  const [fitScale, setFitScale] = useState(1);
+  const { sourceWidth, sourceHeight } = geometry;
+  const scale = pixelExact ? geometry.scale : fitScale;
 
-  // 自动计算缩放比例以适应容器
   useEffect(() => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
     const updateScale = () => {
-      if (containerRef.current) {
-        const parentHeight = containerRef.current.parentElement.clientHeight;
-        const parentWidth = containerRef.current.parentElement.clientWidth;
-        // 目标尺寸 2400x3000
-        // 计算基于宽度的缩放和基于高度的缩放，取较小值以确保完全容纳
-        const scaleX = parentWidth / 2400;
-        const scaleY = parentHeight / 3000;
-        setScale(Math.min(scaleX, scaleY));
+      if (wrapper.clientWidth > 0 && wrapper.clientHeight > 0) {
+        setFitScale(Math.min(wrapper.clientWidth / sourceWidth, wrapper.clientHeight / sourceHeight));
       }
     };
-
     updateScale();
-    window.addEventListener('resize', updateScale);
-    return () => window.removeEventListener('resize', updateScale);
-  }, []);
+    const observer = new ResizeObserver(updateScale);
+    observer.observe(wrapper);
+    return () => observer.disconnect();
+  }, [sourceWidth, sourceHeight]);
 
   // 示例数据
   const sampleMessages = [
@@ -181,53 +180,6 @@ const ObsPreview = ({ settings }) => {
     return `${num}cqh`;
   };
 
-  // 生成平滑描边阴影
-  const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
-    if (!enhanced) {
-      const sw = toUnit(strokeWidth);
-      const swNeg = toUnit(-strokeWidth);
-      const si = toUnit(shadowIntensity);
-      return `
-        ${sw} 0 0 ${strokeColor},
-        ${swNeg} 0 0 ${strokeColor},
-        0 ${sw} 0 ${strokeColor},
-        0 ${swNeg} 0 ${strokeColor},
-        0 ${si} ${si} rgba(0,0,0,0.5)
-      `;
-    }
-
-    // 增强模式：多层描边以实现平滑效果
-    const layers = [0.33, 0.66, 1];
-    const directions = [
-      [1, 0], [-1, 0], [0, 1], [0, -1],
-      [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]
-    ];
-    
-    let shadows = [];
-    
-    // 描边层
-    if (strokeWidth > 0) {
-      layers.forEach(layer => {
-        const w = strokeWidth * layer;
-        directions.forEach(dir => {
-          shadows.push(`${toUnit(w * dir[0])} ${toUnit(w * dir[1])} 0 ${strokeColor}`);
-        });
-      });
-    }
-    
-    // 外发光
-    if (glowIntensity > 0) {
-      shadows.push(`0 0 ${toUnit(glowIntensity)} ${strokeColor}`);
-    }
-    
-    // 投影
-    if (shadowIntensity > 0) {
-      shadows.push(`0 ${toUnit(shadowIntensity * 0.5)} ${toUnit(shadowIntensity)} rgba(0,0,0,0.6)`);
-    }
-    
-    return shadows.join(', ');
-  };
-
   // 修复：如果未设置备用字体，则默认使用主字体
   const usernameFamily = settings.usernameFontFamily || 'sans-serif';
   const usernameFallback = settings.usernameFontFamilyFallback || usernameFamily;
@@ -237,6 +189,7 @@ const ObsPreview = ({ settings }) => {
 
   // 构建样式对象
   const containerStyle = {
+    ...createTextEffectVariables(settings, 'cqh'),
     '--username-font-family': `${usernameFamily}, sans-serif`,
     '--username-font-family-fallback': `${usernameFallback}, sans-serif`,
     '--username-font-size': toUnit(settings.usernameFontSize),
@@ -249,15 +202,6 @@ const ObsPreview = ({ settings }) => {
     '--username-color-anchor-start': settings.usernameColorAnchorStart || '#ff0000',
     '--username-color-anchor-end': settings.usernameColorAnchorEnd || '#ff0000',
     
-    // 动态生成阴影
-    '--username-text-shadow': generateTextShadow(
-      settings.usernameStrokeWidth,
-      settings.usernameStrokeColor,
-      settings.usernameGlowIntensity,
-      settings.usernameShadowIntensity,
-      settings.usernameEnhancedStroke
-    ),
-    
     '--danmaku-font-family': `${danmakuFamily}, sans-serif`,
     '--danmaku-font-family-fallback': `${danmakuFallback}, sans-serif`,
     '--danmaku-font-size': toUnit(settings.danmakuFontSize),
@@ -267,18 +211,10 @@ const ObsPreview = ({ settings }) => {
     '--danmaku-color-anchor-start': settings.danmakuColorAnchorStart || '#ff0000',
     '--danmaku-color-anchor-end': settings.danmakuColorAnchorEnd || '#ff0000',
     
-    // 动态生成阴影
-    '--danmaku-text-shadow': generateTextShadow(
-      settings.danmakuStrokeWidth,
-      settings.danmakuStrokeColor,
-      settings.danmakuGlowIntensity,
-      settings.danmakuShadowIntensity,
-      settings.danmakuEnhancedStroke
-    ),
 
     '--avatar-size': toUnit(settings.avatarSize),
     '--item-spacing': toUnit(settings.itemSpacing),
-    '--emot-size': toUnit(settings.emotSize || 28),
+    '--emot-size': toUnit(settings.emotSize ?? 3.3),
     '--danmaku-line-height': settings.danmakuLineHeight !== undefined ? settings.danmakuLineHeight : 1.5,
     '--username-content-spacing': toUnit(settings.usernameContentSpacing !== undefined ? settings.usernameContentSpacing : 0.37),
     '--bubble-padding-x': toUnit(settings.bubblePaddingX !== undefined ? settings.bubblePaddingX : 3.7),
@@ -335,11 +271,11 @@ const ObsPreview = ({ settings }) => {
   };
 
   return (
-    <div className="obs-preview-wrapper">
+    <div className={`obs-preview-wrapper background-${background}${pixelExact ? ' pixel-exact' : ''}`} ref={wrapperRef}>
+      <div className="obs-preview-extent" style={{ width: sourceWidth * scale, height: sourceHeight * scale }}>
       <div 
-        className={`obs-preview-scale-container ${settings.style === 'bubbles' ? 'style-bubbles' : ''}`}
-        style={{ ...containerStyle, transform: `scale(${scale})` }}
-        ref={containerRef}
+        className={`obs-preview-scale-container ${settings.style === 'bubbles' ? 'style-bubbles' : ''} ${settings.strokeMode === 'native' ? 'stroke-native' : ''}`}
+        style={{ ...containerStyle, width: sourceWidth, height: sourceHeight, transform: `scale(${scale})` }}
       >
         {/* SC 倒计时栏模拟 */}
         <div className="sc-timer-bar">
@@ -493,6 +429,7 @@ const ObsPreview = ({ settings }) => {
             </div>
           </div>
         )})}
+      </div>
       </div>
       </div>
     </div>
