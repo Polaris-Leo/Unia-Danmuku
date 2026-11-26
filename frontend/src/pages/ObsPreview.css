@@ -21,6 +21,9 @@
 }
 
 .obs-preview-scale-container {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 2400px; /* Exact OBS resolution width */
   height: 3000px; /* Exact OBS resolution height */
   transform-origin: top left;
@@ -29,8 +32,7 @@
   container-type: size;
   
   /* 强制使用高质量渲染 */
-  image-rendering: -webkit-optimize-contrast;
-  image-rendering: crisp-edges;
+  image-rendering: auto;
   
   /* 默认样式变量 - 将在组件中通过 style 覆盖 */
   /* 使用 cqh (Container Query Height) 单位，1cqh = 1% 容器高度 */
@@ -488,3 +490,8 @@
   display: none !important;
 }
 
+
+.obs-preview-wrapper.pixel-exact { overflow: auto; }
+.obs-preview-wrapper.background-dark { background-image: none; background-color: #18202c; }
+.obs-preview-wrapper.background-light { background-image: none; background-color: #fafafa; }
+.obs-preview-extent { position: relative; overflow: hidden; }

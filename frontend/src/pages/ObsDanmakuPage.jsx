@@ -1,6 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import './ObsDanmakuPage.css';
 import './ObsDanmakuPageBubbles.css';
+import { normalizeObsSettings } from '../utils/obsSettings';
+import { createTextEffectVariables } from '../utils/obsRendering';
+import './ObsTextEffects.css';
 
 // Helper to split text into Main (ASCII) and Fallback (Non-ASCII) parts
 const renderTextWithFallback = (text, type = 'danmaku', overrideColor = null) => {
@@ -82,7 +85,7 @@ const ObsDanmakuPage = () => {
       try {
         const parsed = JSON.parse(saved);
         console.log('✅ 解析后的设置:', parsed);
-        return parsed;
+        return normalizeObsSettings(parsed);
       } catch (e) {
         console.error('❌ 设置解析失败:', e);
         return null;
@@ -106,7 +109,7 @@ const ObsDanmakuPage = () => {
 
         if (data.success && data.settings && Object.keys(data.settings).length > 0) {
           console.log('✅ 成功加载OBS配置:', data.settings, `模板: ${data.template}`);
-          setCustomStyles(data.settings);
+          setCustomStyles(normalizeObsSettings(data.settings));
           setError(null);
         } else {
           console.warn('⚠️ 后端配置为空或无效，使用默认值');
@@ -163,58 +166,15 @@ const ObsDanmakuPage = () => {
     console.log('🎨 应用样式到CSS变量:', customStyles);
     if (customStyles) {
       const root = document.documentElement;
+      for (const [property, value] of Object.entries(createTextEffectVariables(customStyles))) {
+        root.style.setProperty(property, value);
+      }
       
       // Helper to append unit
       const toUnit = (val) => {
         const num = parseFloat(val);
         if (isNaN(num)) return '0vh';
         return `${num}vh`;
-      };
-
-      // 生成平滑描边阴影 (直接使用对应单位)
-      const generateTextShadow = (strokeWidth, strokeColor, glowIntensity, shadowIntensity, enhanced) => {
-        if (!enhanced) {
-          const w = toUnit(strokeWidth);
-          const s = toUnit(shadowIntensity);
-          return `
-            ${w} 0 0 ${strokeColor},
-            -${w} 0 0 ${strokeColor},
-            0 ${w} 0 ${strokeColor},
-            0 -${w} 0 ${strokeColor},
-            0 ${s} ${s} rgba(0,0,0,0.5)
-          `;
-        }
-
-        // 增强模式：多层描边以实现平滑效果
-        const layers = [0.33, 0.66, 1];
-        const directions = [
-          [1, 0], [-1, 0], [0, 1], [0, -1],
-          [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]
-        ];
-        
-        let shadows = [];
-        
-        // 描边层
-        if (strokeWidth > 0) {
-          layers.forEach(layer => {
-            const w = strokeWidth * layer;
-            directions.forEach(dir => {
-              shadows.push(`${toUnit(w * dir[0])} ${toUnit(w * dir[1])} 0 ${strokeColor}`);
-            });
-          });
-        }
-        
-        // 外发光
-        if (glowIntensity > 0) {
-          shadows.push(`0 0 ${toUnit(glowIntensity)} ${strokeColor}`);
-        }
-        
-        // 投影
-        if (shadowIntensity > 0) {
-          shadows.push(`0 ${toUnit(shadowIntensity * 0.5)} ${toUnit(shadowIntensity)} rgba(0,0,0,0.6)`);
-        }
-        
-        return shadows.join(', ');
       };
 
       // 所有样式都需要设置，因为气泡样式也使用了部分CSS变量
@@ -235,15 +195,6 @@ const ObsDanmakuPage = () => {
       root.style.setProperty('--username-color-guard3', customStyles.usernameColorGuard3 || '#1fa3f1');
       root.style.setProperty('--username-color-anchor-start', customStyles.usernameColorAnchorStart || '#ff0000');
       root.style.setProperty('--username-color-anchor-end', customStyles.usernameColorAnchorEnd || '#ff0000');
-      
-      // 动态生成用户名阴影
-      root.style.setProperty('--username-text-shadow', generateTextShadow(
-        customStyles.usernameStrokeWidth,
-        customStyles.usernameStrokeColor,
-        customStyles.usernameGlowIntensity || 8,
-        customStyles.usernameShadowIntensity || 6,
-        customStyles.usernameEnhancedStroke !== false
-      ));
 
       const danmakuFamily = customStyles.danmakuFontFamily || 'sans-serif';
       const danmakuFallback = customStyles.danmakuFontFamilyFallback || danmakuFamily;
@@ -257,19 +208,10 @@ const ObsDanmakuPage = () => {
       root.style.setProperty('--danmaku-color', customStyles.danmakuColor || '#333333');
       root.style.setProperty('--danmaku-color-anchor-start', customStyles.danmakuColorAnchorStart || '#ff0000');
       root.style.setProperty('--danmaku-color-anchor-end', customStyles.danmakuColorAnchorEnd || '#ff0000');
-      
-      // 动态生成弹幕内容阴影
-      root.style.setProperty('--danmaku-text-shadow', generateTextShadow(
-        customStyles.danmakuStrokeWidth,
-        customStyles.danmakuStrokeColor,
-        customStyles.danmakuGlowIntensity || 8,
-        customStyles.danmakuShadowIntensity || 6,
-        customStyles.danmakuEnhancedStroke !== false
-      ));
 
       root.style.setProperty('--avatar-size', toUnit(customStyles.avatarSize));
       root.style.setProperty('--item-spacing', toUnit(customStyles.itemSpacing));
-      root.style.setProperty('--emot-size', toUnit(customStyles.emotSize || 28));
+      root.style.setProperty('--emot-size', toUnit(customStyles.emotSize ?? 3.3));
       root.style.setProperty('--danmaku-line-height', customStyles.danmakuLineHeight !== undefined ? customStyles.danmakuLineHeight : 1.5);
       root.style.setProperty('--username-content-spacing', toUnit(customStyles.usernameContentSpacing !== undefined ? customStyles.usernameContentSpacing : 0.37));
       root.style.setProperty('--bubble-padding-x', toUnit(customStyles.bubblePaddingX !== undefined ? customStyles.bubblePaddingX : 3.7));
@@ -601,7 +543,7 @@ const ObsDanmakuPage = () => {
 
   return (
     // 简洁样式
-    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''}`}>
+    <div className={`obs-danmaku-simple ${activeSCs.length > 0 ? 'has-sc-timer' : ''} ${customStyles?.style === 'bubbles' ? 'style-bubbles' : ''} ${customStyles?.strokeMode === 'native' ? 'stroke-native' : ''}`}>
       {/* SC倒计时栏 */}
       {activeSCs.length > 0 && (
         <div className="sc-timer-bar">

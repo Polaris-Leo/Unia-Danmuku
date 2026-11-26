@@ -56,3 +56,19 @@ test('each template keeps its own line height and spacing after either is saved'
   assert.deepEqual(templates.default, { danmakuLineHeight: 1.6, itemSpacing: 1 });
   assert.deepEqual(templates['1'], { danmakuLineHeight: 0.9, itemSpacing: 0.2 });
 });
+
+test('old settings round trip without field loss and upgrading main keeps secondary unchanged', async () => {
+  const previous = { usernameFontSize: 12, danmakuFontSize: 4.5, danmakuLineHeight: 1.05,
+    usernameContentSpacing: -0.25, itemSpacing: 0, danmakuStrokeWidth: 0,
+    danmakuGlowIntensity: 0, usernameEnhancedStroke: false,
+    usernameFontFamilyFallback2: 'Old CJK Font', extension: { keep: true } };
+  const secondary = { ...previous, usernameFontSize: 3.2, danmakuLineHeight: 0.95 };
+  await save('default', previous);
+  await save('1', secondary);
+  assert.deepEqual(await read('default'), previous);
+  const upgraded = { ...previous, obsSettingsUnit: 'vh', strokeMode: 'shadow',
+    usernameStrokeSoftness: 0, danmakuStrokeSoftness: 0 };
+  await save('default', upgraded);
+  assert.deepEqual(await read('default'), upgraded);
+  assert.deepEqual(await read('1'), secondary);
+});
