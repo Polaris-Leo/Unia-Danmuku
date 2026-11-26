@@ -17,16 +17,16 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "axios": "^1.6.2",
+    "axios": "^1.21.1",
     "bilibili-live-ws": "^6.3.1",
     "cookie-parser": "^1.4.6",
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
-    "express": "^4.18.2",
-    "multer": "^2.0.2",
+    "express": "^4.22.3",
+    "multer": "^2.5.0",
     "pako": "^2.1.0",
     "qrcode": "^1.5.3",
-    "ws": "^8.18.3"
+    "ws": "^8.23.0"
   },
   "devDependencies": {
     "nodemon": "^3.0.2"

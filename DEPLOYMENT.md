@@ -5,8 +5,8 @@
 ## 📋 准备工作
 
 ### 系统要求
-- Node.js >= 16.0.0
-- npm 或 yarn
+- Node.js 24 LTS（与 Docker 镜像一致）
+- npm（随 Node.js 安装）
 - Git
 
 ### 端口要求
@@ -27,12 +27,12 @@ cd Unia-Danmuku
 ```bash
 # 安装后端依赖
 cd backend
-npm install
+npm ci
 cd ..
 
 # 安装前端依赖
 cd frontend
-npm install
+npm ci
 cd ..
 ```
 
@@ -306,8 +306,8 @@ pm2 monit
 git pull
 
 # 安装新依赖
-cd backend && npm install && cd ..
-cd frontend && npm install && cd ..
+cd backend && npm ci && cd ..
+cd frontend && npm ci && cd ..
 
 # 重新构建前端
 cd frontend && npm run build && cd ..
