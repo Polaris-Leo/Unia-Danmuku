@@ -45,9 +45,9 @@ docker run -d \
 - 采用多阶段构建，优化镜像大小
 - 第一阶段：构建前端静态文件
 - 第二阶段：打包后端和前端静态文件
-- 使用 alpine 版本的 Node.js，镜像更小
-- 使用非 root 用户运行，提高安全性
+- 使用 Node.js 24 LTS 的 Alpine 镜像；前后端通过 npm ci 按各自锁文件安装
 - 包含健康检查机制
+- Compose 中的独立 Cookie 管理服务使用自己的运行环境
 
 ### .dockerignore
 - 排除不必要的文件，减小构建上下文

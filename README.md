@@ -62,14 +62,14 @@ Unia-Danmuku 用于连接 B 站直播间，接收实时弹幕、礼物、醒目�
 
 ### 环境要求
 
-- Node.js 16+
+- Node.js 24 LTS（与 Docker 镜像一致）
 - npm
 
 ### 后端
 
 ```bash
 cd backend
-npm install
+npm ci
 npm run dev
 ```
 
@@ -77,7 +77,7 @@ npm run dev
 
 ```bash
 cd frontend
-npm install
+npm ci
 npm run dev
 ```
 

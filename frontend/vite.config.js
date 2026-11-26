@@ -29,13 +29,13 @@ export default defineConfig({
     }
   },
   build: {
+    // Keep the previous browser transform targets for OBS browser sources.
+    target: ['es2020', 'edge88', 'firefox78', 'chrome87', 'safari14'],
     chunkSizeWarningLimit: 1500,
-    rollupOptions: {
+    rolldownOptions: {
       output: {
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
+        codeSplitting: {
+          groups: [{ name: 'vendor', test: /node_modules/, tags: ['$initial'] }]
         }
       }
     }

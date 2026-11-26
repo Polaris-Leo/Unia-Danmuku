@@ -2,15 +2,15 @@
 # -------- 多阶段构建 Dockerfile（自动前后端集成，无需本地 Node 环境） --------
 
 # 阶段1：构建前端
-FROM node:18-alpine AS frontend-builder
+FROM node:24-alpine AS frontend-builder
 WORKDIR /app/frontend
-COPY frontend/package*.json ./
-RUN npm install
+COPY frontend/package.json frontend/package-lock.json ./
+RUN npm ci
 COPY frontend/ ./
 RUN npm run build
 
 # 阶段2：构建后端并集成前端产物
-FROM node:18-alpine
+FROM node:24-alpine
 WORKDIR /app
 
 # 换源加速 (解决 dl-cdnlink 连接慢的问题)
@@ -20,9 +20,9 @@ RUN sed -i 's/dl-cdn.alpinelinux.org/mirrors.aliyun.com/g' /etc/apk/repositories
 RUN apk add --no-cache dumb-init
 
 # 复制后端依赖
-COPY backend/package*.json ./backend/
+COPY backend/package.json backend/package-lock.json ./backend/
 WORKDIR /app/backend
-RUN npm install --only=production
+RUN npm ci --omit=dev
 
 # 复制后端源代码
 COPY backend/src ./src
